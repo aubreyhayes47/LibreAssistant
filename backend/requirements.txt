@@ -1,0 +1,28 @@
+# Core dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+sqlalchemy>=2.0.0
+sqlite3  # Built into Python
+
+# Encryption
+pycryptodome>=3.19.0
+
+# Web scraping
+playwright>=1.40.0
+selenium>=4.15.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+
+# LLM integration
+ollama>=0.1.8
+
+# Development tools
+black>=23.0.0
+ruff>=0.1.0
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+aiofiles>=23.2.0
