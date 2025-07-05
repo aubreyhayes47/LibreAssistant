@@ -1,22 +1,29 @@
 <script>
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
+  import { generateTestData } from '$lib/utils/testData.js';
 
   let name = $state("");
   let greetMsg = $state("");
   let backendMsg = $state("");
   let isLoading = $state(false);
+  let databaseInitialized = $state(false);
   
   // Chat interface
   let chatInput = $state("");
+  /** @type {Array<{id: string, role: 'user'|'assistant', content: string, timestamp: string}>} */
   let chatMessages = $state([]);
   let currentUrl = $state("");
   let extractedContent = $state("");
   
   // Browser data
+  /** @type {Array<string>} */
   let browserData = $state([]);
   let dataType = $state("history");
 
+  /**
+   * @param {Event} event
+   */
   async function greet(event) {
     event.preventDefault();
     if (!name.trim()) return;
@@ -39,6 +46,9 @@
     }
   }
 
+  /**
+   * @param {Event} event
+   */
   async function processUrl(event) {
     event.preventDefault();
     if (!currentUrl.trim()) return;
@@ -51,9 +61,10 @@
         
         // Add to chat messages
         chatMessages = [...chatMessages, {
-          type: 'url',
+          id: `url-${Date.now()}`,
+          role: /** @type {'user'} */ ('user'),
           content: `Processed URL: ${currentUrl}`,
-          timestamp: new Date().toLocaleTimeString()
+          timestamp: new Date().toISOString()
         }];
       } else {
         extractedContent = `Error: ${response.error}`;
@@ -65,6 +76,9 @@
     }
   }
 
+  /**
+   * @param {Event} event
+   */
   async function sendChat(event) {
     event.preventDefault();
     if (!chatInput.trim()) return;
@@ -74,33 +88,41 @@
     
     // Add user message
     chatMessages = [...chatMessages, {
-      type: 'user',
+      id: `user-${Date.now()}`,
+      role: /** @type {'user'} */ ('user'),
       content: userMessage,
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toISOString()
     }];
     
     isLoading = true;
     try {
-      const response = await invoke("analyze_content", { content: userMessage });
+      const response = await invoke("chat_with_llm", { 
+        message: userMessage,
+        session_id: 'main-chat'
+      });
+      
       if (response.success) {
         // Add AI response
         chatMessages = [...chatMessages, {
-          type: 'ai',
-          content: response.analysis,
-          timestamp: new Date().toLocaleTimeString()
+          id: `ai-${Date.now()}`,
+          role: /** @type {'assistant'} */ ('assistant'),
+          content: response.response || 'I received your message but had trouble generating a response.',
+          timestamp: new Date().toISOString()
         }];
       } else {
         chatMessages = [...chatMessages, {
-          type: 'error',
-          content: `Error: ${response.error}`,
-          timestamp: new Date().toLocaleTimeString()
+          id: `error-${Date.now()}`,
+          role: /** @type {'assistant'} */ ('assistant'),
+          content: `❌ LLM Error: ${response.error}\n\n💡 Make sure Ollama is running locally:\n1. Install Ollama from https://ollama.ai\n2. Run: ollama pull llama2\n3. Start: ollama serve`,
+          timestamp: new Date().toISOString()
         }];
       }
     } catch (error) {
       chatMessages = [...chatMessages, {
-        type: 'error',
-        content: `Error: ${error}`,
-        timestamp: new Date().toLocaleTimeString()
+        id: `error-${Date.now()}`,
+        role: /** @type {'assistant'} */ ('assistant'),
+        content: `❌ Connection Error: ${error}\n\n🔧 Troubleshooting:\n1. Check that Ollama is running (ollama serve)\n2. Verify backend connection\n3. Check console for detailed errors`,
+        timestamp: new Date().toISOString()
       }];
     } finally {
       isLoading = false;
@@ -110,25 +132,94 @@
   async function getBrowserData() {
     isLoading = true;
     try {
-      const response = await invoke("get_browser_data", { dataType });
+      // Ensure database is initialized
+      if (!databaseInitialized) {
+        browserData = ['⚠️ Database not initialized. Please wait for initialization to complete.'];
+        return;
+      }
+      
+      const response = await invoke("get_browser_history", { 
+        limit: 10,
+        search_query: null 
+      });
+      
       if (response.success) {
-        browserData = response.data;
+        const history = response.history || [];
+        if (history.length > 0) {
+          browserData = history.map((/** @type {any} */ item) => 
+            `📄 ${item.title || 'Untitled'}\n🔗 ${item.url}\n⏰ ${new Date(item.visit_time || Date.now()).toLocaleString()}\n`
+          );
+        } else {
+          browserData = ['📭 No browser history found.\n\n💡 Click "Generate Test Data" to add some sample entries!'];
+        }
       } else {
-        browserData = [`Error: ${response.error}`];
+        browserData = [`❌ Error: ${response.error}`];
       }
     } catch (error) {
-      browserData = [`Error: ${error}`];
+      browserData = [`❌ Error: ${error}`];
     } finally {
       isLoading = false;
     }
   }
 
-  onMount(() => {
+  async function generateTestDataLocal() {
+    isLoading = true;
+    try {
+      const result = await generateTestData();
+      
+      if (result.success) {
+        chatMessages = [...chatMessages, {
+          id: `success-${Date.now()}`,
+          role: /** @type {'assistant'} */ ('assistant'),
+          content: `✅ ${result.message}! Generated ${result.results.length} test entries. You can now test browser history and bookmarks.`,
+          timestamp: new Date().toISOString()
+        }];
+      } else {
+        chatMessages = [...chatMessages, {
+          id: `error-${Date.now()}`,
+          role: /** @type {'assistant'} */ ('assistant'),
+          content: `❌ Failed to generate test data: ${result.error}`,
+          timestamp: new Date().toISOString()
+        }];
+      }
+      
+    } catch (error) {
+      chatMessages = [...chatMessages, {
+        id: `error-${Date.now()}`,
+        role: /** @type {'assistant'} */ ('assistant'),
+        content: `❌ Failed to generate test data: ${error instanceof Error ? error.message : String(error)}`,
+        timestamp: new Date().toISOString()
+      }];
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  onMount(async () => {
+    // Initialize database first
+    try {
+      console.log('Initializing database...');
+      const dbResult = await invoke("init_database");
+      console.log('Database initialization result:', dbResult);
+      
+      if (dbResult.success) {
+        console.log('✅ Database initialized successfully');
+        databaseInitialized = true;
+      } else {
+        console.error('❌ Database initialization failed:', dbResult.error);
+        databaseInitialized = false;
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize database:', error);
+      databaseInitialized = false;
+    }
+    
     // Initialize with welcome message
     chatMessages = [{
-      type: 'ai',
+      id: `welcome-${Date.now()}`,
+      role: /** @type {'assistant'} */ ('assistant'),
       content: 'Welcome to LibreAssistant! I can help you process URLs, analyze content, and access browser data. All processing happens locally for your privacy.',
-      timestamp: new Date().toLocaleTimeString()
+      timestamp: new Date().toISOString()
     }];
   });
 </script>
@@ -138,6 +229,13 @@
     <div class="header-content">
       <h1>🔧 LibreAssistant</h1>
       <p class="subtitle">Open Source AI Assistant Browser</p>
+      <div class="status-indicator">
+        {#if databaseInitialized}
+          <span class="status-badge success">✅ Database Ready</span>
+        {:else}
+          <span class="status-badge loading">⏳ Initializing Database...</span>
+        {/if}
+      </div>
     </div>
   </header>
   
@@ -190,8 +288,8 @@
       <h2>💬 AI Chat</h2>
       <div class="chat-messages">
         {#each chatMessages as message}
-          <div class="message {message.type}">
-            <span class="timestamp">{message.timestamp}</span>
+          <div class="message {message.role}">
+            <span class="timestamp">{new Date(message.timestamp).toLocaleTimeString()}</span>
             <div class="content">{message.content}</div>
           </div>
         {/each}
@@ -218,18 +316,16 @@
     <div class="panel">
       <h2>📊 Browser Data</h2>
       <div class="browser-controls">
-        <select bind:value={dataType}>
-          <option value="history">History</option>
-          <option value="bookmarks">Bookmarks</option>
-          <option value="cookies">Cookies</option>
-        </select>
+        <button onclick={generateTestDataLocal} disabled={isLoading}>
+          {isLoading ? 'Generating...' : 'Generate Test Data'}
+        </button>
         <button onclick={getBrowserData} disabled={isLoading}>
-          {isLoading ? 'Loading...' : 'Get Data'}
+          {isLoading ? 'Loading...' : 'Get History'}
         </button>
       </div>
       {#if browserData.length > 0}
         <div class="browser-data">
-          <h3>Browser {dataType}:</h3>
+          <h3>Browser history:</h3>
           <ul>
             {#each browserData as item}
               <li>{item}</li>
@@ -278,6 +374,30 @@ h1 {
 
 .header-content {
   display: inline-block;
+}
+
+.status-indicator {
+  margin-top: 10px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.status-badge.success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-badge.loading {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
 .subtitle {
@@ -438,6 +558,12 @@ select {
   background: #667eea;
   color: white;
   margin-left: auto;
+}
+
+.message.assistant {
+  background: #e8f5e8;
+  color: #2d5a2d;
+  border-left: 4px solid #4caf50;
 }
 
 .message.ai {

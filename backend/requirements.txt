@@ -2,7 +2,10 @@
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 sqlalchemy>=2.0.0
-sqlite3  # Built into Python
+# sqlite3 is built into Python
+
+# HTTP client for Ollama
+aiohttp>=3.9.0
 
 # Encryption
 pycryptodome>=3.19.0

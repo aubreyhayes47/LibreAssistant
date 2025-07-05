@@ -6,33 +6,339 @@ This module handles Tauri native command invocations.
 import sys
 import json
 import asyncio
+import time
+import os
 from typing import Dict, Any, Optional
-import logging
+from pathlib import Path
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('backend.log'),
-        # Remove stdout handler to prevent JSON parsing issues
-        # logging.StreamHandler(sys.stdout)
-    ]
-)
+# Ensure UTF-8 encoding for stdout
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
 
-logger = logging.getLogger(__name__)
+# Set environment variables for consistent encoding
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+# Import our infrastructure modules
+from db import init_database, close_database, ChatOperations, BookmarkOperations, HistoryOperations
+from llm import get_ollama_client, get_conversation_context, get_prompt_builder
+from utils import init_config, init_logging, get_logger, log_command_start, log_command_success, log_command_error
+
+# Initialize configuration and logging
+config = init_config()
+init_logging()
+logger = get_logger('main')
 
 
 class CommandHandler:
     """Handles incoming commands from Tauri frontend."""
     
     def __init__(self):
+        """Initialize command handler with available commands."""
         self.commands = {
-            'hello': self.hello_command,
-            'process_url': self.process_url,
-            'get_browser_data': self.get_browser_data,
-            'analyze_content': self.analyze_content,
+            'init_database': self.init_database_command,
+            'chat_with_llm': self.chat_with_llm_command,
+            'save_bookmark': self.save_bookmark_command,
+            'get_chat_history': self.get_chat_history_command,
+            'get_bookmarks': self.get_bookmarks_command,
+            'search_bookmarks': self.search_bookmarks_command,
+            'get_browser_history': self.get_browser_history_command,
+            'add_history_entry': self.add_history_entry_command,
+            'hello': self.hello_command,  # Keep for testing
+            'process_url': self.process_url,  # Legacy command
+            'extract_page_content': self.process_url,  # Alias for process_url
+            'get_browser_data': self.get_browser_data,  # Legacy command
+            'analyze_content': self.analyze_content,  # Legacy command
         }
+        # Check if database is already initialized by checking if it exists and is accessible
+        self._database_initialized = self._check_database_state()
+    
+    def _check_database_state(self) -> bool:
+        """Check if database is already initialized and accessible."""
+        try:
+            # Import here to avoid circular imports
+            from db.database import db_manager
+            
+            # Check if the database manager has an active engine
+            if db_manager.engine is None:
+                # Try to initialize with default path if not already done
+                db_manager.initialize()
+                
+            # Test database connection by trying to get session
+            if db_manager.SessionLocal is not None:
+                with db_manager.get_session():
+                    pass  # Just test if we can get a session
+                logger.info("Database state check: initialized and accessible")
+                return True
+            else:
+                logger.info("Database state check: not initialized")
+                return False
+                
+        except Exception as e:
+            logger.warning(f"Database state check failed: {str(e)}")
+            return False
+    
+    async def init_database_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Initialize the database."""
+        try:
+            db_path = payload.get('db_path')
+            success = init_database(db_path)
+            
+            if success:
+                self._database_initialized = True
+                logger.info("Database initialized successfully")
+                return {
+                    'success': True,
+                    'message': 'Database initialized successfully',
+                    'db_path': db_path
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'Failed to initialize database'
+                }
+        except Exception as e:
+            logger.error(f"Database initialization error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    async def chat_with_llm_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Process a chat message with the LLM."""
+        try:
+            message = payload.get('message')
+            session_id = payload.get('session_id', 'default')
+            
+            if not message:
+                return {'success': False, 'error': 'No message provided'}
+            
+            # Get conversation context
+            context = get_conversation_context(session_id)
+            
+            # Add user message to context
+            context.add_message('user', message)
+            
+            # Build system prompt
+            prompt_builder = get_prompt_builder()
+            system_prompt = prompt_builder.build_chat_prompt(message)
+            
+            # Get conversation messages for LLM
+            messages = [{'role': 'system', 'content': system_prompt}] + context.get_context_messages()
+            
+            # Get LLM response
+            client = await get_ollama_client()
+            result = await client.chat_completion(messages)
+            
+            if result['success']:
+                response_content = result['message'].get('content', '')
+                
+                # Add assistant response to context
+                context.add_message('assistant', response_content)
+                
+                # Save both messages to database
+                if self._database_initialized:
+                    await ChatOperations.save_message(message, 'user', session_id)
+                    await ChatOperations.save_message(response_content, 'assistant', session_id)
+                
+                return {
+                    'success': True,
+                    'response': response_content,
+                    'session_id': session_id,
+                    'model': result.get('model'),
+                    'context_summary': context.get_context_summary()
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.get('error', 'Unknown LLM error'),
+                    'session_id': session_id
+                }
+                
+        except Exception as e:
+            logger.error(f"Chat command error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'session_id': payload.get('session_id', 'default')
+            }
+    
+    async def save_bookmark_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Save a bookmark."""
+        try:
+            url = payload.get('url')
+            title = payload.get('title')
+            content = payload.get('content')
+            tags = payload.get('tags')
+            folder = payload.get('folder', 'default')
+            
+            if not url:
+                return {'success': False, 'error': 'No URL provided'}
+            
+            if not self._database_initialized:
+                return {'success': False, 'error': 'Database not initialized'}
+            
+            bookmark = await BookmarkOperations.save_bookmark(
+                url=url,
+                title=title,
+                content=content,
+                tags=tags,
+                folder=folder
+            )
+            
+            if bookmark:
+                return {
+                    'success': True,
+                    'bookmark_id': bookmark.id,
+                    'message': 'Bookmark saved successfully'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'Failed to save bookmark'
+                }
+                
+        except Exception as e:
+            logger.error(f"Save bookmark error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    async def get_chat_history_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Get chat history for a session."""
+        try:
+            session_id = payload.get('session_id', 'default')
+            limit = payload.get('limit', 50)
+            
+            if not self._database_initialized:
+                return {'success': False, 'error': 'Database not initialized'}
+            
+            history = await ChatOperations.get_chat_history(session_id, limit)
+            
+            return {
+                'success': True,
+                'history': history,
+                'session_id': session_id,
+                'count': len(history)
+            }
+            
+        except Exception as e:
+            logger.error(f"Get chat history error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    async def get_bookmarks_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Get bookmarks."""
+        try:
+            folder = payload.get('folder')
+            limit = payload.get('limit', 100)
+            
+            if not self._database_initialized:
+                return {'success': False, 'error': 'Database not initialized'}
+            
+            bookmarks = await BookmarkOperations.get_bookmarks(folder, limit)
+            
+            return {
+                'success': True,
+                'bookmarks': bookmarks,
+                'count': len(bookmarks)
+            }
+            
+        except Exception as e:
+            logger.error(f"Get bookmarks error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    async def search_bookmarks_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Search bookmarks."""
+        try:
+            query = payload.get('query')
+            limit = payload.get('limit', 50)
+            
+            if not query:
+                return {'success': False, 'error': 'No search query provided'}
+            
+            if not self._database_initialized:
+                return {'success': False, 'error': 'Database not initialized'}
+            
+            results = await BookmarkOperations.search_bookmarks(query, limit)
+            
+            return {
+                'success': True,
+                'results': results,
+                'query': query,
+                'count': len(results)
+            }
+            
+        except Exception as e:
+            logger.error(f"Search bookmarks error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    async def get_browser_history_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Get browser history."""
+        try:
+            session_id = payload.get('session_id')
+            limit = payload.get('limit', 100)
+            
+            if not self._database_initialized:
+                return {'success': False, 'error': 'Database not initialized'}
+            
+            history = await HistoryOperations.get_history(session_id, limit)
+            
+            return {
+                'success': True,
+                'history': history,
+                'count': len(history)
+            }
+            
+        except Exception as e:
+            logger.error(f"Get browser history error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    async def add_history_entry_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Add a browser history entry."""
+        try:
+            url = payload.get('url')
+            title = payload.get('title')
+            session_id = payload.get('session_id', 'default')
+            
+            if not url:
+                return {'success': False, 'error': 'No URL provided'}
+            
+            if not self._database_initialized:
+                return {'success': False, 'error': 'Database not initialized'}
+            
+            success = await HistoryOperations.add_history_entry(url, title, session_id)
+            
+            if success:
+                return {
+                    'success': True,
+                    'message': 'History entry added successfully'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'Failed to add history entry'
+                }
+                
+        except Exception as e:
+            logger.error(f"Add history entry error: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
     
     async def hello_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Test command to verify communication."""
@@ -40,93 +346,195 @@ class CommandHandler:
         return {
             'success': True,
             'message': f'Hello, {name}! Backend is working.',
-            'timestamp': payload.get('timestamp')
+            'timestamp': payload.get('timestamp'),
+            'database_initialized': self._database_initialized
         }
     
     async def process_url(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Process a URL for content extraction."""
+        """Process a URL for content extraction using async content extractor."""
         url = payload.get('url')
         if not url:
             return {'success': False, 'error': 'No URL provided'}
         
-        # TODO: Implement web scraping logic
-        return {
-            'success': True,
-            'url': url,
-            'title': 'Example Title',
-            'content': 'Extracted content will go here...'
-        }
+        try:
+            # Import the content extractor
+            from agents.content_extractor import ContentExtractor
+            
+            # Normalize URL
+            if not url.startswith(('http://', 'https://')):
+                url = 'https://' + url
+            
+            # Use the async content extractor
+            async with ContentExtractor() as extractor:
+                result = await extractor.extract_content(url)
+                
+                if result['success']:
+                    # Format response for compatibility with existing frontend code
+                    return {
+                        'success': True,
+                        'url': result['url'],
+                        'title': result['title'],
+                        'content': result['text'],
+                        'description': result.get('description', ''),
+                        'links': result.get('links', []),
+                        'images': result.get('images', []),
+                        'headings': result.get('headings', []),
+                        'metadata': {
+                            'status_code': result.get('status_code'),
+                            'content_type': result.get('content_type'),
+                            'size': result.get('size')
+                        }
+                    }
+                else:
+                    return result  # Return the error result as-is
+                    
+        except Exception as e:
+            logger.error(f"Error processing URL {url}: {str(e)}")
+            return {
+                'success': False,
+                'error': f'Processing error: {str(e)}'
+            }
     
     async def get_browser_data(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Get browser history or bookmarks."""
+        """Legacy: Get browser history or bookmarks."""
         data_type = payload.get('type', 'history')
         
-        # TODO: Implement browser data extraction
-        return {
-            'success': True,
-            'type': data_type,
-            'data': [],
-            'count': 0
-        }
+        # Redirect to new commands
+        if data_type == 'history':
+            return await self.get_browser_history_command(payload)
+        elif data_type == 'bookmarks':
+            return await self.get_bookmarks_command(payload)
+        else:
+            return {
+                'success': False,
+                'error': f'Unknown data type: {data_type}'
+            }
     
     async def analyze_content(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze content using LLM."""
+        """Legacy: Analyze content using LLM."""
         content = payload.get('content')
         if not content:
             return {'success': False, 'error': 'No content provided'}
         
-        # TODO: Implement LLM analysis
+        # TODO: Implement content analysis with new LLM infrastructure
         return {
             'success': True,
             'analysis': 'Content analysis will go here...',
             'keywords': [],
-            'summary': ''
+            'summary': '',
+            'message': 'Legacy command - will be replaced with LLM analysis'
         }
     
     async def handle_command(self, command: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle incoming command."""
+        """Handle incoming command with proper logging and error handling."""
+        session_id = payload.get('session_id', 'default')
+        start_time = time.time()
+        
+        # Log command start
+        log_command_start(command, payload, session_id)
+        
         if command not in self.commands:
+            error_msg = f'Unknown command: {command}'
+            log_command_error(command, error_msg, session_id)
             return {
                 'success': False,
-                'error': f'Unknown command: {command}'
+                'error': error_msg
             }
         
         try:
             result = await self.commands[command](payload)
-            logger.info(f"Command '{command}' executed successfully")
+            duration = time.time() - start_time
+            
+            if result.get('success', False):
+                log_command_success(command, duration, session_id)
+            else:
+                log_command_error(command, result.get('error', 'Unknown error'), session_id)
+            
             return result
+            
         except Exception as e:
-            logger.error(f"Error executing command '{command}': {str(e)}")
+            duration = time.time() - start_time
+            error_msg = str(e)
+            log_command_error(command, error_msg, session_id)
+            logger.error(f"Unhandled error in command '{command}': {error_msg}")
             return {
                 'success': False,
-                'error': str(e)
+                'error': error_msg
             }
 
 
 async def main():
     """Main entry point for command-line execution."""
-    if len(sys.argv) < 3:
-        print(json.dumps({
-            'success': False,
-            'error': 'Usage: python main.py <command> <json_payload>'
-        }))
-        sys.exit(1)
-    
-    command = sys.argv[1]
     try:
-        payload = json.loads(sys.argv[2])
-    except json.JSONDecodeError as e:
-        print(json.dumps({
+        if len(sys.argv) < 3:
+            result = {
+                'success': False,
+                'error': 'Usage: python main.py <command> <json_payload>'
+            }
+            print(json.dumps(result))
+            sys.exit(1)
+        
+        command = sys.argv[1]
+        payload_source = sys.argv[2]
+        
+        # Check if the payload is a file path (starts with temp_payload.json or is a file)
+        if payload_source.endswith('temp_payload.json') or Path(payload_source).exists():
+            # Read JSON from file
+            try:
+                with open(payload_source, 'r', encoding='utf-8') as f:
+                    payload_text = f.read()
+                payload = json.loads(payload_text)
+            except (FileNotFoundError, IOError) as e:
+                result = {
+                    'success': False,
+                    'error': f'Failed to read payload file: {str(e)}'
+                }
+                print(json.dumps(result))
+                sys.exit(1)
+            except json.JSONDecodeError as e:
+                result = {
+                    'success': False,
+                    'error': f'Invalid JSON in payload file: {str(e)}'
+                }
+                print(json.dumps(result))
+                sys.exit(1)
+        else:
+            # Parse as direct JSON string (fallback)
+            try:
+                payload = json.loads(payload_source)
+            except json.JSONDecodeError as e:
+                result = {
+                    'success': False,
+                    'error': f'Invalid JSON payload: {str(e)}'
+                }
+                print(json.dumps(result))
+                sys.exit(1)
+        
+        # Initialize handler and process command
+        handler = CommandHandler()
+        result = await handler.handle_command(command, payload)
+        
+        # Output result as JSON for Tauri to consume
+        print(json.dumps(result, ensure_ascii=False))
+        
+    except Exception as e:
+        # Final error handler for any unhandled exceptions
+        result = {
             'success': False,
-            'error': f'Invalid JSON payload: {str(e)}'
-        }))
+            'error': f'Fatal error: {str(e)}'
+        }
+        print(json.dumps(result))
+        logger.error(f"Fatal error in main: {str(e)}")
         sys.exit(1)
     
-    handler = CommandHandler()
-    result = await handler.handle_command(command, payload)
-    
-    # Output result as JSON for Tauri to consume
-    print(json.dumps(result))
+    finally:
+        # Cleanup
+        try:
+            from llm import close_ollama_client
+            await close_ollama_client()
+            close_database()
+        except Exception:
+            pass  # Ignore cleanup errors
 
 
 if __name__ == '__main__':
