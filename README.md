@@ -1,237 +1,264 @@
-# LibreAssistant
+# 📜 LibreAssistant
 
-An open-source AI assistant browser built with Tauri and Python, designed for privacy-focused AI interactions and web automation.
+An open-source, privacy-first AI assistant platform built with Tauri, Svelte, Rust, and Python. Designed for **local-first AI**, **web automation**, and **customizable Flavors** that serve real communities—especially those most overlooked.
+
+---
+
+## ✝️ Mission
+
+LibreAssistant is more than a single app—it's a **flexible, modular platform** for building secure, local-first AI tools that *respect privacy* and *empower service*.
+
+Our goal is to support **families, churches, schools, clinics, nonprofits, and small businesses**—especially in low-resource or disconnected environments.
+
+> *“Serve the least, the last, and the lost—locally and globally.”*
+
+---
 
 ## 🚀 Features
 
-- 🤖 **Local AI Integration**: Powered by Ollama for private AI conversations
-- 🌐 **Web Automation**: Built-in web scraping and browser automation
-- 📱 **Native Performance**: Tauri-based desktop application with Rust backend
-- 🔒 **Privacy First**: All processing happens locally on your machine
-- 🔧 **Extensible**: Modular Python backend for custom AI agents
-- 💬 **Interactive Chat**: Real-time AI conversations with message history
-- 🌍 **URL Processing**: Extract and analyze content from web pages
-- 📊 **Browser Data**: Access browser history, bookmarks, and cookies
+✅ **Local AI Integration** with Ollama for private, on-device conversations
+✅ **Web Automation** with scraping and browser control
+✅ **Modular Plugin System** for adding custom tools
+✅ **Privacy First** with no mandatory cloud
+✅ **Role-Based Access Control (RBAC)** for multi-user setups
+✅ **Flavor System** for audience-specific configurations
+✅ **USB/SD Distribution** for offline use
 
-## 🏗️ Architecture
+---
+
+## 🌍 Example Flavors
+
+LibreAssistant is designed to be **configured** for specific audiences and use cases through "Flavors"—predefined bundles of plugins, UI layouts, and permissions.
+
+✅ Solo Private Assistant (Power User)
+✅ Developer Console (Plugin Creation)
+✅ Household/Family Assistant
+✅ School/Homeschool Co-op Suite
+✅ Faith & Community Ministry Tool *(Memphis Edition)*
+✅ Recovery Curriculum Manager
+✅ Volunteer/Incident Management Suite
+
+Each Flavor is fully local, encrypted, and adaptable to local languages and contexts.
+
+---
+
+## 🏗️ Architecture Overview
 
 ```
 LibreAssistant/
-├── frontend/          # Tauri + Svelte frontend
-│   ├── src/          # Svelte source files
-│   ├── src-tauri/    # Rust backend for Tauri
-│   └── static/       # Static assets
-├── backend/          # Python backend
-│   ├── agents/       # AI agents
-│   ├── db/           # Database modules
-│   ├── llm/          # LLM integration
-│   ├── utils/        # Utility functions
-│   └── main.py       # Main entry point
-└── shared/           # Shared configurations
+├── frontend/          # Tauri + Svelte UI
+│   ├── src/
+│   ├── src-tauri/
+│   └── static/
+├── backend/           # Python backend
+│   ├── agents/
+│   ├── db/
+│   ├── llm/
+│   ├── utils/
+│   └── main.py
+└── shared/            # Shared configs
 ```
 
-**Technology Stack:**
-- **Frontend**: Tauri + Svelte for native desktop UI
-- **Backend**: Python with FastAPI, SQLAlchemy, and AI integrations
-- **Communication**: High-performance native commands (Rust ↔ Python)
-- **AI Engine**: Ollama integration for local LLM processing
-- **Database**: SQLite for local data storage
+✅ **Frontend:** Tauri + Svelte for native desktop UI
+✅ **Backend:** Python (FastAPI, SQLAlchemy)
+✅ **Communication:** Native Rust ↔ Python bridge
+✅ **AI Engine:** Ollama integration for local LLM
+✅ **Database:** SQLite for encrypted local data
 
-## � Prerequisites
+---
 
-- **Rust**: Install from [rustup.rs](https://rustup.rs/)
-- **Node.js**: LTS version (18+ recommended)
-- **Python**: 3.10 or higher
-- **Git**: For version control
+## 🔌 Modular Plugin System
 
-## �️ Installation
+✅ Self-contained Python modules
+✅ Register new backend commands and UI components
+✅ Supports user-contributed plugins
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/aubreyhayes47/LibreAssistant.git
-   cd LibreAssistant
-   ```
+Examples:
 
-2. **Setup Frontend**:
-   ```bash
-   cd frontend
-   npm install
-   ```
+* Note-taking / Reading plans
+* Consent log management
+* Recovery curriculum manager
+* Scripture reference tools
+* Web scraping and URL analysis
+* Language phrasebook / translation helper
 
-3. **Setup Backend**:
-   ```bash
-   cd ../backend
-   python -m venv venv
-   
-   # Windows:
-   venv\Scripts\activate
-   
-   # macOS/Linux:
-   source venv/bin/activate
-   
-   pip install -r requirements.txt
-   ```
+---
+
+## 🧭 Flavor Configuration
+
+Each Flavor is defined by a **config file** (e.g. `flavor.json`):
+
+* Default plugins
+* UI layout and components
+* User roles and permissions
+* Localization and language settings
+
+Example `flavor.json`:
+
+```
+{
+  "name": "Faith & Community Memphis Edition",
+  "plugins": ["note_manager", "reading_plan", "consent_log", "phrasebook"],
+  "roles": ["Admin", "Guest"],
+  "locale": "en-US"
+}
+```
+
+✅ Fully offline
+✅ USB/SD deployable
+✅ Low-spec hardware friendly
+✅ Supports local language customization
+
+---
+
+## 🛠️ Installation
+
+### Prerequisites
+
+* Rust: [rustup.rs](https://rustup.rs)
+* Node.js: 18+ recommended
+* Python: 3.10 or higher
+* Git
+
+### Clone the Repository
+
+```
+git clone https://github.com/aubreyhayes47/LibreAssistant.git
+cd LibreAssistant
+```
+
+### Frontend Setup
+
+```
+cd frontend
+npm install
+```
+
+### Backend Setup
+
+```
+cd ../backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+---
 
 ## 🚀 Development
 
-### Start Development Server
+✅ Start Frontend (from `frontend/`):
 
-1. **Start Frontend** (from `frontend/` directory):
-   ```bash
-   npm run tauri dev
-   ```
+```
+npm run tauri dev
+```
 
-The application will automatically communicate with the Python backend through Tauri native commands.
+✅ Build for Production:
 
-### Build for Production
-
-```bash
-cd frontend
+```
 npm run tauri build
 ```
 
+---
+
 ## 🔧 Backend API
 
-The Python backend provides several commands accessible through Tauri native commands:
+The Python backend exposes commands accessible through Tauri:
 
-### Available Commands
+✅ Sample Commands:
 
-- **`hello`**: Test backend connectivity
-- **`process_url`**: Extract content from URLs
-- **`get_browser_data`**: Access browser history/bookmarks
-- **`analyze_content`**: AI content analysis
+* `hello`: Test connectivity
+* `process_url`: Extract web content
+* `get_browser_data`: Access history/bookmarks
+* `analyze_content`: AI content analysis
 
-### Command Structure
-
-```rust
-// Frontend command invocation
-let response = invoke("command_name", { param: value }).await;
-```
+✅ Adding New Commands:
 
 ```python
-# Backend receives
-{
-    "param": value,
-    "timestamp": "unix_timestamp"
-}
+async def new_command(self, payload):
+    return { "success": True, "data": result }
+```
 
-# Backend returns
-{
-    "success": true/false,
-    "data": {...},
-    "error": "error message if failed"
+Register in Tauri Rust:
+
+```rust
+#[tauri::command]
+async fn new_command(param: String) -> Result<CommandResponse, String> {
+    // Implementation
 }
 ```
+
+---
 
 ## 🧪 Testing
 
-### Frontend Tests
-```bash
+✅ Frontend:
+
+```
 cd frontend
 npm test
 ```
 
-### Backend Tests
-```bash
+✅ Backend:
+
+```
 cd backend
 python -m pytest
 ```
 
-## 📝 Configuration
+---
 
-### Environment Variables
+## ⚙️ Configuration
 
-Create `.env` files in the backend directory:
+✅ `.env` in `backend/`:
 
-```env
-# Backend settings
+```
 LOG_LEVEL=INFO
 OLLAMA_HOST=http://localhost:11434
-
-# Database settings
 DATABASE_URL=sqlite:///./libreassistant.db
 ```
 
-### Tauri Configuration
+✅ Tauri Config:
 
-Edit `frontend/src-tauri/tauri.conf.json` for app settings:
-- Window properties
-- Security policies
-- Build configurations
-
-## 🔌 Extensions
-
-### Adding New Backend Commands
-
-1. **Add command to Python** (`backend/main.py`):
-   ```python
-   async def new_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-       # Implementation
-       return {"success": True, "data": result}
-   ```
-
-2. **Register in command handler**:
-   ```python
-   self.commands['new_command'] = self.new_command
-   ```
-
-3. **Add Rust wrapper** (`frontend/src-tauri/src/lib.rs`):
-   ```rust
-   #[tauri::command]
-   async fn new_command(param: String) -> Result<CommandResponse, String> {
-       // Implementation
-   }
-   ```
-
-4. **Register in Tauri**:
-   ```rust
-   .invoke_handler(tauri::generate_handler![
-       // ... existing commands
-       new_command
-   ])
-   ```
-
-## 🤝 Contributing
-
-LibreAssistant is open source and welcomes contributions! 
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-Please see our [Contributing Guidelines](CONTRIBUTING.md) for detailed information.
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-1. **Python not found**: Ensure Python is in PATH and virtual environment is activated
-2. **Rust compilation errors**: Update Rust toolchain with `rustup update`
-3. **Frontend build fails**: Clear node_modules and reinstall dependencies
-
-### Debugging
-
-- **Frontend**: Use browser dev tools in Tauri app
-- **Backend**: Check `backend.log` for Python errors
-- **Communication**: Enable debug logging in Tauri config
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Tauri](https://tauri.app/) - Modern desktop app framework
-- [Svelte](https://svelte.dev/) - Reactive UI framework
-- [Ollama](https://ollama.ai/) - Local LLM integration
-- [FastAPI](https://fastapi.tiangolo.com/) - Python web framework
-
-## 📞 Support
-
-For support, please open an issue on GitHub or contact the development team.
+* `frontend/src-tauri/tauri.conf.json`
 
 ---
 
-**LibreAssistant** - Your privacy-first AI assistant browser. Built with ❤️ by the open source community.
+## ❤️ Contributing
+
+LibreAssistant is **open source** and **Beatitudes-aligned**. We welcome contributions of all kinds:
+
+✅ Plugin developers
+✅ Translators
+✅ UI/UX designers
+✅ Educators and curriculum writers
+✅ Mission-minded testers
+
+Please:
+
+* Fork the repo
+* Create feature branches
+* Write tests
+* Submit pull requests
+
+---
+
+## 📜 License
+
+MIT License. See LICENSE file for details.
+
+---
+
+## ✝️ Our Pledge
+
+> *“We will not optimize for profit over mission. We will serve the poor, the meek, those who mourn, the peacemakers, and the persecuted.”*
+
+We aim to enable **ethical, local-first AI** that can be used anywhere—from suburban homes to rural mission schools to refugee ministries.
+
+---
+
+## 📞 Support
+
+Please open an issue on GitHub or contact the development team.
+
+LibreAssistant — *Your privacy-first, modular AI assistant platform. Built with ❤️ and guided by the Beatitudes.*
