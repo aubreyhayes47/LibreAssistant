@@ -17,11 +17,17 @@ Our goal is to support **families, churches, schools, clinics, nonprofits, and s
 ## 🚀 Features
 
 ✅ **Local AI Integration** with Ollama for private, on-device conversations
+
 ✅ **Web Automation** with scraping and browser control
+
 ✅ **Modular Plugin System** for adding custom tools
+
 ✅ **Privacy First** with no mandatory cloud
+
 ✅ **Role-Based Access Control (RBAC)** for multi-user setups
+
 ✅ **Flavor System** for audience-specific configurations
+
 ✅ **USB/SD Distribution** for offline use
 
 ---
@@ -31,11 +37,17 @@ Our goal is to support **families, churches, schools, clinics, nonprofits, and s
 LibreAssistant is designed to be **configured** for specific audiences and use cases through "Flavors"—predefined bundles of plugins, UI layouts, and permissions.
 
 ✅ Solo Private Assistant (Power User)
+
 ✅ Developer Console (Plugin Creation)
+
 ✅ Household/Family Assistant
+
 ✅ School/Homeschool Co-op Suite
+
 ✅ Faith & Community Ministry Tool *(Memphis Edition)*
+
 ✅ Recovery Curriculum Manager
+
 ✅ Volunteer/Incident Management Suite
 
 Each Flavor is fully local, encrypted, and adaptable to local languages and contexts.
@@ -60,9 +72,13 @@ LibreAssistant/
 ```
 
 ✅ **Frontend:** Tauri + Svelte for native desktop UI
+
 ✅ **Backend:** Python (FastAPI, SQLAlchemy)
+
 ✅ **Communication:** Native Rust ↔ Python bridge
+
 ✅ **AI Engine:** Ollama integration for local LLM
+
 ✅ **Database:** SQLite for encrypted local data
 
 ---
@@ -70,7 +86,9 @@ LibreAssistant/
 ## 🔌 Modular Plugin System
 
 ✅ Self-contained Python modules
+
 ✅ Register new backend commands and UI components
+
 ✅ Supports user-contributed plugins
 
 Examples:
@@ -105,8 +123,11 @@ Example `flavor.json`:
 ```
 
 ✅ Fully offline
+
 ✅ USB/SD deployable
+
 ✅ Low-spec hardware friendly
+
 ✅ Supports local language customization
 
 ---
@@ -229,9 +250,13 @@ DATABASE_URL=sqlite:///./libreassistant.db
 LibreAssistant is **open source** and **Beatitudes-aligned**. We welcome contributions of all kinds:
 
 ✅ Plugin developers
+
 ✅ Translators
+
 ✅ UI/UX designers
+
 ✅ Educators and curriculum writers
+
 ✅ Mission-minded testers
 
 Please:
