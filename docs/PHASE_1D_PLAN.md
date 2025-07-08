@@ -1,6 +1,6 @@
 # Phase 1D Development Plan
 
-This document outlines the initial goals and tasks for Phase 1D of the LibreAssistant MVP. Phase 1D introduces an embedded browser panel and server-side page summarization.
+This document outlines the goals for Phase 1D of the LibreAssistant MVP. LibreAssistant is a single-user, privacy-first interface to the internet. Phase 1D expands the app with an embedded browser preview and automated page summarization so users can read the web through the assistant instead of a traditional browser.
 
 ## Goals
 
@@ -14,7 +14,11 @@ This document outlines the initial goals and tasks for Phase 1D of the LibreAssi
    - Reuse the existing `ContentExtractor` agent to fetch page text.
    - Generate an LLM summary and store it using `SummaryOperations`.
 
-3. **Tauri Integration**
+3. **Search Agent Preparation**
+   - Begin a search workflow that queries multiple providers.
+   - Feed search results into the summarization pipeline.
+
+4. **Tauri Integration**
    - Expose the `summarize_page` command from Rust and add it to the invoke handler list.
    - Wire the new command into the BrowserPanel component so users can request summaries.
 

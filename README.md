@@ -1,14 +1,14 @@
 # 📜 LibreAssistant
 
-An open-source, privacy-first AI assistant platform built with Tauri, Svelte, Rust, and Python. Designed for **local-first AI**, **web automation**, and **customizable Flavors** that serve real communities—especially those most overlooked.
+An open-source, privacy-first browser replacement powered by Tauri, Svelte, Rust, and Python. LibreAssistant fetches and summarizes web content for you so you rarely need to open cluttered pages yourself. It is designed for **local-first AI**, **web automation**, and **customizable Flavors** that serve real communities—especially those most overlooked.
 
 ---
 
 ## ✝️ Mission
 
-LibreAssistant is more than a single app—it's a **flexible, modular platform** for building secure, local-first AI tools that *respect privacy* and *empower service*.
+LibreAssistant is your private, local-first AI gateway to the internet—an assistant that reads the web for you, summarizes what matters, and protects your privacy.
 
-Our goal is to support **families, churches, schools, clinics, nonprofits, and small businesses**—especially in low-resource or disconnected environments.
+Our focus is helping individuals and small organizations reclaim the web without sacrificing privacy or control.
 
 > *“Serve the least, the last, and the lost—locally and globally.”*
 
@@ -16,25 +16,27 @@ Our goal is to support **families, churches, schools, clinics, nonprofits, and s
 
 ## 🚀 Features
 
-✅ **Local AI Integration** with Ollama for private, on-device conversations
+✅ **Local AI Chat** with Ollama for private, on-device conversations
 
-✅ **Web Automation** with scraping and browser control
+✅ **Embedded Browser Panel** for optional page previews
 
-✅ **Modular Plugin System** for adding custom tools
+✅ **Web Scraping & Extraction** to pull clean text from sites
 
-✅ **Privacy First** with no mandatory cloud
+✅ **Summarization Pipeline** that returns concise answers
 
-✅ **Role-Based Access Control (RBAC)** for multi-user setups
+✅ **Search Agent** supporting multiple providers
 
-✅ **Flavor System** for audience-specific configurations
+✅ **Plugin System** for web-focused automation
 
-✅ **USB/SD Distribution** for offline use
+✅ **Flavor System** for single-user plugin bundles
+
+✅ **Optional USB/SD Distribution** for offline use
 
 ---
 
 ## 🌍 Example Flavors
 
-LibreAssistant is designed to be **configured** for specific audiences and use cases through "Flavors"—predefined bundles of plugins, UI layouts, and permissions.
+LibreAssistant is designed to be **configured** for specific audiences through "Flavors"—predefined bundles of plugins and UI layouts.
 
 ✅ Solo Private Assistant (Power User)
 
@@ -108,7 +110,6 @@ Each Flavor is defined by a **config file** (e.g. `flavor.json`):
 
 * Default plugins
 * UI layout and components
-* User roles and permissions
 * Localization and language settings
 
 Example `flavor.json`:
@@ -117,7 +118,6 @@ Example `flavor.json`:
 {
   "name": "Faith & Community Memphis Edition",
   "plugins": ["note_manager", "reading_plan", "consent_log", "phrasebook"],
-  "roles": ["Admin", "Guest"],
   "locale": "en-US"
 }
 ```
@@ -324,4 +324,4 @@ We aim to enable **ethical, local-first AI** that can be used anywhere—from su
 
 Please open an issue on GitHub or contact the development team.
 
-LibreAssistant — *Your privacy-first, modular AI assistant platform. Built with ❤️ and guided by the Beatitudes.*
+LibreAssistant — *Your privacy-first AI gateway to the internet. Built with ❤️ and guided by the Beatitudes.*

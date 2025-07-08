@@ -7,7 +7,7 @@ This is a Tauri-based AI assistant application with a Python backend for high-pe
 ## Project Identity
 
 - **Name**: LibreAssistant
-- **Purpose**: Open source AI assistant browser
+- **Purpose**: Privacy-first AI browser replacement
 - **Focus**: Privacy-first, local AI processing
 - **License**: MIT License
 
