@@ -222,12 +222,7 @@ The frontend includes lightweight placeholder stores and utilities under
 
 ## 📈 Development Status
 
-Phase **1C** (chat interface) is complete. Phase **1D** is well underway with an
-embedded browser panel, a page summarization command, a multi-provider search
-agent, and persistent user settings. The app connects to Ollama locally, stores
-chat, bookmarks and history, and all tests pass. See
-[TROUBLESHOOTING_PLAN](.github/TROUBLESHOOTING_PLAN.md) for the latest progress
-details.
+Phase **1D** (browser integration) is complete. The app includes an embedded browser panel, a page summarization command, a multi-provider search agent, and persistent user settings. It connects to Ollama locally, stores chat, bookmarks and history, and all tests pass. See [TROUBLESHOOTING_PLAN](.github/TROUBLESHOOTING_PLAN.md) for progress details.
 
 ---
 
