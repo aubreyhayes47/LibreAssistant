@@ -26,8 +26,6 @@ class StructuredFormatter(logging.Formatter):
         }
 
         # Add extra fields if present
-        if hasattr(record, "user_id"):
-            log_entry["user_id"] = record.user_id
         if hasattr(record, "session_id"):
             log_entry["session_id"] = record.session_id
         if hasattr(record, "command"):

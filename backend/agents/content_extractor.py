@@ -9,6 +9,7 @@ from urllib.parse import urljoin, urlparse
 
 import aiohttp
 from bs4 import BeautifulSoup
+from readability import Document
 
 logger = logging.getLogger(__name__)
 
@@ -118,8 +119,15 @@ class ContentExtractor:
         try:
             soup = BeautifulSoup(html, "html.parser")
 
+            # Attempt to extract main article using readability for better accuracy
+            try:
+                main_html = Document(html).summary()
+                main_soup = BeautifulSoup(main_html, "html.parser")
+            except Exception:
+                main_soup = soup
+
             # Remove script and style elements
-            for script in soup(["script", "style"]):
+            for script in main_soup(["script", "style"]):
                 script.decompose()
 
             # Extract title
@@ -133,7 +141,7 @@ class ContentExtractor:
                 description = description_elem.get("content", "").strip()
 
             # Extract main text content
-            text_content = soup.get_text()
+            text_content = main_soup.get_text()
             # Clean up whitespace
             text_lines = [line.strip() for line in text_content.splitlines()]
             text_content = "\n".join(line for line in text_lines if line)
@@ -144,7 +152,7 @@ class ContentExtractor:
 
             # Extract links
             links = []
-            for link in soup.find_all("a", href=True):
+            for link in main_soup.find_all("a", href=True):
                 href = link["href"]
                 link_text = link.get_text().strip()
                 if href and link_text:
@@ -160,7 +168,7 @@ class ContentExtractor:
 
             # Extract images
             images = []
-            for img in soup.find_all("img", src=True):
+            for img in main_soup.find_all("img", src=True):
                 src = img["src"]
                 alt = img.get("alt", "").strip()
 
@@ -174,7 +182,7 @@ class ContentExtractor:
 
             # Extract headings
             headings = []
-            for heading in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
+            for heading in main_soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
                 text = heading.get_text().strip()
                 if text:
                     headings.append(

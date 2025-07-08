@@ -21,8 +21,9 @@ Our focus is helping individuals and small organizations reclaim the web without
 ✅ **Embedded Browser Panel** for optional page previews
 
 ✅ **Web Scraping & Extraction** to pull clean text from sites
-
+✅ **Readability Fallback** for difficult pages
 ✅ **Summarization Pipeline** that returns concise answers
+✅ **Summary Caching** to avoid duplicate processing
 
 ✅ **Web Search Command** using DuckDuckGo results
 
@@ -32,7 +33,7 @@ Our focus is helping individuals and small organizations reclaim the web without
 
 ✅ **History Cleanup Commands** for chat and browsing data
 
-🚧 **Plugin System** for web-focused automation (in progress)
+🚧 **Plugin System** for web-focused automation *(simplified, single-user)*
 
 ✅ **Flavor System** for single-user plugin bundles
 
@@ -93,7 +94,7 @@ LibreAssistant/
 
 ## 🔌 Modular Plugin System *(In Development)*
 
-The plugin framework is currently being implemented.
+The plugin framework is currently being simplified for a single-user setup.
 It will allow:
 
 ✅ Self-contained Python modules

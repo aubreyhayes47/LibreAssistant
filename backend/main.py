@@ -495,6 +495,7 @@ class CommandHandler:
 
         try:
             from agents.content_extractor import ContentExtractor
+            from db.models import PageSummary
             from db.operations import SummaryOperations
 
             if not url.startswith(("http://", "https://")):
@@ -508,6 +509,19 @@ class CommandHandler:
 
             title = result.get("title", "")
             text = result.get("text", "")
+
+            # Avoid duplicate work by checking for an existing summary
+            if self._database_initialized:
+                content_hash = PageSummary.generate_content_hash(text)
+                existing = await SummaryOperations.get_summary(url, content_hash)
+                if existing:
+                    return {
+                        "success": True,
+                        "url": url,
+                        "title": title,
+                        "summary": existing["summary"],
+                        "model": existing.get("model_used"),
+                    }
 
             prompt_builder = get_prompt_builder()
             prompt = prompt_builder.build_summarization_prompt(url, title, text)
