@@ -1,5 +1,7 @@
 # LibreAssistant Troubleshooting Plan - PHASE 1D DEVELOPMENT
 
+LibreAssistant aims to replace traditional web browsers with a single-user assistant that fetches and summarizes content for you. The project is privacy-first and runs locally with optional Ollama integration.
+
 **Date Updated**: July 9, 2025
 **Current Phase**: Phase 1D (Browser Integration)
 **Status**: 🚧 Phase 1D in progress - basic browser panel and summarization command implemented

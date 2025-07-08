@@ -1,5 +1,7 @@
 # LibreAssistant Implementation Algorithm
 
+LibreAssistant is a privacy-first, single-user interface to the internet. It fetches and summarizes online content so users can read the web through an AI assistant.
+
 ## MVP-1: Core Chat + Browser Foundation
 
 ### PHASE 1A: Backend Infrastructure Setup
@@ -328,7 +330,8 @@
    c. Drag-and-drop content organization
    d. Keyboard shortcuts for all major functions
 
-2. Collaboration Features:
+2. Collaboration Features (Keystone Hub):
+   *These features may appear in a future server-hosted companion project. LibreAssistant itself remains single-user.*
    a. Share chat sessions and content
    b. Export conversations as reports
    c. Collaborative bookmarking
