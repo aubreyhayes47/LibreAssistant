@@ -132,6 +132,12 @@ Initial browser integration is functional. Remaining tasks focus on UI polish an
 ### ✅ FIXED - Test Suite Setup
 - **Issue**: `pytest` failed due to missing async plugin
 - **Solution**: Installed `pytest-asyncio` and annotated async tests
+
+### ❗ Newly Identified Issues (July 2025 Review)
+- **Formatting/Linting**: `black --check` fails on 16 backend files and `ruff check` reports over 100 issues (unsorted imports, long lines, unused variables). Fix with `black .` and `ruff --fix .`.
+- **Logic Bug**: `backend/llm/ollama_client.py` has a recursive call in `health_check()` and references an undefined `model` variable. Refactor this function before further development.
+- **Environment Setup**: Tests initially fail until `pip install -r backend/requirements.txt` is run. Always execute `./setup.sh` in a new environment.
+- **Frontend Checks**: `npm run check` fails if dependencies are missing. Run `npm install` in `frontend/` and resolve missing import paths reported by `svelte-check`.
 ## Risk Assessment - MAJOR PROGRESS
 
 ### ✅ Resolved Risks (Previously High)
