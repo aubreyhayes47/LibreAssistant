@@ -383,19 +383,42 @@ class CommandHandler:
             return {"success": False, "error": f"Unknown data type: {data_type}"}
 
     async def analyze_content(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Legacy: Analyze content using LLM."""
+        """Analyze arbitrary content using the LLM."""
         content = payload.get("content")
         if not content:
             return {"success": False, "error": "No content provided"}
 
-        # TODO: Implement content analysis with new LLM infrastructure
-        return {
-            "success": True,
-            "analysis": "Content analysis will go here...",
-            "keywords": [],
-            "summary": "",
-            "message": "Legacy command - will be replaced with LLM analysis",
-        }
+        url = payload.get("url", "")
+        title = payload.get("title", "")
+
+        try:
+            prompt_builder = get_prompt_builder()
+            prompt = prompt_builder.build_bookmark_analysis_prompt(url, title, content)
+
+            client = await get_ollama_client()
+            llm_result = await client.chat_completion(
+                [
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": content[:2000]},
+                ]
+            )
+
+            if llm_result["success"]:
+                analysis_text = llm_result["message"].get("content", "")
+                return {
+                    "success": True,
+                    "analysis": analysis_text,
+                    "model": llm_result.get("model"),
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": llm_result.get("error", "LLM error"),
+                }
+
+        except Exception as e:
+            logger.error(f"Analyze content error: {str(e)}")
+            return {"success": False, "error": str(e)}
 
     async def summarize_page_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Extract a URL and return an LLM summary."""
