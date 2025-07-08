@@ -148,16 +148,26 @@ git clone https://github.com/aubreyhayes47/LibreAssistant.git
 cd LibreAssistant
 ```
 
-### Frontend Setup
+### Quick Setup
+
+Install all Python and Node dependencies with the helper script:
+
+```
+./setup.sh
+```
+
+This creates a local virtual environment in `.venv/` and runs `npm install` in
+`frontend/`. Activate the environment with `source .venv/bin/activate` after the
+script finishes.
+
+### Manual Setup Steps
+
+If you prefer a manual approach you can still install each part individually:
 
 ```
 cd frontend
 npm install
-```
 
-### Backend Setup
-
-```
 cd ../backend
 python -m venv venv
 source venv/bin/activate
