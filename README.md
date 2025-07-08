@@ -32,7 +32,7 @@ Our focus is helping individuals and small organizations reclaim the web without
 
 ✅ **History Cleanup Commands** for chat and browsing data
 
-✅ **Plugin System** for web-focused automation
+🚧 **Plugin System** for web-focused automation (in progress)
 
 ✅ **Flavor System** for single-user plugin bundles
 
@@ -91,13 +91,16 @@ LibreAssistant/
 
 ---
 
-## 🔌 Modular Plugin System
+## 🔌 Modular Plugin System *(In Development)*
+
+The plugin framework is currently being implemented.
+It will allow:
 
 ✅ Self-contained Python modules
 
-✅ Register new backend commands and UI components
+✅ Registration of new backend commands and UI components
 
-✅ Supports user-contributed plugins
+✅ User-contributed plugins
 
 Examples:
 
