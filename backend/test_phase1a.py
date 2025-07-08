@@ -7,6 +7,7 @@ import json
 import sys
 import os
 from pathlib import Path
+import pytest
 
 # Add backend to path
 backend_dir = Path(__file__).parent
@@ -17,6 +18,7 @@ from llm import get_ollama_client, get_conversation_context, get_prompt_builder
 from utils import init_config, init_logging, get_logger
 
 
+@pytest.mark.asyncio
 async def test_database_operations():
     """Test database operations."""
     print("=== Testing Database Operations ===")
@@ -71,6 +73,7 @@ async def test_database_operations():
     return True
 
 
+@pytest.mark.asyncio
 async def test_llm_integration():
     """Test LLM integration (requires Ollama to be running)."""
     print("\n=== Testing LLM Integration ===")
@@ -119,6 +122,7 @@ async def test_llm_integration():
         return False
 
 
+@pytest.mark.asyncio
 async def test_configuration():
     """Test configuration management."""
     print("\n=== Testing Configuration ===")
@@ -148,6 +152,7 @@ async def test_configuration():
         return False
 
 
+@pytest.mark.asyncio
 async def test_logging():
     """Test logging configuration."""
     print("\n=== Testing Logging ===")
@@ -174,6 +179,7 @@ async def test_logging():
         return False
 
 
+@pytest.mark.asyncio
 async def test_command_handler():
     """Test the command handler."""
     print("\n=== Testing Command Handler ===")

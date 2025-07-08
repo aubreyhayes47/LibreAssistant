@@ -6,6 +6,7 @@ import json
 import sys
 import os
 import asyncio
+import pytest
 
 # Add the backend directory to the path
 backend_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,6 +14,7 @@ sys.path.insert(0, backend_dir)
 
 from main import CommandHandler
 
+@pytest.mark.asyncio
 async def test_backend():
     """Test basic backend functionality"""
     handler = CommandHandler()

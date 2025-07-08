@@ -53,6 +53,22 @@ class OllamaClient:
         """Check if Ollama server is available."""
         try:
             await self._ensure_session()
+            if not await self.health_check():
+                return {
+                    'success': False,
+                    'error': 'Ollama service unavailable',
+                    'message': {}
+                }
+
+            if not await self.check_model_exists(model):
+                pulled = await self.pull_model(model)
+                if not pulled:
+                    return {
+                        'success': False,
+                        'error': f'Model not available: {model}',
+                        'message': {}
+                    }
+            url = urljoin(self.host, '/api/chat')
             url = urljoin(self.host, '/api/tags')
             async with self.session.get(url) as response:
                 return response.status == 200
@@ -117,9 +133,24 @@ class OllamaClient:
         # Use defaults from config if not provided
         model = model or config.llm.default_model
         temperature = temperature if temperature is not None else config.llm.temperature
-        
+
         try:
             await self._ensure_session()
+            if not await self.health_check():
+                return {
+                    'success': False,
+                    'error': 'Ollama service unavailable',
+                    'response': ''
+                }
+
+            if not await self.check_model_exists(model):
+                pulled = await self.pull_model(model)
+                if not pulled:
+                    return {
+                        'success': False,
+                        'error': f'Model not available: {model}',
+                        'response': ''
+                    }
             url = urljoin(self.host, '/api/generate')
             
             payload = {
@@ -226,6 +257,22 @@ class OllamaClient:
         
         try:
             await self._ensure_session()
+            if not await self.health_check():
+                return {
+                    'success': False,
+                    'error': 'Ollama service unavailable',
+                    'message': {}
+                }
+
+            if not await self.check_model_exists(model):
+                pulled = await self.pull_model(model)
+                if not pulled:
+                    return {
+                        'success': False,
+                        'error': f'Model not available: {model}',
+                        'message': {}
+                    }
+
             url = urljoin(self.host, '/api/chat')
             
             payload = {

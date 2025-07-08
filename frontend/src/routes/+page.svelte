@@ -138,22 +138,21 @@
         return;
       }
       
-      const response = await invoke("get_browser_history", { 
-        limit: 10,
-        search_query: null 
-      });
-      
-      if (response.success) {
-        const history = response.history || [];
+      const response = await invoke("get_browser_history", { limit: 10 });
+
+      if (response.success && Array.isArray(response.history)) {
+        const history = response.history;
         if (history.length > 0) {
-          browserData = history.map((/** @type {any} */ item) => 
-            `📄 ${item.title || 'Untitled'}\n🔗 ${item.url}\n⏰ ${new Date(item.visit_time || Date.now()).toLocaleString()}\n`
+          browserData = history.map((/** @type {any} */ item) =>
+            `📄 ${item.title || 'Untitled'}\n🔗 ${item.url}\n⏰ ${new Date(item.visit_time).toLocaleString()}\n`
           );
         } else {
           browserData = ['📭 No browser history found.\n\n💡 Click "Generate Test Data" to add some sample entries!'];
         }
-      } else {
+      } else if (!response.success) {
         browserData = [`❌ Error: ${response.error}`];
+      } else {
+        browserData = ['📭 No browser history found.'];
       }
     } catch (error) {
       browserData = [`❌ Error: ${error}`];
@@ -449,7 +448,7 @@ h1 {
   margin-bottom: 15px;
 }
 
-input, button, select {
+input, button {
   border-radius: 8px;
   border: 1px solid #ddd;
   padding: 10px 15px;
@@ -488,11 +487,6 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
-}
-
-select {
-  background: #f9f9f9;
-  min-width: 120px;
 }
 
 .result {
@@ -646,12 +640,12 @@ select {
     color: #f6f6f6;
   }
   
-  input, select {
+  input {
     background: #2f2f2f;
     color: #f6f6f6;
     border-color: #555;
   }
-  
+
   input:focus {
     border-color: #667eea;
   }
