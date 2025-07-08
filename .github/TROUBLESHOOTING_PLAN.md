@@ -134,10 +134,10 @@ Initial browser integration is functional. Remaining tasks focus on UI polish an
 - **Solution**: Installed `pytest-asyncio` and annotated async tests
 
 ### ❗ Newly Identified Issues (July 2025 Review)
-- **Formatting/Linting**: `black --check` fails on 16 backend files and `ruff check` reports over 100 issues (unsorted imports, long lines, unused variables). Fix with `black .` and `ruff --fix .`.
-- **Logic Bug**: `backend/llm/ollama_client.py` has a recursive call in `health_check()` and references an undefined `model` variable. Refactor this function before further development.
-- **Environment Setup**: Tests initially fail until `pip install -r backend/requirements.txt` is run. Always execute `./setup.sh` in a new environment.
-- **Frontend Checks**: `npm run check` fails if dependencies are missing. Run `npm install` in `frontend/` and resolve missing import paths reported by `svelte-check`.
+- **Formatting/Linting**: `black --check` failed on many files and `ruff` reported numerous issues. **Resolved** by running `black .` and `ruff check --fix .`.
+- **Logic Bug**: `backend/llm/ollama_client.py` contained a recursive call in `health_check()` and referenced an undefined `model`. **Fixed** by simplifying the health check logic.
+- **Environment Setup**: Tests initially fail until `pip install -r backend/requirements.txt` is run. Always execute `./setup.sh` in a new environment. *(Still required)*
+- **Frontend Checks**: `npm run check` failed due to missing modules. Added placeholder store and utility modules under `src/lib` to satisfy `svelte-check`.
 ## Risk Assessment - MAJOR PROGRESS
 
 ### ✅ Resolved Risks (Previously High)

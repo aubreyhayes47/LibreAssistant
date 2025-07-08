@@ -204,6 +204,9 @@ cd backend && black . && ruff --fix . && python -m pytest
 cd ../frontend && npm install && npm run check
 ```
 
+The frontend includes lightweight placeholder stores and utilities under
+`src/lib/` so that `svelte-check` can run without additional setup.
+
 ---
 
 ## 📈 Development Status
