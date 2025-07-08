@@ -32,7 +32,7 @@ Our focus is helping individuals and small organizations reclaim the web without
 
 ✅ **History Cleanup Commands** for chat and browsing data
 
-✅ **Plugin System** for web-focused automation
+🚧 **Plugin System** for web-focused automation (in progress)
 
 ✅ **Flavor System** for single-user plugin bundles
 
@@ -91,13 +91,16 @@ LibreAssistant/
 
 ---
 
-## 🔌 Modular Plugin System
+## 🔌 Modular Plugin System *(In Development)*
+
+The plugin framework is currently being implemented.
+It will allow:
 
 ✅ Self-contained Python modules
 
-✅ Register new backend commands and UI components
+✅ Registration of new backend commands and UI components
 
-✅ Supports user-contributed plugins
+✅ User-contributed plugins
 
 Examples:
 
@@ -218,11 +221,12 @@ The frontend includes lightweight placeholder stores and utilities under
 
 ## 📈 Development Status
 
-Phase **1C** (chat interface) is complete. Phase **1D** work has begun with a new
-embedded browser preview component and a backend command for page summarization.
-The app connects to Ollama locally, stores chat, bookmarks and history, and all
-tests pass. See [TROUBLESHOOTING_PLAN](.github/TROUBLESHOOTING_PLAN.md) for the
-latest progress details.
+Phase **1C** (chat interface) is complete. Phase **1D** is well underway with an
+embedded browser panel, a page summarization command, a multi-provider search
+agent, and persistent user settings. The app connects to Ollama locally, stores
+chat, bookmarks and history, and all tests pass. See
+[TROUBLESHOOTING_PLAN](.github/TROUBLESHOOTING_PLAN.md) for the latest progress
+details.
 
 ---
 
