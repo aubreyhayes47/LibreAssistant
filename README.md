@@ -182,6 +182,16 @@ npm run tauri build
 
 ---
 
+## 📈 Development Status
+
+Phase **1C** (chat interface) is now complete. The application connects to
+Ollama locally, stores chat history, bookmarks, and browser history, and all
+tests pass. Development is shifting to **Phase 1D**, which will introduce an
+embedded browser panel and page summarization. See
+[TROUBLESHOOTING_PLAN](.github/TROUBLESHOOTING_PLAN.md) for details.
+
+---
+
 ## 🔧 Backend API
 
 The Python backend exposes commands accessible through Tauri:
