@@ -1,6 +1,6 @@
 # 📜 LibreAssistant
 
-An open-source, privacy-first interface to the internet powered by Tauri, Svelte, Rust, and Python. LibreAssistant fetches and summarizes web content so you rarely need to open cluttered pages yourself. It is designed for **local-first AI**, **web automation**, and **customizable Flavors** that serve real communities—especially those most overlooked.
+An open-source, **single-user** and privacy-first interface to the internet powered by Tauri, Svelte, Rust, and Python. LibreAssistant fetches and summarizes web content so you rarely need to open cluttered pages yourself. The app focuses on **local-first AI**, **web automation**, and **customizable Flavors** that serve real communities—especially those most overlooked.
 
 ---
 
@@ -193,10 +193,11 @@ npm run tauri build
 ```
 
 ### Development Checks
-Run the setup script once in a new environment:
+Run the setup script once in a new environment and activate the virtual environment:
 
 ```bash
 ./setup.sh
+source .venv/bin/activate
 ```
 
 Before committing run:
