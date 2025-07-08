@@ -38,10 +38,10 @@
 <div class="browser-panel">
   <div class="controls">
     <input bind:value={url} placeholder="Enter URL" />
-    <button on:click={navigate} disabled={isLoading}>Go</button>
-    <button on:click={summarize} disabled={isLoading}>Summarize</button>
+    <button onclick={navigate} disabled={isLoading}>Go</button>
+    <button onclick={summarize} disabled={isLoading}>Summarize</button>
   </div>
-  <iframe class="webview" src={iframeSrc}></iframe>
+  <iframe class="webview" src={iframeSrc} title="browser preview"></iframe>
   {#if summary}
     <div class="summary">
       <h3>Page Summary</h3>
