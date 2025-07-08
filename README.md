@@ -28,6 +28,10 @@ Our focus is helping individuals and small organizations reclaim the web without
 
 ✅ **Search Agent** supporting multiple providers
 
+✅ **Persistent User Settings** with commands to save preferences
+
+✅ **History Cleanup Commands** for chat and browsing data
+
 ✅ **Plugin System** for web-focused automation
 
 ✅ **Flavor System** for single-user plugin bundles

@@ -141,6 +141,20 @@ class ChatOperations:
             logger.error(f"Failed to get chat sessions: {str(e)}")
             return []
 
+    @staticmethod
+    async def clear_history(session_id: str | None = None) -> int:
+        """Delete chat history. Returns number of messages removed."""
+        try:
+            with get_db_session() as db:
+                query = db.query(ChatMessage)
+                if session_id:
+                    query = query.filter(ChatMessage.session_id == session_id)
+                deleted = query.delete()
+                return deleted
+        except Exception as e:
+            logger.error(f"Failed to clear chat history: {str(e)}")
+            return 0
+
 
 class BookmarkOperations:
     """CRUD operations for bookmarks."""
@@ -394,6 +408,20 @@ class HistoryOperations:
         except Exception as e:
             logger.error(f"Failed to search history: {str(e)}")
             return []
+
+    @staticmethod
+    async def clear_history(session_id: str | None = None) -> int:
+        """Delete browser history entries."""
+        try:
+            with get_db_session() as db:
+                query = db.query(BrowserHistory)
+                if session_id:
+                    query = query.filter(BrowserHistory.session_id == session_id)
+                deleted = query.delete()
+                return deleted
+        except Exception as e:
+            logger.error(f"Failed to clear history: {str(e)}")
+            return 0
 
 
 class SummaryOperations:

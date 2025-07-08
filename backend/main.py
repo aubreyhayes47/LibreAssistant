@@ -25,10 +25,16 @@ from db import (
     BookmarkOperations,
     ChatOperations,
     HistoryOperations,
+    SettingsOperations,
     close_database,
     init_database,
 )
-from llm import get_conversation_context, get_ollama_client, get_prompt_builder
+from llm import (
+    clear_conversation_context,
+    get_conversation_context,
+    get_ollama_client,
+    get_prompt_builder,
+)
 from utils import (
     get_logger,
     init_config,
@@ -65,6 +71,11 @@ class CommandHandler:
             "analyze_content": self.analyze_content,  # Legacy command
             "summarize_page": self.summarize_page_command,
             "search_web": self.search_web_command,
+            "set_user_setting": self.set_user_setting_command,
+            "get_user_setting": self.get_user_setting_command,
+            "clear_chat_history": self.clear_chat_history_command,
+            "clear_browser_history": self.clear_browser_history_command,
+            "clear_conversation_context": self.clear_conversation_context_command,
         }
         # Check if the database is already initialized by verifying that it
         # exists and is accessible
@@ -319,6 +330,61 @@ class CommandHandler:
             logger.error(f"Add history entry error: {str(e)}")
             return {"success": False, "error": str(e)}
 
+    async def clear_chat_history_command(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Clear chat history for a session or all sessions."""
+        session_id = payload.get("session_id")
+        if not self._database_initialized:
+            return {"success": False, "error": "Database not initialized"}
+
+        deleted = await ChatOperations.clear_history(session_id)
+        return {"success": True, "deleted": deleted}
+
+    async def clear_browser_history_command(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Clear browser history."""
+        session_id = payload.get("session_id")
+        if not self._database_initialized:
+            return {"success": False, "error": "Database not initialized"}
+
+        deleted = await HistoryOperations.clear_history(session_id)
+        return {"success": True, "deleted": deleted}
+
+    async def clear_conversation_context_command(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Clear in-memory conversation context."""
+        session_id = payload.get("session_id", "default")
+        clear_conversation_context(session_id)
+        return {"success": True, "session_id": session_id}
+
+    async def set_user_setting_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Persist a user setting."""
+        key = payload.get("key")
+        value = payload.get("value")
+        category = payload.get("category", "general")
+        if not key:
+            return {"success": False, "error": "No key provided"}
+        if not self._database_initialized:
+            return {"success": False, "error": "Database not initialized"}
+
+        success = await SettingsOperations.set_setting(key, value, category)
+        return {"success": success}
+
+    async def get_user_setting_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Retrieve a user setting."""
+        key = payload.get("key")
+        default = payload.get("default")
+        if not key:
+            return {"success": False, "error": "No key provided"}
+        if not self._database_initialized:
+            return {"success": False, "error": "Database not initialized"}
+
+        value = await SettingsOperations.get_setting(key, default)
+        return {"success": True, "value": value}
+
     async def hello_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Test command to verify communication."""
         name = payload.get("name", "World")
@@ -477,9 +543,11 @@ class CommandHandler:
             return {"success": False, "error": str(e)}
 
     async def search_web_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Search the web using DuckDuckGo."""
+        """Search the web and optionally summarize results."""
         query = payload.get("query")
         max_results = int(payload.get("max_results", 5))
+        provider = payload.get("provider", "duckduckgo")
+        summarize = payload.get("summarize", False)
 
         if not query:
             return {"success": False, "error": "No query provided"}
@@ -487,8 +555,24 @@ class CommandHandler:
         try:
             from agents.search_agent import SearchAgent
 
-            agent = SearchAgent()
+            agent = SearchAgent(provider=provider)
             results = await agent.search(query, max_results=max_results)
+
+            if summarize:
+                summarized = []
+                for item in results:
+                    try:
+                        summary = await self.summarize_page_command(
+                            {"url": item.get("url")}
+                        )
+                        item["summary"] = (
+                            summary.get("summary") if summary.get("success") else ""
+                        )
+                    except Exception as exc:  # pragma: no cover - network errors
+                        logger.error(f"Summary error: {exc}")
+                        item["summary"] = ""
+                    summarized.append(item)
+                results = summarized
 
             return {"success": True, "results": results, "count": len(results)}
         except Exception as e:  # pragma: no cover - network errors
