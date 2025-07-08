@@ -10,3 +10,5 @@
 
 ### Changed
 - Updated README with new feature details.
+- Updated troubleshooting plan and Phase 1D plan to reflect current status.
+- Clarified plugin system progress in documentation.
