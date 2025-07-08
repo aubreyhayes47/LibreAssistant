@@ -1,6 +1,6 @@
 # 📜 LibreAssistant
 
-An open-source, privacy-first browser replacement powered by Tauri, Svelte, Rust, and Python. LibreAssistant fetches and summarizes web content for you so you rarely need to open cluttered pages yourself. It is designed for **local-first AI**, **web automation**, and **customizable Flavors** that serve real communities—especially those most overlooked.
+An open-source, privacy-first interface to the internet powered by Tauri, Svelte, Rust, and Python. LibreAssistant fetches and summarizes web content so you rarely need to open cluttered pages yourself. It is designed for **local-first AI**, **web automation**, and **customizable Flavors** that serve real communities—especially those most overlooked.
 
 ---
 
@@ -30,7 +30,7 @@ Our focus is helping individuals and small organizations reclaim the web without
 
 ✅ **Flavor System** for single-user plugin bundles
 
-✅ **Optional USB/SD Distribution** for offline use
+✅ **Offline Distribution** via USB/SD (optional)
 
 ---
 
@@ -124,7 +124,7 @@ Example `flavor.json`:
 
 ✅ Fully offline
 
-✅ USB/SD deployable
+✅ USB/SD deployable (optional)
 
 ✅ Low-spec hardware friendly
 

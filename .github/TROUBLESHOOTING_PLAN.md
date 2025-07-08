@@ -1,6 +1,6 @@
 # LibreAssistant Troubleshooting Plan - PHASE 1D DEVELOPMENT
 
-LibreAssistant aims to replace traditional web browsers with a single-user assistant that fetches and summarizes content for you. The project is privacy-first and runs locally with optional Ollama integration.
+LibreAssistant is a privacy-first, single-user assistant that fetches and summarizes web content for you. It serves as an AI gateway to the internet and runs locally with optional Ollama integration.
 
 **Date Updated**: July 9, 2025
 **Current Phase**: Phase 1D (Browser Integration)
@@ -161,17 +161,17 @@ Initial browser integration is functional. Remaining tasks focus on UI polish an
 - **Security**: Local-first architecture working well
 - **Testing coverage**: Core functionality proven working
 
-## Next Steps - Phase 1D Development
+## Next Steps
 
-### IMMEDIATE (This Week)
-1. **Create BrowserPanel.svelte** for in-app browsing
-2. **Integrate content extraction agents**
-3. **Enable page summarization in chat**
+### Immediate Focus
+1. **Enhance content extraction** for dynamic sites
+2. **Tune summarization prompts** for concise answers
+3. **Integrate the search agent** with multiple providers
 
-### READY FOR PHASE 1D
-1. Implement navigation controls and bookmarking
-2. Connect extracted content to the existing database
-3. Polish UI and cross-platform testing
+### Upcoming Tasks
+1. Simplify plugin loading and remove multi-user hooks
+2. Improve local memory and user settings management
+3. Polish the optional browser panel and history syncing
 
 ### SUCCESS METRICS ACHIEVED
 - **Core Architecture**: 100% Complete ✅

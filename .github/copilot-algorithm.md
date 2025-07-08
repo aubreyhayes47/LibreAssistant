@@ -411,3 +411,25 @@ LibreAssistant is a privacy-first, single-user interface to the internet. It fet
 - [ ] Advanced features don't impact core performance
 
 This algorithm provides a systematic approach to building LibreAssistant with clear milestones, testing criteria, and success metrics for both MVP phases.
+
+## Next Steps
+
+The roadmap below prioritizes features that strengthen LibreAssistant as a single-user assistant to the web:
+
+1. **Improve Summarization & Extraction**
+   - Refine the content parser for difficult sites
+   - Tune prompts for shorter, higher-quality summaries
+2. **Search Agent Integration**
+   - Combine results from multiple providers
+   - Feed result pages into the summarization pipeline
+3. **Plugin System Simplification**
+   - Streamline plugin loading and configuration
+   - Remove legacy multi-user hooks
+4. **Memory & Personalization**
+   - Persist local preferences in `user_settings`
+   - Allow quick clearing of history and memory
+5. **Embedded Browser Polish**
+   - Keep the web view optional as a fallback viewer
+   - Ensure all automation remains privacy-first
+
+These steps replace earlier multi-user and RBAC goals, focusing entirely on a privacy-respecting, local-first experience.
