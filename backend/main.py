@@ -50,6 +50,7 @@ class CommandHandler:
             'extract_page_content': self.process_url,  # Alias for process_url
             'get_browser_data': self.get_browser_data,  # Legacy command
             'analyze_content': self.analyze_content,  # Legacy command
+            'summarize_page': self.summarize_page_command,
         }
         # Check if database is already initialized by checking if it exists and is accessible
         self._database_initialized = self._check_database_state()
@@ -424,6 +425,60 @@ class CommandHandler:
             'summary': '',
             'message': 'Legacy command - will be replaced with LLM analysis'
         }
+
+    async def summarize_page_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract a URL and return an LLM summary."""
+        url = payload.get('url')
+        if not url:
+            return {'success': False, 'error': 'No URL provided'}
+
+        try:
+            from agents.content_extractor import ContentExtractor
+            from db.operations import SummaryOperations
+
+            if not url.startswith(('http://', 'https://')):
+                url = 'https://' + url
+
+            async with ContentExtractor() as extractor:
+                result = await extractor.extract_content(url)
+
+            if not result.get('success'):
+                return result
+
+            title = result.get('title', '')
+            text = result.get('text', '')
+
+            prompt_builder = get_prompt_builder()
+            prompt = prompt_builder.build_summarization_prompt(url, title, text)
+
+            client = await get_ollama_client()
+            llm_result = await client.chat_completion([
+                {'role': 'system', 'content': prompt},
+                {'role': 'user', 'content': text[:2000]}
+            ])
+
+            if llm_result['success']:
+                summary_text = llm_result['message'].get('content', '')
+
+                if self._database_initialized:
+                    await SummaryOperations.save_summary(url, summary_text, text, llm_result.get('model'))
+
+                return {
+                    'success': True,
+                    'url': url,
+                    'title': title,
+                    'summary': summary_text,
+                    'model': llm_result.get('model')
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': llm_result.get('error', 'LLM error')
+                }
+
+        except Exception as e:
+            logger.error(f"Summarize page error: {str(e)}")
+            return {'success': False, 'error': str(e)}
     
     async def handle_command(self, command: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming command with proper logging and error handling."""

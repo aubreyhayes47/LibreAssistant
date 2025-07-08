@@ -190,8 +190,16 @@ async fn hello_backend(name: String) -> Result<CommandResponse, String> {
 async fn process_url(url: String) -> Result<CommandResponse, String> {
     let mut payload_data = HashMap::new();
     payload_data.insert("url".to_string(), serde_json::Value::String(url));
-    
+
     call_python_backend("process_url".to_string(), CommandPayload { data: payload_data }).await
+}
+
+#[tauri::command]
+async fn summarize_page(url: String) -> Result<CommandResponse, String> {
+    let mut payload_data = HashMap::new();
+    payload_data.insert("url".to_string(), serde_json::Value::String(url));
+
+    call_python_backend("summarize_page".to_string(), CommandPayload { data: payload_data }).await
 }
 
 #[tauri::command]
@@ -332,7 +340,8 @@ pub fn run() {
             get_bookmarks,
             search_bookmarks,
             get_browser_history,
-            add_history_entry
+            add_history_entry,
+            summarize_page
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
