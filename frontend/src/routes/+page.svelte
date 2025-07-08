@@ -2,6 +2,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
   import { generateTestData } from '$lib/utils/testData.js';
+  import BrowserPanel from '$lib/BrowserPanel.svelte';
 
   let name = $state("");
   let greetMsg = $state("");
@@ -309,6 +310,12 @@
           {isLoading ? 'Sending...' : 'Send'}
         </button>
       </form>
+    </div>
+
+    <!-- Embedded Browser -->
+    <div class="panel">
+      <h2>🕸️ Browser Preview</h2>
+      <BrowserPanel />
     </div>
 
     <!-- Browser Data -->
