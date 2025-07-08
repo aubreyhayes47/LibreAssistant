@@ -64,6 +64,7 @@ class CommandHandler:
             "get_browser_data": self.get_browser_data,  # Legacy command
             "analyze_content": self.analyze_content,  # Legacy command
             "summarize_page": self.summarize_page_command,
+            "search_web": self.search_web_command,
         }
         # Check if the database is already initialized by verifying that it
         # exists and is accessible
@@ -473,6 +474,25 @@ class CommandHandler:
 
         except Exception as e:
             logger.error(f"Summarize page error: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    async def search_web_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Search the web using DuckDuckGo."""
+        query = payload.get("query")
+        max_results = int(payload.get("max_results", 5))
+
+        if not query:
+            return {"success": False, "error": "No query provided"}
+
+        try:
+            from agents.search_agent import SearchAgent
+
+            agent = SearchAgent()
+            results = await agent.search(query, max_results=max_results)
+
+            return {"success": True, "results": results, "count": len(results)}
+        except Exception as e:  # pragma: no cover - network errors
+            logger.error(f"Search web error: {str(e)}")
             return {"success": False, "error": str(e)}
 
     async def handle_command(

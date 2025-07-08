@@ -24,6 +24,8 @@ Our focus is helping individuals and small organizations reclaim the web without
 
 ✅ **Summarization Pipeline** that returns concise answers
 
+✅ **Web Search Command** using DuckDuckGo results
+
 ✅ **Search Agent** supporting multiple providers
 
 ✅ **Plugin System** for web-focused automation
@@ -230,6 +232,7 @@ The Python backend exposes commands accessible through Tauri:
 * `get_browser_data`: Access history/bookmarks
 * `analyze_content`: AI content analysis
 * `summarize_page`: Extract content and return a summary
+* `search_web`: Query DuckDuckGo for web results
 
 ✅ Adding New Commands:
 

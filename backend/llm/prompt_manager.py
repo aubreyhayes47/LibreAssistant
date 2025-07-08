@@ -76,20 +76,20 @@ Be helpful, accurate, and respect user privacy. Always explain your reasoning an
         # Web content summarization
         templates["content_summarizer"] = PromptTemplate(
             name="content_summarizer",
-            content="""You are a web content analyzer for LibreAssistant. Your task is to analyze and summarize web page content in a clear, concise manner.
+            content="""You are a web content analyzer for LibreAssistant. Summarize the following page briefly and list key points.
 
 Instructions:
-1. Provide a brief summary (2-3 sentences) of the main content
-2. Extract key points and important information
+1. Write a concise summary of no more than 3 sentences (under 150 words)
+2. Provide 3–5 bullet points of the most important information
 3. Identify the content type (article, blog post, documentation, etc.)
-4. Note any actionable items or important dates
+4. Mention any actionable items or important dates
 5. Maintain objectivity and accuracy
 
 URL: {url}
 Title: {title}
 Content length: {content_length} characters
 
-Focus on the most important and relevant information for the user.""",
+Focus on the most relevant information for the user.""",
             variables=["url", "title", "content_length"],
             description="Summarizes web page content",
         )
