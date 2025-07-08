@@ -190,6 +190,20 @@ npm run tauri dev
 npm run tauri build
 ```
 
+### Development Checks
+Run the setup script once in a new environment:
+
+```bash
+./setup.sh
+```
+
+Before committing run:
+
+```bash
+cd backend && black . && ruff --fix . && python -m pytest
+cd ../frontend && npm install && npm run check
+```
+
 ---
 
 ## 📈 Development Status
