@@ -2,12 +2,14 @@ import json
 import asyncio
 import sys
 import os
+import pytest
 
 # Add the backend directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from main import CommandHandler
 
+@pytest.mark.asyncio
 async def test_backend():
     handler = CommandHandler()
     

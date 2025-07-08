@@ -264,17 +264,17 @@
     <div class="panel">
       <h2>⚙️ Test Configuration</h2>
       <div class="input-group">
-        <label>Test Message:</label>
-        <input bind:value={testMessage} placeholder="Enter test message">
+        <label for="test-message">Test Message:</label>
+        <input id="test-message" bind:value={testMessage} placeholder="Enter test message">
         
-        <label>Test URL:</label>
-        <input bind:value={testUrl} placeholder="Enter test URL">
+        <label for="test-url">Test URL:</label>
+        <input id="test-url" bind:value={testUrl} placeholder="Enter test URL">
         
-        <label>Test Title:</label>
-        <input bind:value={testTitle} placeholder="Enter test title">
+        <label for="test-title">Test Title:</label>
+        <input id="test-title" bind:value={testTitle} placeholder="Enter test title">
         
-        <label>Search Query:</label>
-        <input bind:value={searchQuery} placeholder="Enter search query">
+        <label for="search-query">Search Query:</label>
+        <input id="search-query" bind:value={searchQuery} placeholder="Enter search query">
       </div>
     </div>
   </div>
