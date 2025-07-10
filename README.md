@@ -151,37 +151,32 @@ Example `flavor.json`:
 * Python: 3.10 or higher
 * Git
 
-### Clone the Repository
+### Dependencies
 
-```
-git clone https://github.com/aubreyhayes47/LibreAssistant.git
-cd LibreAssistant
-```
+The Python backend uses `requirements.txt` for dependency management. While there's also a `pyproject.toml` file (for Poetry support), the setup script and documentation use pip with `requirements.txt` for simplicity.
 
 ### Quick Setup
 
-Install all Python and Node dependencies with the helper script:
+For detailed installation instructions including platform-specific requirements, see [SETUP.md](SETUP.md).
 
-```
+#### Linux/macOS
+
+```bash
+git clone https://github.com/aubreyhayes47/LibreAssistant.git
+cd LibreAssistant
 ./setup.sh
+source .venv/bin/activate
 ```
 
-This creates a local virtual environment in `.venv/` and runs `npm install` in
-`frontend/`. Activate the environment with `source .venv/bin/activate` after the
-script finishes.
+#### Windows
 
-### Manual Setup Steps
-
-If you prefer a manual approach you can still install each part individually:
-
-```
-cd frontend
-npm install
-
-cd ../backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+```bash
+git clone https://github.com/aubreyhayes47/LibreAssistant.git
+cd LibreAssistant
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r backend\requirements.txt
+cd frontend && npm install && cd ..
 ```
 
 ---
@@ -190,22 +185,25 @@ pip install -r requirements.txt
 
 ✅ Start Frontend (from `frontend/`):
 
-```
-npm run tauri dev
+```bash
+npm run tauri:dev
 ```
 
 ✅ Build for Production:
 
-```
-npm run tauri build
+```bash
+npm run tauri:build
 ```
 
 ### Development Checks
+
 Run the setup script once in a new environment and activate the virtual environment:
 
 ```bash
 ./setup.sh
-source .venv/bin/activate
+source .venv/bin/activate  # Linux/macOS
+# OR
+.venv\Scripts\activate     # Windows
 ```
 
 Before committing run:
@@ -228,58 +226,71 @@ Phase **1D** (browser integration) is complete. The app includes an embedded bro
 
 ## 🔧 Backend API
 
-The Python backend exposes commands accessible through Tauri:
+The Python backend exposes commands accessible through Tauri. For detailed API documentation including parameters and examples, see [API.md](API.md).
 
 ✅ Sample Commands:
 
 * `hello`: Test connectivity
-* `process_url`: Extract web content
+* `process_url`: Extract web content  
 * `get_browser_data`: Access history/bookmarks
 * `analyze_content`: AI content analysis
 * `summarize_page`: Extract content and return a summary
 * `search_web`: Query DuckDuckGo for web results
+* `chat_with_llm`: Chat with local Ollama LLM
+* `save_bookmark`: Save a bookmark to database
+* `get_chat_history`: Retrieve chat conversation history
+* `get_bookmarks`: Get saved bookmarks
+* `search_bookmarks`: Search through bookmarks
+* `get_browser_history`: Get browsing history
+* `add_history_entry`: Add entry to browsing history
+* `set_user_setting`: Save user preferences
+* `get_user_setting`: Retrieve user preferences
+* `clear_chat_history`: Clear chat history
+* `clear_browser_history`: Clear browsing history
+* `clear_conversation_context`: Clear LLM conversation context
 
 ✅ Adding New Commands:
 
+**Python Backend (backend/main.py):**
 ```python
-async def new_command(self, payload):
+async def new_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
     return { "success": True, "data": result }
 ```
 
-Register in Tauri Rust:
-
+**Rust Tauri (frontend/src-tauri/src/lib.rs):**
 ```rust
 #[tauri::command]
 async fn new_command(param: String) -> Result<CommandResponse, String> {
-    // Implementation
+    let mut payload_data = HashMap::new();
+    payload_data.insert("param".to_string(), serde_json::Value::String(param));
+    call_python_backend("new_command".to_string(), CommandPayload { data: payload_data }).await
 }
 ```
+
+Don't forget to add the new command to the `invoke_handler` list in the `run()` function.
 
 ---
 
 ## 🧪 Testing
 
-✅ Frontend:
-
-```
-cd frontend
-npm test
-```
-
 ✅ Backend:
 
-```
+```bash
 cd backend
 python -m pytest
 ```
+
+✅ Frontend:
+
+Frontend testing is currently set up with placeholder test utilities. See `src/lib/utils/testData.js` for the current test data generation functionality.
 
 ---
 
 ## ⚙️ Configuration
 
-✅ `.env` in `backend/`:
+✅ `.env` in `backend/` (copy from `.env.example`):
 
-```
+```env
 LOG_LEVEL=INFO
 OLLAMA_HOST=http://localhost:11434
 DATABASE_URL=sqlite:///./libreassistant.db
@@ -329,6 +340,8 @@ We aim to enable **ethical, local-first AI** that can be used anywhere—from su
 ---
 
 ## 📞 Support
+
+For installation help and common issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 Please open an issue on GitHub or contact the development team.
 

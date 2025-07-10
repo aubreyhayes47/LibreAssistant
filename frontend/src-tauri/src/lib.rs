@@ -323,6 +323,67 @@ async fn add_history_entry(url: String, title: String, visit_time: Option<String
     call_python_backend("add_history_entry".to_string(), CommandPayload { data: payload_data }).await
 }
 
+#[tauri::command]
+async fn search_web(query: String, provider: Option<String>, limit: Option<i32>) -> Result<CommandResponse, String> {
+    let mut payload_data = HashMap::new();
+    payload_data.insert("query".to_string(), serde_json::Value::String(query));
+    
+    if let Some(search_provider) = provider {
+        payload_data.insert("provider".to_string(), serde_json::Value::String(search_provider));
+    }
+    
+    if let Some(result_limit) = limit {
+        payload_data.insert("limit".to_string(), serde_json::Value::Number(serde_json::Number::from(result_limit)));
+    }
+    
+    call_python_backend("search_web".to_string(), CommandPayload { data: payload_data }).await
+}
+
+#[tauri::command]
+async fn set_user_setting(key: String, value: String) -> Result<CommandResponse, String> {
+    let mut payload_data = HashMap::new();
+    payload_data.insert("key".to_string(), serde_json::Value::String(key));
+    payload_data.insert("value".to_string(), serde_json::Value::String(value));
+    
+    call_python_backend("set_user_setting".to_string(), CommandPayload { data: payload_data }).await
+}
+
+#[tauri::command]
+async fn get_user_setting(key: String) -> Result<CommandResponse, String> {
+    let mut payload_data = HashMap::new();
+    payload_data.insert("key".to_string(), serde_json::Value::String(key));
+    
+    call_python_backend("get_user_setting".to_string(), CommandPayload { data: payload_data }).await
+}
+
+#[tauri::command]
+async fn clear_chat_history(session_id: Option<String>) -> Result<CommandResponse, String> {
+    let mut payload_data = HashMap::new();
+    
+    if let Some(session) = session_id {
+        payload_data.insert("session_id".to_string(), serde_json::Value::String(session));
+    }
+    
+    call_python_backend("clear_chat_history".to_string(), CommandPayload { data: payload_data }).await
+}
+
+#[tauri::command]
+async fn clear_browser_history() -> Result<CommandResponse, String> {
+    let payload_data = HashMap::new();
+    call_python_backend("clear_browser_history".to_string(), CommandPayload { data: payload_data }).await
+}
+
+#[tauri::command]
+async fn clear_conversation_context(session_id: Option<String>) -> Result<CommandResponse, String> {
+    let mut payload_data = HashMap::new();
+    
+    if let Some(session) = session_id {
+        payload_data.insert("session_id".to_string(), serde_json::Value::String(session));
+    }
+    
+    call_python_backend("clear_conversation_context".to_string(), CommandPayload { data: payload_data }).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -341,7 +402,13 @@ pub fn run() {
             search_bookmarks,
             get_browser_history,
             add_history_entry,
-            summarize_page
+            summarize_page,
+            search_web,
+            set_user_setting,
+            get_user_setting,
+            clear_chat_history,
+            clear_browser_history,
+            clear_conversation_context
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
