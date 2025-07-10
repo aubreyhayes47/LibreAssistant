@@ -5,34 +5,39 @@ Database package for LibreAssistant.
 from .database import DatabaseManager, close_database, get_db_session, init_database
 from .models import (
     Base,
+    User,
+    Conversation,
+    Message,
+    SearchHistory,
+    ContentCache,
+    UserSettings,
     BookmarkEntry,
     BrowserHistory,
-    ChatMessage,
     PageSummary,
-    UserSettings,
 )
-from .operations import (
-    BookmarkOperations,
-    ChatOperations,
-    HistoryOperations,
-    SettingsOperations,
-    SummaryOperations,
-)
+# TODO: Operations need to be rewritten for new schema
+# from .operations import (
+#     BookmarkOperations,
+#     ChatOperations,
+#     HistoryOperations,
+#     SettingsOperations,
+#     SummaryOperations,
+# )
 
 __all__ = [
     "DatabaseManager",
-    "init_database",
+    "init_database", 
     "get_db_session",
     "close_database",
-    "ChatMessage",
+    "Base",
+    "User",
+    "Conversation",
+    "Message",
+    "SearchHistory",
+    "ContentCache",
+    "UserSettings",
     "BookmarkEntry",
     "BrowserHistory",
     "PageSummary",
-    "UserSettings",
-    "Base",
-    "ChatOperations",
-    "BookmarkOperations",
-    "HistoryOperations",
-    "SummaryOperations",
-    "SettingsOperations",
+    # Operations will be added back after rewriting for new schema
 ]

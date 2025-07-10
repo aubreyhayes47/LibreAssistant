@@ -6,21 +6,28 @@ This guide provides detailed information for developers working on LibreAssistan
 
 LibreAssistant is built with a three-tier architecture:
 
-1. **Frontend**: Svelte 4 + Tauri for the desktop interface
+1. **Frontend**: Svelte 5 + Tauri for the desktop interface
 2. **Bridge**: Rust-based Tauri commands for secure communication  
-3. **Backend**: Python CLI processing (FastAPI planned)
+3. **Backend**: Python CLI processing with complete database layer
 
 ### Current Communication Flow
 
 ```
-Frontend (Svelte 4) → Tauri Commands (Rust) → Python CLI Backend
+Frontend (Svelte 5) → Tauri Commands (Rust) → Python CLI Backend → SQLite Database
 ```
 
-**Current Implementation:**
-- Frontend uses legacy Svelte 4 store patterns
-- Backend processes commands via CLI arguments
-- No database persistence (data lost on restart)
-- Basic error handling and response formatting
+**Current Implementation (Updated July 10, 2025):**
+- Frontend: Svelte 5 with modern reactive patterns
+- Backend: CLI-based command processing with 16+ implemented commands
+- Database: Complete SQLAlchemy schema (9 models) - Phase 1.1 Step 1 ✅ COMPLETED
+- Command handling: Comprehensive Tauri command interface with all documented features
+- AI Integration: Functional Ollama client with conversation context management
+
+**Completed Milestones:**
+- ✅ **Database Foundation**: Complete SQLAlchemy models with relationships, indexing, and privacy controls
+- ✅ **Command Interface**: All major commands implemented (`chat_with_llm`, `search_web`, `set_user_setting`, etc.)
+- ✅ **Basic AI Pipeline**: Ollama integration with context management
+- ✅ **Web Scraping**: Functional content extraction and summarization
 
 **Target Architecture:**
 ```

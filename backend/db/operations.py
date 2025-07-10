@@ -12,11 +12,15 @@ from sqlalchemy import and_, desc, func, or_
 try:
     from .database import get_db_session
     from .models import (
+        User,
+        Conversation,
+        Message,
+        SearchHistory,
+        ContentCache,
+        UserSettings,
         BookmarkEntry,
         BrowserHistory,
-        ChatMessage,
         PageSummary,
-        UserSettings,
     )
 except ImportError:
     # Fallback for direct execution
@@ -26,11 +30,15 @@ except ImportError:
     sys.path.append(str(Path(__file__).parent.parent))
     from db.database import get_db_session
     from db.models import (
+        User,
+        Conversation,
+        Message,
+        SearchHistory,
+        ContentCache,
+        UserSettings,
         BookmarkEntry,
         BrowserHistory,
-        ChatMessage,
         PageSummary,
-        UserSettings,
     )
 
 logger = logging.getLogger(__name__)
@@ -42,7 +50,7 @@ class ChatOperations:
     @staticmethod
     async def save_message(
         content: str, role: str, session_id: str = "default"
-    ) -> Optional[ChatMessage]:
+    ) -> Optional[Message]:
         """Save a chat message to the database."""
         try:
             with get_db_session() as db:
