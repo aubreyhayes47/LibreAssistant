@@ -18,20 +18,21 @@ git add .
 Create a comprehensive commit message:
 
 ```bash
-git commit -m "docs: Comprehensive documentation review and update
+git commit -m "docs: Complete documentation audit and roadmap integration
 
-- Add missing Tauri command wrappers for search_web, user settings, and history clearing
-- Create comprehensive API documentation (API.md)
-- Add detailed setup guide (SETUP.md) 
-- Add troubleshooting guide (TROUBLESHOOTING.md)
-- Add configuration template (.env.example)
-- Fix Windows installation instructions in README
-- Synchronize dependencies between requirements.txt and pyproject.toml
-- Add missing npm scripts (tauri:dev, tauri:build)
-- Update CHANGELOG to reflect current state
-- Ensure all documented features match actual implementation
+- Document current proof-of-concept state across all files
+- Create comprehensive Implementation Roadmap (docs/IMPLEMENTATION_ROADMAP.md)
+- Add clear current vs planned feature distinctions throughout documentation
+- Update all module docs with implementation status indicators (🟢🟡🔴)
+- Correct inaccurate claims about FastAPI, Svelte 5, and advanced features
+- Synchronize documentation with actual codebase state
+- Reference implementation roadmap for future development plans
+- Update setup, troubleshooting, and contributing guides
+- Clarify CLI-based backend vs planned FastAPI architecture
+- Fix inconsistencies between claimed and actual features
 
-Fixes #[issue-number] if applicable"
+This comprehensive audit ensures all documentation accurately reflects the current
+proof-of-concept state while providing clear development roadmap for contributors."
 ```
 
 ## Step 4: Push to GitHub

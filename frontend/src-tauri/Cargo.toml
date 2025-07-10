@@ -1,9 +1,13 @@
 [package]
 name = "libreassistant"
 version = "0.1.0"
-description = "LibreAssistant - Open Source AI Assistant Browser"
-authors = ["Aubrey Hayes <aubreyhayes47@gmail.com>"]
+description = "Privacy-first, single-user AI interface to the internet"
+authors = ["LibreAssistant Contributors"]
+license = "MIT"
+repository = "https://github.com/yourusername/LibreAssistant"
 edition = "2021"
+keywords = ["ai", "assistant", "privacy", "local", "tauri"]
+categories = ["gui", "web-programming"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -172,11 +172,24 @@ npm run check
 - `backend/pyproject.toml` and `requirements.txt` for Python dependencies
 - `frontend/package.json` for Node.js dependencies
 
-## Next Steps
+## Current State & Next Steps
 
-After successful setup:
+LibreAssistant is currently in **proof-of-concept** state. After successful setup:
 
+### Current Features (Working)
 1. Start the development server with `npm run tauri:dev`
-2. Test the backend connection using the UI
-3. Run the test suite to ensure everything works
-4. Check the CONTRIBUTING.md for development guidelines
+2. Test basic backend connection using the UI
+3. Basic chat functionality (requires Ollama)
+4. Simple web content extraction
+5. SQLite database operations
+
+### Next Development Steps
+See the [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) for detailed development plans:
+
+1. **Phase 1.1**: Database Layer - Implement migrations and advanced operations
+2. **Phase 1.2**: FastAPI Backend - Replace CLI with REST API architecture  
+3. **Phase 1.3**: Session Management - Add user sessions and persistent state
+4. **Phase 1.4**: Svelte 5 Migration - Upgrade to modern reactive patterns
+5. **Phase 2**: Advanced Features - Browser integration, search agents, etc.
+
+For development guidelines, see CONTRIBUTING.md and DEVELOPMENT.md.

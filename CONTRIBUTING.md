@@ -1,27 +1,30 @@
 # Contributing to LibreAssistant
 
-Thank you for your interest in contributing to LibreAssistant! This document provides guidelines for contributing to our open-source AI assistant browser project.
+Thank you for your interest in contributing to LibreAssistant! This document provides guidelines for contributing to our open-source AI assistant project.
+
+⚠️ **Project Status**: LibreAssistant is currently in proof-of-concept state. See the [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) for planned development phases and contribution opportunities.
+
+## Current Architecture
+
+- **Frontend**: Tauri + Svelte 4 (Svelte 5 migration planned)
+- **Backend**: Python CLI-based processing (FastAPI migration planned)  
+- **Database**: SQLite with SQLAlchemy models
+- **AI**: Local Ollama integration for privacy-first processing
 
 ## 🚀 Getting Started
 
-### Development Setup
+### Development Priorities
 
-1. **Fork the repository**
-   ```bash
-   git clone https://github.com/yourusername/LibreAssistant.git
-   cd LibreAssistant
-   ```
+Current development focuses on building production-ready infrastructure:
 
-2. **Follow setup instructions**
-   - See the main [README.md](README.md) for detailed installation steps
-   - Ensure you have Rust, Node.js, and Python installed
+1. **Phase 1.1**: Database Layer (SQLAlchemy migrations, operations)
+2. **Phase 1.2**: FastAPI Backend (replace CLI with REST API)
+3. **Phase 1.3**: Session Management (user state, persistence) 
+4. **Phase 1.4**: Svelte 5 Migration (modern reactive patterns)
 
-3. **Create a development branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+See [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) for detailed task breakdown.
 
-## 📝 Code Style Guidelines
+### Code Style Guidelines
 
 ### Python Backend
 - **Formatting**: Use [Black](https://black.readthedocs.io/) with line length 88
@@ -37,7 +40,7 @@ Thank you for your interest in contributing to LibreAssistant! This document pro
 ### JavaScript/Svelte
 - **Formatting**: Use [Prettier](https://prettier.io/) for consistent formatting
 - **Style**: Follow modern JavaScript/ES6+ practices
-- **Components**: Use Svelte 5 runes syntax (`$state`, `$effect`, etc.)
+- **Components**: Currently using Svelte 4 (Svelte 5 migration planned in Phase 1.4)
 
 ### Commit Messages
 Use [Conventional Commits](https://www.conventionalcommits.org/) format:

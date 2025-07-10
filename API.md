@@ -1,6 +1,16 @@
 # LibreAssistant API Documentation
 
+⚠️ **Current Status**: LibreAssistant is in proof-of-concept state with CLI-based backend. This documentation describes both current and planned API functionality.
+
 This document describes all available backend commands accessible through the Tauri frontend.
+
+## Current vs Planned Features
+
+🟢 **Currently Working**: Basic commands listed below are implemented and functional  
+🟡 **Partially Working**: Some advanced features may have limitations  
+🔴 **Planned**: FastAPI REST architecture and advanced features coming in future phases
+
+See the [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) for development timeline.
 
 ## Command Structure
 
@@ -314,44 +324,17 @@ if (result.success) {
 }
 ```
 
-## Adding New Commands
+## Future Development
 
-To add a new command:
+For planned API expansions and backend architecture changes, see:
+- [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) - Full development plan
+- [Database Module](docs/modules/database.md) - Planned database features  
+- [LLM Module](docs/modules/llm.md) - AI integration roadmap
+- [Agents Module](docs/modules/agents.md) - Search and automation plans
 
-1. **Add to Python backend** (`backend/main.py`):
-```python
-async def my_new_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-    # Implementation
-    return {"success": True, "data": "result"}
-```
-
-2. **Register in commands dictionary**:
-```python
-self.commands = {
-    # ...existing commands...
-    "my_new_command": self.my_new_command,
-}
-```
-
-3. **Add Tauri wrapper** (`frontend/src-tauri/src/lib.rs`):
-```rust
-#[tauri::command]
-async fn my_new_command(param: String) -> Result<CommandResponse, String> {
-    let mut payload_data = HashMap::new();
-    payload_data.insert("param".to_string(), serde_json::Value::String(param));
-    call_python_backend("my_new_command".to_string(), CommandPayload { data: payload_data }).await
-}
-```
-
-4. **Add to invoke handler**:
-```rust
-.invoke_handler(tauri::generate_handler![
-    // ...existing commands...
-    my_new_command
-])
-```
-
-5. **Use in frontend**:
-```javascript
-const result = await invoke('my_new_command', { param: 'value' });
-```
+The next major milestone is transitioning from CLI to FastAPI backend (Phase 1.2), which will provide:
+- REST API endpoints
+- Better error handling  
+- Request validation
+- Auto-generated OpenAPI documentation
+- Async performance improvements

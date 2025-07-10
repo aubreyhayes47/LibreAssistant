@@ -1,19 +1,24 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- **Documentation Audit**: Updated all documentation to accurately reflect current proof-of-concept state
+- **Project Status Clarity**: Added clear distinction between current and planned features across all docs
+- **Implementation Roadmap**: Created comprehensive development plan in `docs/IMPLEMENTATION_ROADMAP.md`
+- **Consistent References**: All documentation now references the implementation roadmap for future development
+
 ### Added
-- Comprehensive API documentation in API.md
-- Detailed setup guide in SETUP.md
+- Comprehensive API documentation in API.md with current vs planned feature distinctions
+- Detailed setup guide in SETUP.md with next development steps
 - Missing Tauri commands: `search_web`, `set_user_setting`, `get_user_setting`, `clear_chat_history`, `clear_browser_history`, `clear_conversation_context`
 - npm scripts for Tauri development and building (`tauri:dev`, `tauri:build`)
-
-### Changed
-- Updated README with accurate installation instructions for Windows
-- Synchronized pyproject.toml dependencies with requirements.txt
-- Fixed backend API command list to include all implemented commands
-- Improved development setup documentation
+- Status indicators (🟢 working, 🟡 partial, 🔴 planned) throughout module documentation
 
 ### Fixed
+- Corrected inaccurate claims about FastAPI implementation (currently CLI-based)
+- Updated Svelte version references (currently v4, v5 planned for Phase 1.4)
+- Clarified SQLAlchemy usage (basic models implemented, advanced features planned)
+- Synchronized all documentation with actual codebase state
 - Missing exposure of backend commands through Tauri interface
 - Inconsistencies between documentation and actual implementation
 - Installation instructions for Windows users

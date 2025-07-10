@@ -14,30 +14,37 @@ Our focus is helping individuals and small organizations reclaim the web without
 
 ---
 
-## 🚀 Features
+## 🚀 Current Features (Proof of Concept)
 
-✅ **Local AI Chat** with Ollama for private, on-device conversations
+✅ **Basic AI Chat** with Ollama integration (simple client)
 
-✅ **Embedded Browser Panel** for optional page previews
+✅ **Tauri + Svelte Frontend** with native desktop framework
 
-✅ **Web Scraping & Extraction** to pull clean text from sites
-✅ **Readability Fallback** for difficult pages
-✅ **Summarization Pipeline** that returns concise answers
-✅ **Summary Caching** to avoid duplicate processing
+✅ **Basic Web Scraping** using requests and BeautifulSoup
 
-✅ **Web Search Command** using DuckDuckGo results
+✅ **Simple Search** via DuckDuckGo (basic implementation)
 
-✅ **Search Agent** supporting multiple providers
+✅ **CLI-based Backend** with command processing
 
-✅ **Persistent User Settings** with commands to save preferences
+✅ **Structured JSON Responses** for frontend communication
 
-✅ **History Cleanup Commands** for chat and browsing data
+## 🚧 Features In Development
 
-🚧 **Plugin System** for web-focused automation *(simplified, single-user)*
+The following features are planned but not yet implemented:
 
-✅ **Flavor System** for single-user plugin bundles
+🚧 **Database Layer** - SQLAlchemy models and persistence (not implemented)
 
-✅ **Offline Distribution** via USB/SD (optional)
+🚧 **FastAPI Backend** - REST API architecture (currently CLI-based)
+
+🚧 **Advanced Web Scraping** - Playwright integration (using basic tools)
+
+🚧 **Session Management** - Conversation persistence (not implemented)
+
+🚧 **Privacy Features** - Data encryption and controls (basic local storage)
+
+🚧 **Performance Optimization** - Caching and optimization (not implemented)
+
+🚧 **Comprehensive Testing** - Unit, integration, and E2E tests (minimal)
 
 ---
 
@@ -63,82 +70,110 @@ Each Flavor is fully local, encrypted, and adaptable to local languages and cont
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Current Architecture
 
 ```
 LibreAssistant/
-├── frontend/          # Tauri + Svelte UI
+├── frontend/          # Tauri + Svelte UI (Svelte 4 patterns)
 │   ├── src/
-│   ├── src-tauri/
+│   ├── src-tauri/     # Basic Tauri commands
 │   └── static/
-├── backend/           # Python backend
-│   ├── agents/
-│   ├── db/
-│   ├── llm/
-│   ├── utils/
-│   └── main.py
-└── shared/            # Shared configs
+├── backend/           # Python CLI backend
+│   ├── agents/        # Basic search and scraping
+│   ├── llm/           # Simple Ollama client
+│   ├── utils/         # Utility functions
+│   └── main.py        # CLI command processor
 ```
 
-✅ **Frontend:** Tauri + Svelte for native desktop UI
+**Current Implementation:**
+- **Frontend:** Tauri + Svelte 4 (legacy store patterns)
+- **Backend:** Python CLI processing (no FastAPI)
+- **Communication:** Basic Rust ↔ Python subprocess calls
+- **AI Engine:** Basic Ollama client integration
+- **Database:** No persistence layer (data lost on restart)
 
-✅ **Backend:** Python (FastAPI, SQLAlchemy)
-
-✅ **Communication:** Native Rust ↔ Python bridge
-
-✅ **AI Engine:** Ollama integration for local LLM
-
-✅ **Database:** SQLite for encrypted local data
+**Target Architecture:**
+- **Frontend:** Tauri + Svelte 5 with runes
+- **Backend:** FastAPI with SQLAlchemy
+- **Communication:** REST API via Tauri commands
+- **AI Engine:** Advanced LLM pipeline with prompt management
+- **Database:** SQLite with encryption and session persistence
 
 ---
 
-## 🔌 Modular Plugin System *(In Development)*
+## 🔌 Development Roadmap
 
-The plugin framework is currently being simplified for a single-user setup.
-It will allow:
+LibreAssistant is currently a proof-of-concept with a comprehensive development plan to achieve production-ready status. See the [Complete Implementation Algorithm](#implementation-roadmap) below for detailed next steps.
 
-✅ Self-contained Python modules
+**Current State:** Basic proof-of-concept with core UI and simple AI integration
 
-✅ Registration of new backend commands and UI components
+**Target State:** Production-ready privacy-first AI assistant with advanced features
 
-✅ User-contributed plugins
+## 🗺️ Implementation Roadmap
 
-Examples:
+The following roadmap outlines the complete development plan to implement all missing features:
 
-* Note-taking / Reading plans
-* Consent log management
-* Recovery curriculum manager
-* Scripture reference tools
-* Web scraping and URL analysis
-* Language phrasebook / translation helper
+### Phase 1: Core Infrastructure (Weeks 1-3)
+- **Database Layer**: Implement SQLAlchemy models and migrations
+- **FastAPI Backend**: Replace CLI with REST API architecture  
+- **Enhanced Tauri Commands**: Expand command interface and error handling
+- **Session Management**: Add conversation persistence and restoration
+
+### Phase 2: Advanced Web Capabilities (Weeks 4-6)
+- **Playwright Integration**: Replace basic scraping with advanced browser automation
+- **Enhanced Search**: Multi-provider search with intelligent processing
+- **Content Analysis**: Advanced text processing and extraction pipelines
+
+### Phase 3: Comprehensive AI Pipeline (Weeks 7-9)
+- **Advanced Ollama Integration**: Connection pooling, streaming, model management
+- **Prompt Management**: Template system with context optimization
+- **Content Intelligence**: Summarization, entity extraction, analysis
+
+### Phase 4: Session & State Management (Weeks 10-11)
+- **Conversation Management**: Threading, branching, cross-session context
+- **User Preferences**: Settings management and personalization
+- **Data Export/Import**: User data control and portability
+
+### Phase 5: Frontend Modernization (Weeks 12-13)
+- **Svelte 5 Migration**: Convert to runes syntax and modern patterns
+- **Enhanced UI**: Real-time features, progressive enhancement
+- **Accessibility**: Comprehensive accessibility improvements
+
+### Phase 6: Privacy & Security (Weeks 14-15)
+- **Data Encryption**: At-rest encryption with secure key management
+- **Security Hardening**: Input validation, process isolation, network security
+- **Privacy Controls**: Data retention, consent management, audit logging
+
+### Phase 7: Performance Optimization (Weeks 16-17)
+- **Caching Systems**: Multi-level caching with intelligent invalidation
+- **Resource Management**: Memory, CPU, and disk optimization
+- **Async Processing**: Background jobs and streaming responses
+
+### Phase 8: Testing & QA (Weeks 18-19)
+- **Comprehensive Testing**: Unit, integration, E2E, performance, security
+- **Quality Assurance**: Code coverage, monitoring, observability
+
+### Phase 9: Documentation & Distribution (Weeks 20-21)
+- **Complete Documentation**: User guides, API docs, deployment guides
+- **Build & Distribution**: Cross-platform packages and auto-updates
+
+For detailed implementation steps, see the [Complete Implementation Algorithm](docs/IMPLEMENTATION_ROADMAP.md).
 
 ---
 
-## 🧭 Flavor Configuration
+## 🌍 Future Flavors (Post-Production)
 
-Each Flavor is defined by a **config file** (e.g. `flavor.json`):
+Once core infrastructure is complete, LibreAssistant will support "Flavors"—specialized configurations for different use cases:
 
-* Default plugins
-* UI layout and components
-* Localization and language settings
+🔮 **Solo Private Assistant** (Power User)
+🔮 **Developer Console** (Plugin Creation)
+🔮 **Household/Family Assistant**
+🔮 **School/Homeschool Co-op Suite**
+🔮 **Faith & Community Ministry Tool**
+🔮 **Recovery Curriculum Manager**
+🔮 **Volunteer/Incident Management Suite**
 
-Example `flavor.json`:
-
-```
-{
-  "name": "Faith & Community Memphis Edition",
-  "plugins": ["note_manager", "reading_plan", "consent_log", "phrasebook"],
-  "locale": "en-US"
-}
-```
-
-✅ Fully offline
-
-✅ USB/SD deployable (optional)
-
-✅ Low-spec hardware friendly
-
-✅ Supports local language customization
+Each Flavor will be fully local, encrypted, and adaptable to local languages and contexts.
 
 ---
 
@@ -299,6 +334,30 @@ DATABASE_URL=sqlite:///./libreassistant.db
 ✅ Tauri Config:
 
 * `frontend/src-tauri/tauri.conf.json`
+
+---
+
+## 📚 Documentation
+
+### Quick Start
+- **[Setup Guide](SETUP.md)** - Get LibreAssistant running quickly
+- **[User Guide](docs/user-guide/getting-started.md)** - Complete user documentation
+- **[Build Guide](BUILD.md)** - Building from source
+
+### Development
+- **[Development Guide](DEVELOPMENT.md)** - Development patterns and workflows
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
+- **[Testing Guide](docs/testing/testing-guide.md)** - Comprehensive testing documentation
+
+### Architecture
+- **[Agents Module](docs/modules/agents.md)** - Web search and content extraction
+- **[Database Module](docs/modules/database.md)** - Local data storage with SQLite
+- **[LLM Module](docs/modules/llm.md)** - Local AI processing with Ollama
+
+### Project Information
+- **[API Documentation](API.md)** - Backend API reference
+- **[Changelog](CHANGELOG.md)** - Version history and updates
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
 
 ---
 

@@ -2,6 +2,18 @@
 
 This guide helps resolve common issues when setting up or running LibreAssistant.
 
+⚠️ **Project Status**: LibreAssistant is currently in proof-of-concept state. This guide covers troubleshooting for the current CLI-based backend and basic functionality.
+
+## Known Limitations
+
+**Current Architecture:**
+- CLI-based Python backend (FastAPI migration planned)
+- Basic SQLite operations (advanced migrations planned)
+- Svelte 4 frontend (Svelte 5 migration planned)
+- Limited error handling and validation
+
+See the [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md) for planned improvements.
+
 ## Installation Issues
 
 ### Python Virtual Environment
@@ -69,6 +81,8 @@ This guide helps resolve common issues when setting up or running LibreAssistant
 2. Check write permissions in project directory
 3. Delete existing database file and reinitialize
 4. Verify SQLAlchemy dependencies installed
+
+**Note**: Advanced database features like migrations are planned for Phase 1.1.
 
 ### Ollama Connection Issues
 
@@ -216,7 +230,17 @@ When reporting a bug, include:
 
 - **GitHub Issues**: https://github.com/aubreyhayes47/LibreAssistant/issues
 - **Documentation**: README.md, API.md, SETUP.md
+- **Development Plans**: [Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)
 - **Contributing**: CONTRIBUTING.md for development guidelines
+
+## Development Troubleshooting
+
+### CLI Backend vs FastAPI
+
+**Current**: Backend uses CLI-based command processing  
+**Future**: Phase 1.2 will introduce FastAPI REST architecture
+
+If you see references to FastAPI endpoints that don't exist, they're planned features documented in the roadmap.
 
 ## Quick Fixes Checklist
 
