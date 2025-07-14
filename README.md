@@ -1,4 +1,4 @@
-<h1 align="center">LibreAssistant Project</h1>
+<h1 align="center">LibreAssistant</h1>
 
 
 > ### 📢 Announcement
