@@ -99,7 +99,7 @@ These features will make LibreAssistant feel like **your private ChatGPT**—but
 ## Getting Started
 
 LibreAssistant right now works like Reor:  
-1️⃣ **Download** from [Releases](https://github.com/YourUser/LibreAssistant/releases).  
+1️⃣ **Download** from [Releases](https://github.com/aubreyhayes47/LibreAssistant/releases).  
 2️⃣ **Choose a vault folder** of markdown files.  
 3️⃣ **Add your local models** via Ollama or Transformers.js.  
 4️⃣ **Configure your own API keys** for cloud LLMs if desired.  
@@ -127,7 +127,7 @@ Make sure you have [Node.js](https://nodejs.org/en/download) installed.
 
 ```
 
-git clone [https://github.com/YourUser/LibreAssistant.git](https://github.com/YourUser/LibreAssistant.git)
+git clone [https://github.com/aubreyhayes47/LibreAssistant.git](https://github.com/aubreyhayes47/LibreAssistant.git)
 
 ```
 
@@ -168,7 +168,7 @@ This is **early days** for LibreAssistant.
 - Design a friendly, calm UI  
 - Squash bugs and improve stability
 
-Check our [issues](https://github.com/YourUser/LibreAssistant/issues) and the [CONTRIBUTING.md](CONTRIBUTING.md) guide to get involved.
+Check our [issues](https://github.com/aubreyhayes47/LibreAssistant/issues) to get involved.
 
 ---
 
