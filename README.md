@@ -179,5 +179,3 @@ AGPL-3.0 license. See `LICENSE` for details.
 ---
 
 LibreAssistant: **A local-first, user-controlled AI assistant you truly own.**
-
-```
