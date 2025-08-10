@@ -1,0 +1,25 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
+repository:
+  default_branch: develop
+
+branches:
+  - name: main
+    protection:
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+      enforce_admins: true
+      required_status_checks:
+        strict: true
+        contexts: []
+
+projects:
+  - name: LibreAssistant Master Roadmap
+    body: |
+      Central project board tracking progress across phases.
+    columns:
+      - name: Backlog
+      - name: In Progress
+      - name: Review
+      - name: Done
