@@ -14,13 +14,6 @@ Examples of behavior that contributes to a positive environment include:
 - Focusing on what is best for the community
 - Showing tolerance toward other community members
 
-Unacceptable behavior includes:
-
-- The use of sexualized language or imagery
-- Trolling, insulting or derogatory comments, and personal or political attacks
-- Public or private harassment
-- Publishing others' private information without permission
-- Any conduct which could reasonably be considered inappropriate in a professional setting
 
 ## Enforcement Responsibilities
 Project maintainers are responsible for clarifying and enforcing standards of acceptable behavior.  The maintainers may remove, edit, or reject contributions that are not aligned with this Code of Conduct.
