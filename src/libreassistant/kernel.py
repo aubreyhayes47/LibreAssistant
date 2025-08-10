@@ -1,0 +1,47 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
+"""Minimal microkernel managing plugins and user state."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, Protocol
+
+
+class Plugin(Protocol):
+    """Protocol that all plugins must implement."""
+
+    def run(self, user_state: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the plugin with the given user state and payload."""
+
+
+class Microkernel:
+    """Core microkernel responsible for plugin coordination."""
+
+    def __init__(self) -> None:
+        self._plugins: Dict[str, Plugin] = {}
+        self._states: Dict[str, Dict[str, Any]] = {}
+
+    def register_plugin(self, name: str, plugin: Plugin) -> None:
+        """Register a plugin implementation under a specific name."""
+        self._plugins[name] = plugin
+
+    def get_state(self, user_id: str) -> Dict[str, Any]:
+        """Retrieve mutable state for a user, creating it if necessary."""
+        return self._states.setdefault(user_id, {})
+
+    def invoke(self, name: str, user_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Invoke a registered plugin for the given user."""
+        plugin = self._plugins.get(name)
+        if plugin is None:
+            raise KeyError(name)
+        state = self.get_state(user_id)
+        return plugin.run(state, payload)
+
+    def reset(self) -> None:
+        """Reset the registry and user state store. Intended for tests."""
+        self._plugins.clear()
+        self._states.clear()
+
+
+kernel = Microkernel()
