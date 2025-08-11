@@ -14,6 +14,7 @@ Continuous integration runs tests, Markdown style checks, and license header ver
 - **Past Requests** – history API and `<la-past-requests>` component to review plugin interactions
 - **Personal Data Vault** – encrypted, consent-aware storage with export and deletion endpoints
 - **Transparency Dashboards** – Bill of Materials and System Health endpoints with corresponding web components
+- **Theme Marketplace** – browse and install community themes sourced from a dedicated repository
 
 ## Development
 
@@ -30,6 +31,12 @@ Install dependencies and run the test suite with:
 ```sh
 python -m pip install -e .[dev]
 pytest
+```
+
+Rebuild the theme catalog after adding or updating themes with:
+
+```sh
+python scripts/build_theme_catalog.py
 ```
 
 ## Plugins

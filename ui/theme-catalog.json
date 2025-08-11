@@ -1,0 +1,30 @@
+[
+  {
+    "id": "light",
+    "name": "Light",
+    "author": "LibreAssistant",
+    "preview": "#f8f9fa",
+    "rating": 5
+  },
+  {
+    "id": "dark",
+    "name": "Dark",
+    "author": "LibreAssistant",
+    "preview": "#1e1e1e",
+    "rating": 4
+  },
+  {
+    "id": "high-contrast",
+    "name": "High Contrast",
+    "author": "LibreAssistant",
+    "preview": "#000000",
+    "rating": 4
+  },
+  {
+    "id": "solarized",
+    "name": "Solarized",
+    "author": "Community",
+    "preview": "#fdf6e3",
+    "rating": 3
+  }
+]

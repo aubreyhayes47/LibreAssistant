@@ -1,15 +1,9 @@
 /* Copyright (c) 2024 LibreAssistant contributors.
    Licensed under the MIT License. */
 
-:root {
-  /* Color palette */
-  --color-primary: #0d6efd;
-  --color-primary-hover: #0b5ed7;
-  --color-secondary: #6c757d;
-  --color-background: #ffffff;
-  --color-surface: #f8f9fa;
-  --color-text: #212529;
+/* Base design tokens and theme definitions */
 
+:root {
   /* Typography */
   --font-family-sans: 'Helvetica Neue', Arial, sans-serif;
   --font-size-base: 16px;
@@ -29,4 +23,40 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 16px;
+
+  /* Light theme (default) */
+  --color-primary: #0d6efd;
+  --color-primary-hover: #0b5ed7;
+  --color-secondary: #6c757d;
+  --color-background: #ffffff;
+  --color-surface: #f8f9fa;
+  --color-text: #212529;
+  --color-border: #dee2e6;
+  --color-backdrop: rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+:root[data-theme="dark"] {
+  --color-primary: #66b2ff;
+  --color-primary-hover: #3399ff;
+  --color-secondary: #a2a9b1;
+  --color-background: #121212;
+  --color-surface: #1e1e1e;
+  --color-text: #f1f1f1;
+  --color-border: #343a40;
+  --color-backdrop: rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="high-contrast"] {
+  --color-primary: #ffff00;
+  --color-primary-hover: #e6e600;
+  --color-secondary: #ffffff;
+  --color-background: #000000;
+  --color-surface: #000000;
+  --color-text: #ffffff;
+  --color-border: #ffffff;
+  --color-backdrop: rgba(0, 0, 0, 1);
+  --shadow-card: none;
+}
+

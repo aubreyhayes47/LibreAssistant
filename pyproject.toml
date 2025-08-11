@@ -17,6 +17,7 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "cryptography",
+    "cssutils",
 ]
 
 [project.optional-dependencies]

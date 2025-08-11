@@ -27,3 +27,12 @@ Use the GitHub issue tracker to report bugs or request features. Please include 
 
 ## Community
 Join discussions in issues and pull requests to help shape the direction of the project. We strive for inclusive and respectful collaboration.
+
+## Theme Submissions
+
+Community themes live under the `community-themes/` directory. To submit a new theme:
+
+1. Create a folder in `community-themes/` with your theme's name.
+2. Add a `metadata.json` file describing the theme and a `theme.css` stylesheet containing your CSS variables.
+3. Run `python scripts/build_theme_catalog.py` to regenerate the catalog and sanitized styles.
+4. Include the generated changes in your pull request.
