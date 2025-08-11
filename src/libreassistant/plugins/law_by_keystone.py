@@ -1,0 +1,64 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
+"""Law by Keystone plugin stub integrating with File I/O."""
+
+from __future__ import annotations
+
+import json
+import os
+from typing import Any, Dict
+
+from ..kernel import kernel
+from .file_io import FileIOPlugin
+
+
+class LawByKeystonePlugin:
+    """Export legal research results to the local filesystem."""
+
+    def run(self, user_state: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+        query = payload.get("query")
+        fmt = payload.get("output_format", "md")
+        output_path = payload.get("output_path")
+        if not query or not output_path:
+            return {"error": "query and output_path required"}
+
+        if fmt not in {"md", "json", "html"}:
+            return {"error": "unsupported format"}
+
+        os.makedirs(output_path, exist_ok=True)
+
+        summary = {
+            "query": query,
+            "results": [
+                {"title": "Example Case", "summary": "No real data fetched"}
+            ],
+        }
+
+        if fmt == "md":
+            content = f"# Research Summary\n\nQuery: {query}\n"
+            ext = "md"
+        elif fmt == "json":
+            content = json.dumps(summary, indent=2)
+            ext = "json"
+        else:  # html
+            content = (
+                "<html><body><h1>Research Summary</h1>"
+                f"<p>Query: {query}</p></body></html>"
+            )
+            ext = "html"
+
+        file_path = os.path.join(output_path, f"summary.{ext}")
+        file_io = FileIOPlugin()
+        result = file_io.run(
+            user_state,
+            {"operation": "create", "path": file_path, "content": content},
+        )
+        if "error" in result:
+            return result
+        return {"status": "exported", "path": file_path}
+
+
+def register() -> None:
+    """Register the Law by Keystone plugin with the microkernel."""
+    kernel.register_plugin("law_by_keystone", LawByKeystonePlugin())

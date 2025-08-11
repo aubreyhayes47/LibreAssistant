@@ -1,0 +1,9 @@
+{
+  "name": "law_by_keystone",
+  "intent": "export_legal_research",
+  "parameters": {
+    "query": "string",
+    "output_format": "md|json|html",
+    "output_path": "string"
+  }
+}

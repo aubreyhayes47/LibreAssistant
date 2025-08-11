@@ -10,7 +10,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 from .kernel import kernel
-from .plugins import echo
+from .plugins import echo, file_io, law_by_keystone, think_tank
 from .providers import providers
 from .providers.cloud import CloudProvider
 from .providers.local import LocalProvider
@@ -39,6 +39,9 @@ def create_app() -> FastAPI:
 
     # Register built-in plugins
     echo.register()
+    file_io.register()
+    law_by_keystone.register()
+    think_tank.register()
 
     # Register default providers
     providers.register("cloud", CloudProvider())

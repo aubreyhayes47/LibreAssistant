@@ -50,6 +50,9 @@ class LAPluginCatalogue extends HTMLElement {
       { name: 'Calculator', enabled: false },
       { name: 'Notes', enabled: false },
       { name: 'Calendar', enabled: false },
+      { name: 'File I/O', enabled: false },
+      { name: 'Law by Keystone', enabled: false },
+      { name: 'ThinkTank', enabled: false },
     ];
   }
 
