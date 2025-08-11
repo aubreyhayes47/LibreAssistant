@@ -18,6 +18,9 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 from libreassistant.main import app  # noqa: E402  # isort:skip
 from libreassistant.kernel import kernel  # noqa: E402  # isort:skip
 from libreassistant.plugins.echo import register as register_echo  # noqa: E402  # isort:skip
+from libreassistant.providers import providers  # noqa: E402  # isort:skip
+from libreassistant.providers.cloud import CloudProvider  # noqa: E402  # isort:skip
+from libreassistant.providers.local import LocalProvider  # noqa: E402  # isort:skip
 
 
 @pytest.fixture
@@ -32,4 +35,7 @@ def reset_kernel() -> Generator[None, None, None]:
     """Reset the microkernel between tests."""
     kernel.reset()
     register_echo()
+    providers.reset()
+    providers.register("cloud", CloudProvider())
+    providers.register("local", LocalProvider())
     yield

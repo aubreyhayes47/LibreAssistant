@@ -29,5 +29,5 @@ def test_user_state_persists(client) -> None:
     )
     assert first.json()["result"] == {"count": 1}
     assert second.json()["result"] == {"count": 2}
-    assert second.json()["state"] == {"count": 2}
+    assert second.json()["state"]["count"] == 2
 
