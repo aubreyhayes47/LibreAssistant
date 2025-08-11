@@ -5,6 +5,16 @@ A FOSS alternative to next-gen AI assistants like Google Gemini and ChatGPT.
 
 Continuous integration runs tests, Markdown style checks, and license header verification on every pull request.
 
+## Features
+
+- **Design System** – CSS design tokens and accessible web components (primary button, input field, information card, modal dialog)
+- **Main UI** – a tabbed layout with sections for Switchboard, Catalogue, Past Requests, and User Profile plus a six‑step onboarding flow
+- **Switchboard & Providers** – request composer with twelve plugin slots, provider registry for cloud or local models, and an initial system prompt
+- **Plugin Catalogue** – searchable list with enable/disable toggles
+- **Past Requests** – history API and `<la-past-requests>` component to review plugin interactions
+- **Personal Data Vault** – encrypted, consent-aware storage with export and deletion endpoints
+- **Transparency Dashboards** – Bill of Materials and System Health endpoints with corresponding web components
+
 ## Development
 
 A Docker-based environment is provided for local development. Start the API with:
@@ -14,6 +24,13 @@ docker compose up --build
 ```
 
 The service will be available at [http://localhost:8000](http://localhost:8000).
+
+Install dependencies and run the test suite with:
+
+```sh
+python -m pip install -e .[dev]
+pytest
+```
 
 ## Plugins
 
