@@ -1,9 +1,20 @@
 # Copyright (c) 2024 LibreAssistant contributors.
 # Licensed under the MIT License.
 
-"""Integration test for the built-in echo plugin."""
+"""Unit and integration tests for the built-in echo plugin."""
 
 from __future__ import annotations
+
+
+from libreassistant.plugins.echo import EchoPlugin
+
+
+def test_echo_plugin_unit() -> None:
+    plugin = EchoPlugin()
+    state = {}
+    result = plugin.run(state, {"message": "hi"})
+    assert result == {"echo": "hi"}
+    assert state["last_message"] == "hi"
 
 
 def test_echo_plugin_integration(client) -> None:
