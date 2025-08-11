@@ -6,6 +6,7 @@
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from .kernel import kernel
@@ -15,6 +16,7 @@ from .providers.cloud import CloudProvider
 from .providers.local import LocalProvider
 from .vault import DataVault
 from .transparency import HealthMonitor, get_bill_of_materials
+from .themes import get_theme_css
 
 
 def create_app() -> FastAPI:
@@ -27,6 +29,13 @@ def create_app() -> FastAPI:
     async def record_metrics(request: Request, call_next):
         monitor.record_request()
         return await call_next(request)
+
+    @app.middleware("http")
+    async def set_csp(request: Request, call_next):
+        response = await call_next(request)
+        csp = "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'"
+        response.headers["Content-Security-Policy"] = csp
+        return response
 
     # Register built-in plugins
     echo.register()
@@ -118,6 +127,14 @@ def create_app() -> FastAPI:
         except ValueError as exc:  # pragma: no cover - error branch
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"result": result}
+
+    @app.get("/api/v1/themes/{theme_id}.css")
+    def theme_css(theme_id: str) -> Response:
+        try:
+            css = get_theme_css(theme_id)
+        except FileNotFoundError as exc:  # pragma: no cover - error branch
+            raise HTTPException(status_code=404, detail="Theme not found") from exc
+        return Response(css, media_type="text/css")
 
     @app.get("/api/v1/bom")
     def get_bom() -> Dict[str, Any]:

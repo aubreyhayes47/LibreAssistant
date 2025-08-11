@@ -7,4 +7,5 @@ from __future__ import annotations
 
 from importlib import resources
 
-SYSTEM_PROMPT = resources.files("libreassistant").joinpath("system_prompt.txt").read_text()
+raw_prompt = resources.files("libreassistant").joinpath("system_prompt.txt").read_text().splitlines()
+SYSTEM_PROMPT = "\n".join(line for line in raw_prompt if not line.startswith("#"))

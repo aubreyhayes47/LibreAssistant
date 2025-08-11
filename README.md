@@ -7,13 +7,14 @@ Continuous integration runs tests, Markdown style checks, and license header ver
 
 ## Features
 
-- **Design System** – CSS design tokens and accessible web components (primary button, input field, information card, modal dialog)
+- **Design System** – token-based CSS with Light, Dark, and High-Contrast themes plus accessible web components (primary button, input field, information card, modal dialog)
 - **Main UI** – a tabbed layout with sections for Switchboard, Catalogue, Past Requests, and User Profile plus a six‑step onboarding flow
 - **Switchboard & Providers** – request composer with twelve plugin slots, provider registry for cloud or local models, and an initial system prompt
 - **Plugin Catalogue** – searchable list with enable/disable toggles
 - **Past Requests** – history API and `<la-past-requests>` component to review plugin interactions
 - **Personal Data Vault** – encrypted, consent-aware storage with export and deletion endpoints
 - **Transparency Dashboards** – Bill of Materials and System Health endpoints with corresponding web components
+- **Theme Marketplace** – browse, preview, rate, and install community themes from a dedicated repository; styles are sanitized server-side, loaded in sandboxed iframes, and served with a strict Content Security Policy
 
 ## Development
 
@@ -30,6 +31,12 @@ Install dependencies and run the test suite with:
 ```sh
 python -m pip install -e .[dev]
 pytest
+```
+
+Rebuild the theme catalog after adding or updating themes with:
+
+```sh
+python scripts/build_theme_catalog.py
 ```
 
 ## Plugins

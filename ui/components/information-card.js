@@ -13,7 +13,7 @@ class LAInformationCard extends HTMLElement {
           font-family: var(--font-family-sans);
           padding: var(--spacing-md);
           border-radius: var(--radius-md);
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: var(--shadow-card);
         }
         .title {
           font-size: var(--font-size-lg);
