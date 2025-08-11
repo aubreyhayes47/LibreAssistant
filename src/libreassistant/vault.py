@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """Encrypted in-memory data vault for user data."""
 from __future__ import annotations
 

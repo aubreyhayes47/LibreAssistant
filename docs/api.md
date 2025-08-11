@@ -22,6 +22,9 @@ LibreAssistant exposes a FastAPI service with endpoints for plugin invocation, u
 - `POST /api/v1/providers/{name}/key` – configure an API key for a provider
 - `POST /api/v1/generate` – generate a response using the specified provider
 
+## Themes
+- `GET /api/v1/themes/{theme_id}.css` – return sanitized CSS for a theme. The response is served with a strict `Content-Security-Policy` header.
+
 ## Transparency
 - `GET /api/v1/bom` – list application dependencies and versions
 - `GET /api/v1/health` – expose request counts and runtime metrics

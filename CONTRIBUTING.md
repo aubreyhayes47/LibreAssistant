@@ -7,7 +7,7 @@ Thank you for your interest in contributing! We welcome all contributions that u
 ## Development Workflow
 1. Fork the repository and create your feature branch from `develop`.
 2. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
-3. Write clear, self-documented code and include tests when relevant.
+3. Write clear, self-documented code and include tests when relevant. UI styling must use the tokenized design system in `ui/tokens.css`, which includes Light, Dark, and High-Contrast themes.
 4. Run `pytest` to make sure all tests pass.
 5. Lint documentation with `npx markdownlint-cli '**/*.md'`.
 6. Verify files contain the MIT license header using `python scripts/check_license_headers.py`.
@@ -30,9 +30,9 @@ Join discussions in issues and pull requests to help shape the direction of the 
 
 ## Theme Submissions
 
-Community themes live under the `community-themes/` directory. To submit a new theme:
+Community themes live under the `community-themes/` directory. Themes override design tokens via CSS custom properties and are sanitized server-side to a whitelist of safe properties. To submit a new theme:
 
 1. Create a folder in `community-themes/` with your theme's name.
-2. Add a `metadata.json` file describing the theme and a `theme.css` stylesheet containing your CSS variables.
+2. Add a `metadata.json` file describing the theme and a `theme.css` stylesheet overriding tokens via CSS custom properties. Unsupported properties will be removed during sanitization.
 3. Run `python scripts/build_theme_catalog.py` to regenerate the catalog and sanitized styles.
-4. Include the generated changes in your pull request.
+4. Include the generated changes in your pull request. The sanitized CSS will be served at `/api/v1/themes/{name}.css` for the marketplace to load in a sandboxed iframe.

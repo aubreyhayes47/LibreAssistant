@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """Tests for the personal data vault and consent endpoints."""
 from __future__ import annotations
 
