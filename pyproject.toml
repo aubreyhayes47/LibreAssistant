@@ -16,6 +16,7 @@ authors = [{name = "LibreAssistant contributors"}]
 dependencies = [
     "fastapi",
     "uvicorn",
+    "cryptography",
 ]
 
 [project.optional-dependencies]

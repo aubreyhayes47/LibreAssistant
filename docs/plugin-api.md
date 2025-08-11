@@ -55,3 +55,7 @@ def register() -> None:
 ```
 
 The plugin can then be invoked through the `/api/v1/invoke` endpoint by specifying its name and a payload.
+
+## History
+
+Each invocation is appended to a per-user log that can be retrieved via `GET /api/v1/history/{user_id}`. This history powers the Past Requests tab in the web UI and can aid debugging during plugin development.

@@ -14,6 +14,9 @@ def test_echo_plugin_integration(client) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "result": {"echo": "hi"},
-        "state": {"last_message": "hi"},
+        "state": {
+            "last_message": "hi",
+            "history": [{"plugin": "echo", "payload": {"message": "hi"}}],
+        },
     }
 

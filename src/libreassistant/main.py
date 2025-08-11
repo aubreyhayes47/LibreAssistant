@@ -5,19 +5,37 @@
 
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
 from .kernel import kernel
 from .plugins import echo
+from .providers import providers
+from .providers.cloud import CloudProvider
+from .providers.local import LocalProvider
+from .vault import DataVault
+from .transparency import HealthMonitor, get_bill_of_materials
 
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(title="LibreAssistant")
 
+    monitor = HealthMonitor()
+
+    @app.middleware("http")
+    async def record_metrics(request: Request, call_next):
+        monitor.record_request()
+        return await call_next(request)
+
     # Register built-in plugins
     echo.register()
+
+    # Register default providers
+    providers.register("cloud", CloudProvider())
+    providers.register("local", LocalProvider())
+
+    vault = DataVault()
 
     @app.get("/")
     def read_root() -> Dict[str, str]:
@@ -36,7 +54,80 @@ def create_app() -> FastAPI:
         except KeyError as exc:  # pragma: no cover - error branch
             raise HTTPException(status_code=404, detail="Plugin not found") from exc
         state = kernel.get_state(request.user_id)
+        history = state.setdefault("history", [])
+        history.append({"plugin": request.plugin, "payload": request.payload})
         return {"result": result, "state": state}
+
+    @app.get("/api/v1/history/{user_id}")
+    def get_history(user_id: str) -> Dict[str, Any]:
+        """Retrieve a user's past plugin invocations."""
+        state = kernel.get_state(user_id)
+        return {"history": state.get("history", [])}
+
+    class VaultData(BaseModel):
+        data: Dict[str, Any]
+
+    @app.post("/api/v1/vault/{user_id}")
+    def store_data(user_id: str, request: VaultData) -> Dict[str, str]:
+        vault.store(user_id, request.data)
+        return {"status": "ok"}
+
+    @app.get("/api/v1/vault/{user_id}")
+    def get_data(user_id: str) -> Dict[str, Any]:
+        return {"data": vault.retrieve(user_id)}
+
+    @app.get("/api/v1/vault/{user_id}/export")
+    def export_data(user_id: str) -> Dict[str, Any]:
+        return {"data": vault.export(user_id)}
+
+    @app.delete("/api/v1/vault/{user_id}")
+    def delete_data(user_id: str) -> Dict[str, str]:
+        vault.delete(user_id)
+        return {"status": "deleted"}
+
+    class Consent(BaseModel):
+        consent: bool
+
+    @app.post("/api/v1/consent/{user_id}")
+    def set_consent(user_id: str, request: Consent) -> Dict[str, str]:
+        vault.set_consent(user_id, request.consent)
+        return {"status": "ok"}
+
+    @app.get("/api/v1/consent/{user_id}")
+    def get_consent(user_id: str) -> Dict[str, bool]:
+        return {"consent": vault.get_consent(user_id)}
+
+    class ProviderKey(BaseModel):
+        key: str
+
+    @app.post("/api/v1/providers/{name}/key")
+    def set_provider_key(name: str, request: ProviderKey) -> Dict[str, str]:
+        providers.set_api_key(name, request.key)
+        return {"status": "ok"}
+
+    class GenerateRequest(BaseModel):
+        provider: str
+        prompt: str
+
+    @app.post("/api/v1/generate")
+    def generate(request: GenerateRequest) -> Dict[str, str]:
+        try:
+            result = providers.generate(request.provider, request.prompt)
+        except KeyError as exc:  # pragma: no cover - error branch
+            raise HTTPException(status_code=404, detail="Provider not found") from exc
+        except ValueError as exc:  # pragma: no cover - error branch
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"result": result}
+
+    @app.get("/api/v1/bom")
+    def get_bom() -> Dict[str, Any]:
+        """Return the application's Bill of Materials."""
+        return get_bill_of_materials()
+
+    @app.get("/api/v1/health")
+    def health() -> Dict[str, Any]:
+        """Expose basic system health metrics."""
+        return monitor.get_status()
 
     return app
 
