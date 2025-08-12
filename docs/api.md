@@ -26,5 +26,6 @@ LibreAssistant exposes a FastAPI service with endpoints for plugin invocation, u
 - `GET /api/v1/themes/{theme_id}.css` – return sanitized CSS for a theme. The response is served with a strict `Content-Security-Policy` header.
 
 ## Transparency
-- `GET /api/v1/bom` – list application dependencies and versions
+- `GET /api/v1/bom` – list application dependencies, installed models, and datasets. The endpoint scans
+  directories specified by `LA_MODELS_DIR` and `LA_DATASETS_DIR` (defaulting to `models/` and `datasets/`).
 - `GET /api/v1/health` – expose request counts and runtime metrics
