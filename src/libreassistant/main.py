@@ -31,6 +31,17 @@ def create_app() -> FastAPI:
         return await call_next(request)
 
     @app.middleware("http")
+    async def catch_errors(request: Request, call_next):
+        try:
+            response = await call_next(request)
+        except Exception as exc:  # pragma: no cover - error branch
+            monitor.record_error(str(exc))
+            raise
+        if response.status_code >= 500:  # pragma: no cover - error branch
+            monitor.record_error(f"HTTP {response.status_code}")
+        return response
+
+    @app.middleware("http")
     async def set_csp(request: Request, call_next):
         response = await call_next(request)
         csp = "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'"
