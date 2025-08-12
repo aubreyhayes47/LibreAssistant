@@ -38,6 +38,3 @@ where = ["src"]
 [tool.setuptools]
 package-dir = {"" = "src"}
 
-[tool.mypy]
-mypy_path = ["typings"]
-
