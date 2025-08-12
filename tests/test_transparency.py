@@ -30,8 +30,10 @@ def test_error_tracking(client):
 
         return Response(status_code=500)
 
-    before = client.get("/api/v1/health").json()["error_count"]
+    before_status = client.get("/api/v1/health").json()
+    assert before_status["status"] == "ok"
     resp = client.get("/fail")
     assert resp.status_code == 500
-    after = client.get("/api/v1/health").json()["error_count"]
-    assert after == before + 1
+    after_status = client.get("/api/v1/health").json()
+    assert after_status["error_count"] == before_status["error_count"] + 1
+    assert after_status["status"] == "error"

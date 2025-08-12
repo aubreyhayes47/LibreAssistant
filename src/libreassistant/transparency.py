@@ -31,8 +31,9 @@ class HealthMonitor:
 
     def get_status(self) -> Dict[str, Any]:
         """Return a snapshot of current system health metrics."""
+        status = "error" if self.error_count > 0 else "ok"
         return {
-            "status": "ok",
+            "status": status,
             "uptime": time.time() - self.start_time,
             "requests": self.requests,
             "error_count": self.error_count,
