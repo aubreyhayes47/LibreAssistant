@@ -39,6 +39,17 @@ Rebuild the theme catalog after adding or updating themes with:
 python scripts/build_theme_catalog.py
 ```
 
+### Model and Dataset Directories
+
+The bill of materials endpoint inspects local directories to report installed artifacts. By default it scans `models/` and `datasets/` relative to the project root. These paths can be customized with environment variables:
+
+```sh
+export LA_MODELS_DIR=/path/to/models
+export LA_DATASETS_DIR=/path/to/datasets
+```
+
+The endpoint returns empty lists when the configured directories are missing or contain no entries.
+
 ## Plugins
 
 LibreAssistant ships with a simple `echo` plugin that returns the provided message and stores it in the user's state. It serves as a reference implementation for developing additional plugins.

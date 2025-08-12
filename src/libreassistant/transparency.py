@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
+import os
 import time
+from pathlib import Path
 from typing import Any, Dict, List
 
 import importlib.metadata
@@ -46,4 +48,22 @@ def get_bill_of_materials() -> Dict[str, List[str]]:
     dependencies = sorted(
         f"{dist.metadata['Name']}=={dist.version}" for dist in importlib.metadata.distributions()
     )
-    return {"dependencies": dependencies, "models": [], "datasets": []}
+    models_dir = Path(os.environ.get("LA_MODELS_DIR", "models"))
+    datasets_dir = Path(os.environ.get("LA_DATASETS_DIR", "datasets"))
+
+    def _scan(path: Path) -> List[str]:
+        if not path.exists():
+            return []
+        if path.is_file():
+            return [path.name]
+        items = [
+            p.name
+            for p in path.iterdir()
+            if (p.is_file() or p.is_dir()) and not p.name.startswith(".")
+        ]
+        return sorted(items)
+
+    models = _scan(models_dir)
+    datasets = _scan(datasets_dir)
+
+    return {"dependencies": dependencies, "models": models, "datasets": datasets}
