@@ -9,6 +9,9 @@ def test_vault_crud_and_export(client):
     user_id = "alice"
     payload = {"favorite": "cats"}
 
+    resp = client.post(f"/api/v1/consent/{user_id}", json={"consent": True})
+    assert resp.status_code == 200
+
     resp = client.post(f"/api/v1/vault/{user_id}", json={"data": payload})
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
@@ -24,6 +27,9 @@ def test_vault_crud_and_export(client):
     resp = client.delete(f"/api/v1/vault/{user_id}")
     assert resp.status_code == 200
     assert resp.json()["status"] == "deleted"
+
+    resp = client.post(f"/api/v1/consent/{user_id}", json={"consent": True})
+    assert resp.status_code == 200
 
     resp = client.get(f"/api/v1/vault/{user_id}")
     assert resp.status_code == 200
@@ -43,3 +49,24 @@ def test_consent_toggle(client):
     resp = client.get(f"/api/v1/consent/{user_id}")
     assert resp.status_code == 200
     assert resp.json()["consent"] is True
+
+
+def test_vault_requires_consent(client):
+    user_id = "eve"
+    payload = {"pet": "parrot"}
+
+    resp = client.post(f"/api/v1/vault/{user_id}", json={"data": payload})
+    assert resp.status_code == 403
+
+    resp = client.get(f"/api/v1/vault/{user_id}")
+    assert resp.status_code == 403
+
+    resp = client.post(f"/api/v1/consent/{user_id}", json={"consent": True})
+    assert resp.status_code == 200
+
+    resp = client.post(f"/api/v1/vault/{user_id}", json={"data": payload})
+    assert resp.status_code == 200
+
+    resp = client.get(f"/api/v1/vault/{user_id}")
+    assert resp.status_code == 200
+    assert resp.json()["data"] == payload
