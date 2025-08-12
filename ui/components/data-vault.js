@@ -32,35 +32,65 @@ class LADataVault extends HTMLElement {
   }
 
   connectedCallback() {
-    const user = this.getAttribute('user') || 'default';
-    const textarea = this.shadowRoot.getElementById('data');
-    const output = this.shadowRoot.getElementById('output');
+    this.user = this.getAttribute('user') || 'default';
+    this.textarea = this.shadowRoot.getElementById('data');
+    this.output = this.shadowRoot.getElementById('output');
+    this.saveBtn = this.shadowRoot.getElementById('save');
+    this.exportBtn = this.shadowRoot.getElementById('export');
+    this.deleteBtn = this.shadowRoot.getElementById('delete');
 
-    this.shadowRoot.getElementById('save').addEventListener('click', async () => {
+    fetch(`/api/v1/consent/${this.user}`)
+      .then(r => r.json())
+      .then(j => this.updateConsent(j.consent));
+
+    this.saveBtn.addEventListener('click', async () => {
       let data = {};
       try {
-        data = JSON.parse(textarea.value || '{}');
+        data = JSON.parse(this.textarea.value || '{}');
       } catch (e) {
         return;
       }
-      await fetch(`/api/v1/vault/${user}`, {
+      const resp = await fetch(`/api/v1/vault/${this.user}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data })
       });
+      if (resp.status === 403) {
+        this.output.textContent = 'Consent required';
+      }
     });
 
-    this.shadowRoot.getElementById('export').addEventListener('click', async () => {
-      const resp = await fetch(`/api/v1/vault/${user}/export`);
+    this.exportBtn.addEventListener('click', async () => {
+      const resp = await fetch(`/api/v1/vault/${this.user}/export`);
+      if (resp.status === 403) {
+        this.output.textContent = 'Consent required';
+        return;
+      }
       const json = await resp.json();
-      output.textContent = JSON.stringify(json.data, null, 2);
+      this.output.textContent = JSON.stringify(json.data, null, 2);
     });
 
-    this.shadowRoot.getElementById('delete').addEventListener('click', async () => {
-      await fetch(`/api/v1/vault/${user}`, { method: 'DELETE' });
-      output.textContent = '';
-      textarea.value = '';
+    this.deleteBtn.addEventListener('click', async () => {
+      const resp = await fetch(`/api/v1/vault/${this.user}`, { method: 'DELETE' });
+      if (resp.status === 403) {
+        this.output.textContent = 'Consent required';
+        return;
+      }
+      this.output.textContent = '';
+      this.textarea.value = '';
     });
+  }
+
+  updateConsent(consent) {
+    const disabled = !consent;
+    this.saveBtn.disabled = disabled;
+    this.exportBtn.disabled = disabled;
+    this.deleteBtn.disabled = disabled;
+    if (disabled) {
+      this.output.textContent = 'Consent required';
+    } else {
+      this.output.textContent = '';
+    }
   }
 }
 

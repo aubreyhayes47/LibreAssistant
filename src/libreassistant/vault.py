@@ -18,12 +18,19 @@ class DataVault:
         self._data: Dict[str, bytes] = {}
         self._consent: Dict[str, bool] = {}
 
+    def _require_consent(self, user_id: str) -> None:
+        """Raise ``PermissionError`` if the user has not granted consent."""
+        if not self._consent.get(user_id, False):
+            raise PermissionError("Consent required")
+
     def store(self, user_id: str, data: Dict[str, Any]) -> None:
+        self._require_consent(user_id)
         payload = json.dumps(data).encode()
         token = self._fernet.encrypt(payload)
         self._data[user_id] = token
 
     def retrieve(self, user_id: str) -> Dict[str, Any]:
+        self._require_consent(user_id)
         token = self._data.get(user_id)
         if not token:
             return {}
@@ -31,10 +38,12 @@ class DataVault:
         return json.loads(payload.decode())
 
     def delete(self, user_id: str) -> None:
+        self._require_consent(user_id)
         self._data.pop(user_id, None)
         self._consent.pop(user_id, None)
 
     def export(self, user_id: str) -> Dict[str, Any]:
+        self._require_consent(user_id)
         return self.retrieve(user_id)
 
     def set_consent(self, user_id: str, consent: bool) -> None:

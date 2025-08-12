@@ -81,20 +81,34 @@ def create_app() -> FastAPI:
 
     @app.post("/api/v1/vault/{user_id}")
     def store_data(user_id: str, request: VaultData) -> Dict[str, str]:
-        vault.store(user_id, request.data)
+        try:
+            vault.store(user_id, request.data)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="Consent required")
         return {"status": "ok"}
 
     @app.get("/api/v1/vault/{user_id}")
     def get_data(user_id: str) -> Dict[str, Any]:
-        return {"data": vault.retrieve(user_id)}
+        try:
+            data = vault.retrieve(user_id)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="Consent required")
+        return {"data": data}
 
     @app.get("/api/v1/vault/{user_id}/export")
     def export_data(user_id: str) -> Dict[str, Any]:
-        return {"data": vault.export(user_id)}
+        try:
+            data = vault.export(user_id)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="Consent required")
+        return {"data": data}
 
     @app.delete("/api/v1/vault/{user_id}")
     def delete_data(user_id: str) -> Dict[str, str]:
-        vault.delete(user_id)
+        try:
+            vault.delete(user_id)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="Consent required")
         return {"status": "deleted"}
 
     class Consent(BaseModel):

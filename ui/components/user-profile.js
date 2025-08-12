@@ -18,8 +18,12 @@ class LAUserProfile extends HTMLElement {
   connectedCallback() {
     const user = this.getAttribute('user') || 'default';
     const checkbox = this.shadowRoot.getElementById('consent');
+    const vault = this.shadowRoot.querySelector('la-data-vault');
     fetch(`/api/v1/consent/${user}`).then(r => r.json()).then(j => {
       checkbox.checked = j.consent;
+      if (vault && typeof vault.updateConsent === 'function') {
+        vault.updateConsent(j.consent);
+      }
     });
     checkbox.addEventListener('change', async () => {
       await fetch(`/api/v1/consent/${user}`, {
@@ -27,6 +31,9 @@ class LAUserProfile extends HTMLElement {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ consent: checkbox.checked })
       });
+      if (vault && typeof vault.updateConsent === 'function') {
+        vault.updateConsent(checkbox.checked);
+      }
     });
   }
 }
