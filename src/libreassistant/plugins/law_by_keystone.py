@@ -10,7 +10,7 @@ import os
 from typing import Any, Dict
 
 from ..kernel import kernel
-from .file_io import FileIOPlugin
+from . import file_io
 
 
 class LawByKeystonePlugin:
@@ -26,7 +26,16 @@ class LawByKeystonePlugin:
         if fmt not in {"md", "json", "html"}:
             return {"error": "unsupported format"}
 
-        os.makedirs(output_path, exist_ok=True)
+        allowed_dir = os.path.realpath(os.path.expanduser(file_io.ALLOWED_BASE_DIR))
+        user_path = os.path.expanduser(output_path)
+        if not os.path.isabs(user_path):
+            user_path = os.path.join(allowed_dir, user_path)
+        output_dir = os.path.realpath(user_path)
+
+        if not (output_dir == allowed_dir or output_dir.startswith(allowed_dir + os.sep)):
+            return {"error": "path outside allowed directory"}
+
+        os.makedirs(output_dir, exist_ok=True)
 
         summary = {
             "query": query,
@@ -48,9 +57,9 @@ class LawByKeystonePlugin:
             )
             ext = "html"
 
-        file_path = os.path.join(output_path, f"summary.{ext}")
-        file_io = FileIOPlugin()
-        result = file_io.run(
+        file_path = os.path.join(output_dir, f"summary.{ext}")
+        file_plugin = file_io.FileIOPlugin()
+        result = file_plugin.run(
             user_state,
             {"operation": "create", "path": file_path, "content": content},
         )
