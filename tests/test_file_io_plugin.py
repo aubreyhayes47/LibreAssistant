@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from libreassistant.plugins import file_io
 from libreassistant.plugins.file_io import FileIOPlugin
@@ -10,7 +11,7 @@ def test_file_io_plugin_unit(tmp_path: Path) -> None:
     file_io.ALLOWED_BASE_DIR = str(tmp_path)
     plugin = FileIOPlugin()
     path = tmp_path / "example.txt"
-    state = {}
+    state: dict[str, Any] = {}
     result = plugin.run(state, {"operation": "create", "path": str(path), "content": "hello"})
     assert result == {"status": "created"}
     result = plugin.run(state, {"operation": "read", "path": str(path)})

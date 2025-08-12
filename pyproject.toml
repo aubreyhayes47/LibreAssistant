@@ -25,6 +25,11 @@ dev = [
     "pytest",
     "pytest-cov",
     "httpx",
+    "types-cryptography",
+    "types-cssutils",
+    "types-fastapi",
+    "types-pydantic",
+    "types-uvicorn",
 ]
 
 [tool.setuptools.packages.find]
@@ -32,4 +37,7 @@ where = ["src"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.mypy]
+mypy_path = ["typings"]
 
