@@ -1,10 +1,12 @@
+from typing import Any
+
 from libreassistant.plugins import think_tank
 from libreassistant.plugins.think_tank import ThinkTankPlugin
 
 
 def test_thinktank_records_dossier() -> None:
     plugin = ThinkTankPlugin()
-    state = {}
+    state: dict[str, Any] = {}
     payload = {"goal": "Improve education"}
     result = plugin.run(state, payload)
     assert "summary" in result

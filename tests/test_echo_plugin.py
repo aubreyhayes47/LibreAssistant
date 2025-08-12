@@ -6,12 +6,14 @@
 from __future__ import annotations
 
 
+from typing import Any
+
 from libreassistant.plugins.echo import EchoPlugin
 
 
 def test_echo_plugin_unit() -> None:
     plugin = EchoPlugin()
-    state = {}
+    state: dict[str, Any] = {}
     result = plugin.run(state, {"message": "hi"})
     assert result == {"echo": "hi"}
     assert state["last_message"] == "hi"

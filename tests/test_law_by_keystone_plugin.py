@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from typing import Any
+
 from libreassistant.plugins import file_io, law_by_keystone
 from libreassistant.plugins.law_by_keystone import LawByKeystonePlugin
 
@@ -13,7 +15,7 @@ def test_export_creates_file(tmp_path: Path) -> None:
         "output_format": "json",
         "output_path": str(tmp_path),
     }
-    state = {}
+    state: dict[str, Any] = {}
     result = plugin.run(state, payload)
     assert result["status"] == "exported"
     created = tmp_path / "summary.json"
