@@ -8,6 +8,15 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from ..kernel import kernel
+from ..experts import (
+    argumentation,
+    communications,
+    devils_advocate,
+    executive,
+    research,
+    visualizer,
+    aggregation,
+)
 
 
 class ThinkTankPlugin:
@@ -20,17 +29,18 @@ class ThinkTankPlugin:
 
         analysis = {
             "goal": goal,
-            "executive": f"Break down '{goal}' into manageable tasks.",
-            "research": f"Research findings for '{goal}' (stub).",
-            "devils_advocate": f"Potential issues with pursuing '{goal}'.",
-            "argument": f"Supporting argumentation for '{goal}'.",
-            "communications": f"Clear and concise explanation of '{goal}'.",
-            "visualizer": "Visualization not implemented in stub.",
+            "executive": executive.analyze(goal),
+            "research": research.analyze(goal),
+            "devils_advocate": devils_advocate.analyze(goal),
+            "argument": argumentation.analyze(goal),
+            "communications": communications.analyze(goal),
+            "visualizer": visualizer.analyze(goal),
         }
         dossier = user_state.setdefault("thinktank_dossier", [])
         dossier.append(analysis)
+        summary = aggregation.summarize(analysis)
 
-        return {"summary": analysis["communications"], "analysis": analysis}
+        return {"summary": summary, "analysis": analysis}
 
 
 def register() -> None:

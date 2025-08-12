@@ -13,6 +13,16 @@ def test_thinktank_records_dossier() -> None:
     assert state["thinktank_dossier"][0]["goal"] == "Improve education"
 
 
+def test_thinktank_generates_realistic_summary() -> None:
+    plugin = ThinkTankPlugin()
+    result = plugin.run({}, {"goal": "Improve education"})
+    summary = result["summary"]
+    assert "Argument:" in summary
+    assert "Caveats:" in summary
+    analysis = result["analysis"]
+    assert analysis["research"].startswith("Research findings for 'Improve education'")
+
+
 def test_think_tank_integration(client) -> None:
     think_tank.register()
     response = client.post(
@@ -22,4 +32,5 @@ def test_think_tank_integration(client) -> None:
     assert response.status_code == 200
     data = response.json()
     assert "summary" in data["result"]
+    assert "Argument:" in data["result"]["summary"]
     assert data["state"]["thinktank_dossier"][0]["goal"] == "Improve education"
