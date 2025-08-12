@@ -40,3 +40,18 @@ def test_law_by_keystone_integration(client, tmp_path: Path) -> None:
     assert response.json()["result"]["status"] == "exported"
     created = tmp_path / "summary.json"
     assert created.exists()
+
+
+def test_rejects_outside_directory(tmp_path: Path) -> None:
+    file_io.ALLOWED_BASE_DIR = str(tmp_path)
+    plugin = LawByKeystonePlugin()
+    outside = tmp_path.parent / "outside" / "dir"
+    payload = {
+        "query": "test", 
+        "output_format": "json", 
+        "output_path": str(outside),
+    }
+    state: dict[str, Any] = {}
+    result = plugin.run(state, payload)
+    assert result == {"error": "path outside allowed directory"}
+    assert not outside.exists()
