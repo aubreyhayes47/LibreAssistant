@@ -17,11 +17,17 @@ class HealthMonitor:
     def __init__(self) -> None:
         self.start_time = time.time()
         self.requests = 0
+        self.error_count = 0
         self.errors: List[str] = []
 
     def record_request(self) -> None:
         """Increment the total request count."""
         self.requests += 1
+
+    def record_error(self, message: str) -> None:
+        """Record an error event with a message."""
+        self.error_count += 1
+        self.errors.append(message)
 
     def get_status(self) -> Dict[str, Any]:
         """Return a snapshot of current system health metrics."""
@@ -29,6 +35,7 @@ class HealthMonitor:
             "status": "ok",
             "uptime": time.time() - self.start_time,
             "requests": self.requests,
+            "error_count": self.error_count,
             "errors": self.errors,
         }
 
