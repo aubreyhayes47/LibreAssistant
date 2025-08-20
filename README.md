@@ -40,11 +40,18 @@ interface.
 
 ### Optional: Python Development Setup
 
-Install Python dependencies if you want to run unit tests or work on the core
-microkernel:
+Install the Python dependencies using the lock file before working on the core
+microkernel or running tests:
 
 ```sh
+uv pip sync uv.lock
 python -m pip install -e .[dev]
+```
+
+If you modify dependencies, regenerate the lock file with:
+
+```sh
+uv pip compile pyproject.toml -o uv.lock
 ```
 
 ## First Steps in the UI
