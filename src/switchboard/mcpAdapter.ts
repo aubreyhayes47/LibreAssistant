@@ -1,8 +1,17 @@
 import { MCPClient } from '../mcp/client.js';
 
-// Adapter that exposes MCP servers as high level "plugins" to the UI.
-// Each plugin maps to a primary tool; the underlying tools/resources/prompts
-// remain hidden from the switchboard.
+/**
+ * Adapter that exposes MCP servers as high level "plugins" to the UI.
+ * The internal `toolMap` defines how plugin names map to specific tools,
+ * keeping the underlying resources and prompts hidden from the switchboard.
+ *
+ * Destructive file operations trigger an optional consent modal via a global
+ * `showConsentModal` function. If the user declines, the operation is aborted
+ * and a permission error is returned.
+ *
+ * Every plugin invocation is recorded to `/api/v1/history` with the payload
+ * and whether permission was granted.
+ */
 export class MCPAdapter {
   private toolMap: Record<string, string | ((params: any) => string)> = {
     echo: 'echo_message',
@@ -19,14 +28,25 @@ export class MCPAdapter {
     },
     law_by_keystone: 'generate_legal_summary',
     think_tank: 'analyze_goal',
-  };
+  }; 
 
   constructor(private client: MCPClient) {}
 
+  /**
+   * Returns the list of available plugin names exposed by the adapter.
+   */
   listPlugins(): string[] {
     return Object.keys(this.toolMap);
   }
 
+  /**
+   * Invokes a plugin with the given parameters and user context.
+   *
+   * @param plugin - Name of the plugin to invoke.
+   * @param params - Arguments to pass to the underlying tool.
+   * @param userId - Identifier for the user making the request.
+   * @returns Result from the MCP client or a permission error.
+   */
   async invokePlugin(plugin: string, params: any, userId: string): Promise<any> {
     const mapping = this.toolMap[plugin];
     if (!mapping) throw new Error(`Unknown plugin ${plugin}`);
