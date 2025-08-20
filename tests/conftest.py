@@ -18,6 +18,13 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
 import os
+import sqlite3
+import types
+
+# Provide a lightweight stub for the optional pysqlcipher3 dependency used by
+# the database module so tests can run without the compiled extension.
+sys.modules.setdefault("pysqlcipher3", types.SimpleNamespace(dbapi2=sqlite3))
+sys.modules.setdefault("pysqlcipher3.dbapi2", sqlite3)
 
 os.environ["LIBRE_DB_PATH"] = ":memory:"
 os.environ["LIBRE_DB_KEY"] = "test-key"
