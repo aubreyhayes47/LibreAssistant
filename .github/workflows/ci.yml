@@ -12,15 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
       - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
       - run: pip install '.[development]'
       - run: pytest --cov=src/libreassistant
       - run: python scripts/check_license_headers.py
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm ci
       - run: npm test
       - run: npx --yes markdownlint-cli '**/*.md'

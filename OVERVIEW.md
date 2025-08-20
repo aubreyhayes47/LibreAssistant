@@ -12,8 +12,8 @@ MCP adopts a client–server model built on JSON‑RPC 2.0 transported over stdi
 
 ## Threat Model & Mitigations
 Threats include prompt injection, tool poisoning and malicious servers. Without RBAC the system mitigates risk through:
-- explicit server allow‑lists
-- consent prompts for destructive operations
-- a deny‑by‑default network policy
-- filesystem jails for file tools
-- exhaustive audit logging of JSON‑RPC frames
+* explicit server allow‑lists
+* consent prompts for destructive operations
+* a deny‑by‑default network policy
+* filesystem jails for file tools
+* exhaustive audit logging of JSON‑RPC frames
