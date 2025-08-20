@@ -17,6 +17,11 @@ from fastapi.testclient import TestClient
 # without installation.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
+import os
+
+os.environ["LIBRE_DB_PATH"] = ":memory:"
+os.environ["LIBRE_DB_KEY"] = "test-key"
+
 if shutil.which("node") is None:
     # Mock out MCP-based plugins when Node.js isn't available to keep tests
     # hermetic. These plugins would otherwise spawn a Node server during app
@@ -35,6 +40,7 @@ from libreassistant.plugins.echo import (  # noqa: E402
 from libreassistant.providers import providers  # noqa: E402
 from libreassistant.providers.cloud import CloudProvider  # noqa: E402
 from libreassistant.providers.local import LocalProvider  # noqa: E402
+from libreassistant import db as app_db  # noqa: E402
 
 
 @pytest.fixture
@@ -52,4 +58,5 @@ def reset_kernel() -> Generator[None, None, None]:
     providers.reset()
     providers.register("cloud", CloudProvider())
     providers.register("local", LocalProvider())
+    app_db.clear()
     yield

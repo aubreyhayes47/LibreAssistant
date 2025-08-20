@@ -4,7 +4,8 @@
 """Core package for the LibreAssistant application."""
 
 from .kernel import kernel
+from . import db
 
-__all__ = ["__version__", "kernel"]
+__all__ = ["__version__", "kernel", "db"]
 
 __version__ = "0.1.0"
