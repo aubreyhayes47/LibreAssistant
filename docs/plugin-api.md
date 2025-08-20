@@ -60,6 +60,23 @@ The plugin can then be invoked through the `/api/v1/invoke` endpoint by specifyi
 
 Each invocation is appended to a per-user log that can be retrieved via `GET /api/v1/history/{user_id}`. This history powers the Past Requests tab in the web UI and can aid debugging during plugin development.
 
+## MCP Server Integration
+
+Many plugins delegate work to external Model Context Protocol (MCP) servers.
+`MCPPluginAdapter` wraps a server tool and exposes it through the standard
+`run` interface:
+
+```python
+from libreassistant.mcp_adapter import MCPPluginAdapter
+
+class EchoPlugin(MCPPluginAdapter):
+    def __init__(self) -> None:
+        super().__init__("servers/echo/index.ts", "echo_message")
+```
+
+The adapter handles JSON‑RPC communication with the TypeScript server and
+returns the tool's JSON response to the microkernel.
+
 ## File I/O Plugin Security
 
 The built-in `file_io` plugin exposes basic filesystem operations. It sets

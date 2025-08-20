@@ -26,6 +26,12 @@ LibreAssistant exposes a FastAPI service with endpoints for plugin invocation, u
 - `POST /api/v1/providers/{name}/key` – configure an API key for a provider
 - `POST /api/v1/generate` – generate a response using the specified provider
 
+## MCP Registry
+- `GET /api/v1/mcp/servers` – list servers from the MCP registry and their
+  consent status
+- `POST /api/v1/mcp/consent/{name}` – set consent for an MCP server
+- `GET /api/v1/mcp/consent/{name}` – get consent for an MCP server
+
 ## Themes
 - `GET /api/v1/themes/{theme_id}.css` – return sanitized CSS for a theme. The response is served with a strict `Content-Security-Policy` header.
 
