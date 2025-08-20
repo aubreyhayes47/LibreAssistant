@@ -3,6 +3,7 @@ from __future__ import annotations
 """Adapters allowing MCP servers to appear as legacy Plugin objects."""
 
 import json
+import logging
 import os
 import select
 import subprocess
@@ -80,7 +81,11 @@ class MCPClient:
         return self.request("invoke", {"tool": tool, "params": params})
 
     def close(self) -> None:
-        self.proc.kill()
+        try:
+            self.proc.terminate()
+            self.proc.wait()
+        except Exception as exc:  # pragma: no cover - best effort
+            logging.debug("Exception while terminating MCPClient process: %s", exc)
 
 
 Resolver = Callable[[Dict[str, Any]], Tuple[str, Dict[str, Any]]]
