@@ -14,8 +14,17 @@ async function setup() {
 test('law summary generation', async () => {
   const client = await setup();
   try {
-    const res = await client.invoke('law_by_keystone', 'generate_legal_summary', { query: 'test', output_format: 'md', output_path: 'law' });
+    const res = await client.invoke('law_by_keystone', 'generate_legal_summary', {
+      query: 'test',
+      source: 'govinfo',
+      output_format: 'txt',
+      output_path: 'law',
+    });
     assert.equal(res.status, 'exported');
+    assert.ok(Array.isArray(res.sources));
+    assert.ok(res.sources.includes('govinfo'));
+    assert.equal(res.metadata.source, 'govinfo');
+    assert.equal(res.metadata.format, 'txt');
     assert.ok(fs.existsSync(res.path));
   } finally {
     client.close();

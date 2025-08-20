@@ -117,6 +117,27 @@ curl -X POST http://localhost:8000/api/v1/invoke \
       }'
 ```
 
+### Search Government Data with the Law Plugin
+
+```sh
+curl -X POST http://localhost:8000/api/v1/invoke \
+  -H "Content-Type: application/json" \
+  -d '{
+        "plugin": "law_by_keystone",
+        "user_id": "alice",
+        "payload": {
+          "query": "education",
+          "source": "govtrack",
+          "output_format": "json",
+          "output_path": "law"
+        }
+      }'
+```
+
+The law plugin connects to GovInfo, eCFR, CourtListener, Open States, and
+GovTrack APIs and can export results in Markdown, HTML, JSON, plain text, or
+XML with metadata about the query.
+
 ## Customise and Extend
 
 - **Add providers** – set API keys at

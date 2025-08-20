@@ -5,5 +5,12 @@
     { "name": "law_by_keystone", "module": "./servers/law_by_keystone/index.ts" },
     { "name": "think_tank", "module": "./servers/think_tank/index.ts" }
   ],
-  "allowedHosts": ["localhost"]
+  "allowedHosts": [
+    "localhost",
+    "api.govinfo.gov",
+    "api.ecfr.gov",
+    "www.courtlistener.com",
+    "v3.openstates.org",
+    "www.govtrack.us"
+  ]
 }

@@ -100,6 +100,11 @@ export class MCPClient {
       }
     }
 
+    const sources = Array.isArray(result?.sources)
+      ? result.sources
+      : Array.isArray(result?.metadata?.sources)
+      ? result.metadata.sources
+      : undefined;
     const entry: AuditEntry = {
       server: serverName,
       tool,
@@ -108,6 +113,7 @@ export class MCPClient {
       timestamp: Date.now(),
       beforeHash,
       afterHash,
+      dataSources: sources,
     };
     this.auditLog.push(entry);
     await this.appendAudit(entry);

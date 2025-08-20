@@ -29,3 +29,18 @@ test('audit log records invocations', async () => {
     client.close();
   }
 });
+
+test('audit entry captures data sources', async () => {
+  const client = await setup();
+  try {
+    await client.invoke('law_by_keystone', 'generate_legal_summary', {
+      query: 'test',
+      source: 'govtrack',
+      output_path: 'law_audit',
+    });
+    const last = client.auditLog.at(-1);
+    assert.ok(last?.dataSources?.includes('govtrack'));
+  } finally {
+    client.close();
+  }
+});
