@@ -14,10 +14,12 @@ Plugins are Python objects registered in a microkernel. Each invocation mutates 
 User → Switchboard → MCP Client → MCP Server Tool → Audit Log
 ```
 
-The switchboard embeds an MCP client which discovers servers via registry allow‑list. Tools perform work and return JSON results while the client records audit entries. Legacy plugins remain available during migration.
+The switchboard embeds an MCP client which discovers servers via registry
+allow‑list and enforces per‑server network policies. Tools perform work and
+return JSON results while the client records audit entries. Legacy plugins remain
+available during migration.
 
 ### Integration Gaps
 - No schema validation for plugin inputs
 - Transport is tightly coupled to in‑process calls
-- No central allow‑list or consent UX
-- Lacks network controls and audit trail for file operations
+- File operation audit trail is incomplete

@@ -1,5 +1,5 @@
 import { spawn, ChildProcess } from 'child_process';
-import { MCPServer } from './types.js';
+import { MCPServer, NetworkPolicy } from './types.js';
 
 // Basic JSON-RPC message types
 interface JSONRPCRequest {
@@ -32,8 +32,16 @@ export class StdioTransport implements Transport {
   >();
   private buffer = '';
 
-  constructor(command: string, args: string[] = []) {
-    this.proc = spawn(command, args, { stdio: ['pipe', 'pipe', 'inherit'] });
+  constructor(command: string, args: string[] = [], policy?: NetworkPolicy) {
+    this.proc = spawn(command, args, {
+      stdio: ['pipe', 'pipe', 'inherit'],
+      env: {
+        ...process.env,
+        MCP_ALLOW_HOSTS: policy?.allow?.join(',') || '',
+        MCP_DENY_HOSTS: policy?.deny?.join(',') || '',
+        MCP_ALLOW_PROTOCOLS: policy?.protocols?.join(',') || '',
+      },
+    });
     this.proc.stdout!.setEncoding('utf8');
     this.proc.stdout!.on('data', chunk => {
       this.buffer += chunk;

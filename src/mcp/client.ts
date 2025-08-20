@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import Ajv, { ValidateFunction } from 'ajv';
-import { MCPServer, AuditEntry } from './types.js';
+import { MCPServer, AuditEntry, NetworkPolicy } from './types.js';
 import { Transport } from './transport.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -43,13 +43,19 @@ class RemoteServer implements MCPServer {
 export class MCPClient {
   private servers: Map<string, RemoteServer> = new Map();
   private transports: Map<string, Transport> = new Map();
+  private policies: Map<string, NetworkPolicy> = new Map();
   public auditLog: AuditEntry[] = [];
   private ajv = new Ajv({ useDefaults: true });
-  private static allowedHosts: Set<string> = new Set();
+  private static defaultPolicy?: NetworkPolicy;
+  private static activePolicy?: NetworkPolicy;
   private static fetchPatched = false;
   private logPath = path.resolve('logs/audit.ndjson');
 
-  async register(name: string, transport: Transport) {
+  constructor() {
+    MCPClient.patchFetch();
+  }
+
+  async register(name: string, transport: Transport, policy?: NetworkPolicy) {
     const tools = await transport.request('listTools');
     const resources = await transport.request('listResources');
     const prompts = await transport.request('listPrompts');
@@ -62,6 +68,7 @@ export class MCPClient {
     const server = new RemoteServer(transport, tools, resources, prompts, validators);
     this.servers.set(name, server);
     this.transports.set(name, transport);
+    if (policy) this.policies.set(name, policy);
   }
 
   listServers() {
@@ -89,7 +96,10 @@ export class MCPClient {
       }
     }
 
+    const prev = MCPClient.activePolicy;
+    MCPClient.activePolicy = this.policies.get(serverName) || MCPClient.defaultPolicy;
     const result = await server.invoke(tool, params);
+    MCPClient.activePolicy = prev;
 
     if (params && params.path && typeof params.path === 'string') {
       try {
@@ -143,27 +153,38 @@ export class MCPClient {
     }
   }
 
-  setAllowedHosts(hosts: string[]) {
-    MCPClient.allowedHosts = new Set(hosts);
-    if (!MCPClient.fetchPatched) {
-      const original = globalThis.fetch.bind(globalThis);
-      globalThis.fetch = async function (input: any, init?: any) {
-        const href =
-          typeof input === 'string'
-            ? input
-            : input instanceof URL
-            ? input.href
-            : input.url;
-        const host = new URL(href).hostname;
-        if (
-          MCPClient.allowedHosts.size &&
-          !MCPClient.allowedHosts.has(host)
-        ) {
-          return Promise.reject(new Error(`Host ${host} not allowed`));
-        }
+  setDefaultPolicy(policy?: NetworkPolicy) {
+    MCPClient.defaultPolicy = policy;
+  }
+
+  private static patchFetch() {
+    if (MCPClient.fetchPatched) return;
+    const original = globalThis.fetch.bind(globalThis);
+    globalThis.fetch = async function (input: any, init?: any) {
+      const href =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+          ? input.href
+          : input.url;
+      const url = new URL(href);
+      if (url.protocol === 'file:' || url.protocol === 'node:' || url.protocol === 'data:') {
         return original(input as any, init);
-      } as any;
-      MCPClient.fetchPatched = true;
-    }
+      }
+      const policy = MCPClient.activePolicy || MCPClient.defaultPolicy;
+      if (policy) {
+        if (policy.allow && policy.allow.length && !policy.allow.includes(url.hostname)) {
+          return Promise.reject(new Error(`Host ${url.hostname} not allowed`));
+        }
+        if (policy.deny && policy.deny.includes(url.hostname)) {
+          return Promise.reject(new Error(`Host ${url.hostname} denied`));
+        }
+        if (policy.protocols && policy.protocols.length && !policy.protocols.includes(url.protocol.replace(':', ''))) {
+          return Promise.reject(new Error(`Protocol ${url.protocol} not allowed`));
+        }
+      }
+      return original(input as any, init);
+    } as any;
+    MCPClient.fetchPatched = true;
   }
 }

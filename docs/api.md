@@ -47,6 +47,10 @@ different server or model.
 - `POST /api/v1/mcp/consent/{name}` – set consent for an MCP server
 - `GET /api/v1/mcp/consent/{name}` – get consent for an MCP server
 
+Registry entries may include a `network` object describing `allow`, `deny`, and
+`protocols` lists. A `defaultNetwork` policy applies to servers without explicit
+rules. These settings control which hosts and protocols a server may access.
+
 ## Themes
 - `GET /api/v1/themes/{theme_id}.css` – return sanitized CSS for a theme. The response is served with a strict `Content-Security-Policy` header.
 

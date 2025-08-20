@@ -33,3 +33,9 @@ export interface AuditEntry {
   afterHash?: string;
   dataSources?: string[];
 }
+
+export interface NetworkPolicy {
+  allow?: string[];
+  deny?: string[];
+  protocols?: string[];
+}

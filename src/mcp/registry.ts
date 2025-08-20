@@ -1,12 +1,13 @@
 import { MCPClient } from './client.js';
 import { StdioTransport } from './transport.js';
+import { NetworkPolicy } from './types.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 interface RegistryConfig {
-  servers: { name: string; module: string }[];
-  allowedHosts?: string[];
+  servers: { name: string; module: string; network?: NetworkPolicy }[];
+  defaultNetwork?: NetworkPolicy;
 }
 
 /**
@@ -38,18 +39,18 @@ export async function loadRegistry(
     path.dirname(fileURLToPath(import.meta.url)),
     'server-runner.js'
   );
-  if (config.allowedHosts) {
-    client.setAllowedHosts(config.allowedHosts);
+  if (config.defaultNetwork) {
+    client.setDefaultPolicy(config.defaultNetwork);
   }
   for (const entry of config.servers) {
     if (!consent[entry.name]) continue;
     const modulePath = path.resolve(entry.module);
-    const transport = new StdioTransport('node', [
-      '--loader',
-      'ts-node/esm',
-      runner,
-      modulePath,
-    ]);
-    await client.register(entry.name, transport);
+    const policy = entry.network || config.defaultNetwork;
+    const transport = new StdioTransport(
+      'node',
+      ['--loader', 'ts-node/esm', runner, modulePath],
+      policy,
+    );
+    await client.register(entry.name, transport, policy);
   }
 }

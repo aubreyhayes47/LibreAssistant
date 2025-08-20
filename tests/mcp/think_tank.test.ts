@@ -11,6 +11,18 @@ async function setup() {
 }
 
 test('think tank returns structured analysis', async () => {
+  process.env.THINK_TANK_MODEL_RESPONSE = JSON.stringify({
+    summary: 'test',
+    analysis: {
+      goal: 'world peace',
+      executive: { tasks: [] },
+      research: { summary: '', sources: [] },
+      devils_advocate: { concerns: [] },
+      argument: { points: [] },
+      communications: { message: '', audience: '' },
+      visualizer: { description: '', data: { type: '', labels: [], values: [] } }
+    }
+  });
   const client = await setup();
   try {
     const res = await client.invoke('think_tank', 'analyze_goal', { goal: 'world peace' });
