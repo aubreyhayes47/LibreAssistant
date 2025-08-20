@@ -79,6 +79,16 @@ class MCPPluginAdapter:
         self.client = MCPClient(module, env)
         self.resolver = resolver
 
+    def close(self) -> None:
+        """Release resources held by the underlying MCP client."""
+        self.client.close()
+
+    def __del__(self) -> None:  # pragma: no cover - best effort cleanup
+        try:
+            self.close()
+        except Exception:
+            pass
+
     def _resolve(self, payload: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
         if callable(self.resolver):
             return self.resolver(payload)

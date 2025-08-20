@@ -43,5 +43,15 @@ class Microkernel:
         self._plugins.clear()
         self._states.clear()
 
+    def shutdown(self) -> None:
+        """Call any cleanup hooks exposed by registered plugins."""
+        for plugin in self._plugins.values():
+            close = getattr(plugin, "close", None)
+            if callable(close):
+                try:
+                    close()
+                except Exception:  # pragma: no cover - best effort cleanup
+                    pass
+
 
 kernel = Microkernel()
