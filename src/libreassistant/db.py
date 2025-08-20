@@ -17,6 +17,19 @@ _conn: sqlite3.Connection | None = None
 
 
 def get_conn() -> sqlite3.Connection:
+    """Return a shared connection to the encrypted database.
+
+    Initializes the database on first use, creating the directory and tables
+    as needed. The connection is cached globally so subsequent calls reuse the
+    same handle.
+
+    Returns:
+        sqlite3.Connection: Active connection to the SQLite database.
+
+    Side Effects:
+        Creates the database file and schema if they do not already exist and
+        sets the global connection.
+    """
     global _conn
     if _conn is None:
         if not DB_KEY:
@@ -29,6 +42,18 @@ def get_conn() -> sqlite3.Connection:
 
 
 def _initialize(conn: sqlite3.Connection) -> None:
+    """Create required tables and indexes in the database.
+
+    Parameters:
+        conn: Connection on which schema creation statements are executed.
+
+    Returns:
+        None.
+
+    Side Effects:
+        Executes SQL statements that create tables and indexes if they do not
+        exist and commits the transaction.
+    """
     cur = conn.cursor()
     cur.execute(
         """
@@ -72,6 +97,17 @@ def clear() -> None:
 
 
 def prune_history() -> None:
+    """Remove stale entries from the history table.
+
+    Deletes rows older than the retention period defined by
+    ``HISTORY_RETENTION_DAYS`` and commits the change.
+
+    Returns:
+        None.
+
+    Side Effects:
+        Modifies the ``history`` table by removing expired records.
+    """
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
@@ -82,6 +118,17 @@ def prune_history() -> None:
 
 
 def prune_audit() -> None:
+    """Remove stale entries from the file audit table.
+
+    Deletes rows older than the retention period defined by
+    ``AUDIT_RETENTION_DAYS`` and commits the change.
+
+    Returns:
+        None.
+
+    Side Effects:
+        Modifies the ``file_audit`` table by removing expired records.
+    """
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
@@ -92,6 +139,21 @@ def prune_audit() -> None:
 
 
 def add_history(user_id: str, plugin: str, payload: Dict[str, Any], granted: bool | None) -> None:
+    """Record a plugin invocation for a user.
+
+    Parameters:
+        user_id: Identifier of the user initiating the action.
+        plugin: Name of the plugin invoked.
+        payload: Data passed to the plugin; stored as JSON.
+        granted: Whether consent was granted; ``None`` if unspecified.
+
+    Returns:
+        None.
+
+    Side Effects:
+        Prunes outdated history entries and commits the new record to the
+        database.
+    """
     conn = get_conn()
     prune_history()
     cur = conn.cursor()
@@ -108,6 +170,18 @@ def add_history(user_id: str, plugin: str, payload: Dict[str, Any], granted: boo
 
 
 def get_history(user_id: str) -> List[Dict[str, Any]]:
+    """Retrieve all history entries for a user.
+
+    Parameters:
+        user_id: Identifier of the user whose history is requested.
+
+    Returns:
+        A list of dictionaries containing the plugin name, payload, and
+        optional consent flag.
+
+    Side Effects:
+        None beyond reading from the database.
+    """
     conn = get_conn()
     cur = conn.cursor()
     cur.execute(
@@ -128,6 +202,20 @@ def get_history(user_id: str) -> List[Dict[str, Any]]:
 
 
 def add_file_audit(user_id: str | None, action: str | None, path: str | None) -> None:
+    """Record a file system action in the audit log.
+
+    Parameters:
+        user_id: Identifier of the user performing the action, if known.
+        action: The type of file operation performed.
+        path: The file path involved in the operation.
+
+    Returns:
+        None.
+
+    Side Effects:
+        Prunes outdated audit entries and commits the new record to the
+        database.
+    """
     conn = get_conn()
     prune_audit()
     cur = conn.cursor()
@@ -139,6 +227,18 @@ def add_file_audit(user_id: str | None, action: str | None, path: str | None) ->
 
 
 def get_file_audit(user_id: str | None = None) -> List[Dict[str, Any]]:
+    """Retrieve file audit records, optionally filtering by user.
+
+    Parameters:
+        user_id: If provided, only records for this user are returned.
+
+    Returns:
+        A list of dictionaries with ``user_id``, ``action``, ``path``, and
+        ``timestamp`` keys.
+
+    Side Effects:
+        None beyond reading from the database.
+    """
     conn = get_conn()
     cur = conn.cursor()
     if user_id is None:
