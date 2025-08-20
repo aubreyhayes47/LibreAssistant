@@ -18,7 +18,17 @@ RUNNER = ROOT / "src" / "mcp" / "server-runner.js"
 
 
 class MCPClient:
-    """Minimal JSON-RPC client speaking to an MCP server over stdio."""
+    """Minimal JSON-RPC client speaking to an MCP server over stdio.
+
+    The client manages a subprocess running an MCP server and provides a
+    blocking ``request`` API.  It implements the context manager protocol so
+    that resources are always released::
+
+        with MCPClient("servers/echo/index.ts") as client:
+            client.request("listTools")
+
+    Exiting the ``with`` block automatically terminates the subprocess.
+    """
 
     def __init__(
         self,
@@ -130,6 +140,25 @@ class MCPClient:
             if getattr(self, "_reader", None) and self._reader.is_alive():
                 self._reader.join(timeout=0.1)
 
+    # -- context manager -------------------------------------------------
+
+    def __enter__(self) -> "MCPClient":
+        """Return ``self`` when entering a ``with`` block."""
+
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> bool:
+        """Ensure the subprocess is terminated on context exit."""
+
+        self.close()
+        # Propagate any exception that occurred inside the with block.
+        return False
+
 
 Resolver = Callable[[Dict[str, Any]], Tuple[str, Dict[str, Any]]]
 
@@ -150,6 +179,19 @@ class MCPPluginAdapter:
     def close(self) -> None:
         """Release resources held by the underlying MCP client."""
         self.client.close()
+
+    # Allow adapters to be used as context managers for automatic cleanup.
+    def __enter__(self) -> "MCPPluginAdapter":
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> bool:
+        self.close()
+        return False
 
     def __del__(self) -> None:  # pragma: no cover - best effort cleanup
         try:

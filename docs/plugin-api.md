@@ -83,6 +83,20 @@ class EchoPlugin(MCPPluginAdapter):
 The adapter handles JSON‑RPC communication with the TypeScript server and
 returns the tool's JSON response to the microkernel.
 
+Both :class:`MCPPluginAdapter` and the underlying :class:`MCPClient` implement
+the context manager protocol.  When used with ``with`` they ensure that the
+spawned MCP subprocess is terminated automatically:
+
+```python
+from libreassistant.mcp_adapter import MCPClient
+
+with MCPClient("servers/echo/index.ts") as client:
+    client.request("listTools")
+
+with EchoPlugin() as plugin:
+    plugin.run({}, {"message": "hi"})
+```
+
 ## File I/O Plugin Security
 
 The built-in `file_io` plugin exposes basic filesystem operations. It sets
