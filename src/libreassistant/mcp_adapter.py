@@ -49,7 +49,8 @@ class MCPClient:
         self._queue: queue.Queue[str | None] = queue.Queue()
 
         def _reader() -> None:
-            assert self.proc.stdout
+            if self.proc.stdout is None:
+                raise RuntimeError("MCPClient process has no stdout")
             for line in self.proc.stdout:
                 self._queue.put(line)
             self._queue.put(None)
@@ -70,7 +71,8 @@ class MCPClient:
         self.next_id += 1
         if params is not None:
             req["params"] = params
-        assert self.proc.stdin
+        if self.proc.stdin is None:
+            raise RuntimeError("MCPClient process has no stdin")
         self.proc.stdin.write(json.dumps(req) + "\n")
         self.proc.stdin.flush()
         wait = self.timeout if timeout is None else timeout
