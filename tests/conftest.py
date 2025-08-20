@@ -12,15 +12,18 @@ from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
 
-# Add the src directory to the Python path to import the package without installation
+# Add the src directory to the Python path so the package can be imported
+# without installation.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from libreassistant.main import app  # noqa: E402  # isort:skip
-from libreassistant.kernel import kernel  # noqa: E402  # isort:skip
-from libreassistant.plugins.echo import register as register_echo  # noqa: E402  # isort:skip
-from libreassistant.providers import providers  # noqa: E402  # isort:skip
-from libreassistant.providers.cloud import CloudProvider  # noqa: E402  # isort:skip
-from libreassistant.providers.local import LocalProvider  # noqa: E402  # isort:skip
+from libreassistant.main import app  # noqa: E402
+from libreassistant.kernel import kernel  # noqa: E402
+from libreassistant.plugins.echo import (  # noqa: E402
+    register as register_echo,
+)
+from libreassistant.providers import providers  # noqa: E402
+from libreassistant.providers.cloud import CloudProvider  # noqa: E402
+from libreassistant.providers.local import LocalProvider  # noqa: E402
 
 
 @pytest.fixture

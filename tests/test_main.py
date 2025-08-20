@@ -22,12 +22,13 @@ def test_user_state_persists(client) -> None:
 
     kernel.register_plugin("counter", CounterPlugin())
     first = client.post(
-        "/api/v1/invoke", json={"plugin": "counter", "payload": {}, "user_id": "bob"}
+        "/api/v1/invoke",
+        json={"plugin": "counter", "payload": {}, "user_id": "bob"},
     )
     second = client.post(
-        "/api/v1/invoke", json={"plugin": "counter", "payload": {}, "user_id": "bob"}
+        "/api/v1/invoke",
+        json={"plugin": "counter", "payload": {}, "user_id": "bob"},
     )
     assert first.json()["result"] == {"count": 1}
     assert second.json()["result"] == {"count": 2}
     assert second.json()["state"]["count"] == 2
-

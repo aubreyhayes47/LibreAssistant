@@ -46,7 +46,10 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def set_csp(request: Request, call_next):
         response = await call_next(request)
-        csp = "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'"
+        csp = (
+            "default-src 'self'; script-src 'self'; style-src 'self'; "
+            "object-src 'none'"
+        )
         response.headers["Content-Security-Policy"] = csp
         return response
 
@@ -69,7 +72,9 @@ def create_app() -> FastAPI:
     registry_file = Path("config/mcp.registry.json")
     if registry_file.exists():
         registry = json.loads(registry_file.read_text())
-        mcp_plugins: List[str] = [s["name"] for s in registry.get("servers", [])]
+        mcp_plugins: List[str] = [
+            s["name"] for s in registry.get("servers", [])
+        ]
     else:  # pragma: no cover - file may be missing in tests
         mcp_plugins = []
 
@@ -87,12 +92,19 @@ def create_app() -> FastAPI:
     def invoke(request: InvokeRequest) -> Dict[str, Any]:
         """Invoke a registered plugin through the microkernel."""
         try:
-            result = kernel.invoke(request.plugin, request.user_id, request.payload)
+            result = kernel.invoke(
+                request.plugin, request.user_id, request.payload
+            )
         except KeyError as exc:  # pragma: no cover - error branch
-            raise HTTPException(status_code=404, detail="Plugin not found") from exc
+            raise HTTPException(
+                status_code=404, detail="Plugin not found"
+            ) from exc
         state = kernel.get_state(request.user_id)
         history = state.setdefault("history", [])
-        entry: Dict[str, Any] = {"plugin": request.plugin, "payload": request.payload}
+        entry: Dict[str, Any] = {
+            "plugin": request.plugin,
+            "payload": request.payload,
+        }
         if request.granted is not None:
             entry["granted"] = request.granted
         history.append(entry)
@@ -190,7 +202,9 @@ def create_app() -> FastAPI:
         try:
             result = providers.generate(request.provider, request.prompt)
         except KeyError as exc:  # pragma: no cover - error branch
-            raise HTTPException(status_code=404, detail="Provider not found") from exc
+            raise HTTPException(
+                status_code=404, detail="Provider not found"
+            ) from exc
         except ValueError as exc:  # pragma: no cover - error branch
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"result": result}
@@ -200,7 +214,9 @@ def create_app() -> FastAPI:
         try:
             css = get_theme_css(theme_id)
         except FileNotFoundError as exc:  # pragma: no cover - error branch
-            raise HTTPException(status_code=404, detail="Theme not found") from exc
+            raise HTTPException(
+                status_code=404, detail="Theme not found"
+            ) from exc
         return Response(css, media_type="text/css")
 
     @app.get("/api/v1/bom")

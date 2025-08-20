@@ -94,7 +94,9 @@ class MCPPluginAdapter:
             return self.resolver(payload)
         return self.resolver, payload
 
-    def run(self, user_state: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+    def run(
+        self, user_state: Dict[str, Any], payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         try:
             tool, params = self._resolve(payload)
         except Exception as exc:  # pragma: no cover - defensive

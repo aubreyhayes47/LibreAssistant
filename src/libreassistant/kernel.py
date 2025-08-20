@@ -11,7 +11,9 @@ from typing import Any, Dict, Protocol
 class Plugin(Protocol):
     """Protocol that all plugins must implement."""
 
-    def run(self, user_state: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+    def run(
+        self, user_state: Dict[str, Any], payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Execute the plugin with the given user state and payload."""
 
 
@@ -30,7 +32,9 @@ class Microkernel:
         """Retrieve mutable state for a user, creating it if necessary."""
         return self._states.setdefault(user_id, {})
 
-    def invoke(self, name: str, user_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def invoke(
+        self, name: str, user_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Invoke a registered plugin for the given user."""
         plugin = self._plugins.get(name)
         if plugin is None:

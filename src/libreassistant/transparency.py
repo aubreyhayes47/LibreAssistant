@@ -46,7 +46,8 @@ class HealthMonitor:
 def get_bill_of_materials() -> Dict[str, List[str]]:
     """Gather a list of installed dependencies, models, and datasets."""
     dependencies = sorted(
-        f"{dist.metadata['Name']}=={dist.version}" for dist in importlib.metadata.distributions()
+        f"{dist.metadata['Name']}=={dist.version}"
+        for dist in importlib.metadata.distributions()
     )
     models_dir = Path(os.environ.get("LA_MODELS_DIR", "models"))
     datasets_dir = Path(os.environ.get("LA_DATASETS_DIR", "datasets"))
@@ -66,4 +67,8 @@ def get_bill_of_materials() -> Dict[str, List[str]]:
     models = _scan(models_dir)
     datasets = _scan(datasets_dir)
 
-    return {"dependencies": dependencies, "models": models, "datasets": datasets}
+    return {
+        "dependencies": dependencies,
+        "models": models,
+        "datasets": datasets,
+    }

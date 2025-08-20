@@ -34,7 +34,11 @@ def test_law_by_keystone_integration(client, tmp_path: Path) -> None:
     }
     response = client.post(
         "/api/v1/invoke",
-        json={"plugin": "law_by_keystone", "payload": payload, "user_id": "alice"},
+        json={
+            "plugin": "law_by_keystone",
+            "payload": payload,
+            "user_id": "alice",
+        },
     )
     assert response.status_code == 200
     assert response.json()["result"]["status"] == "exported"
@@ -47,8 +51,8 @@ def test_rejects_outside_directory(tmp_path: Path) -> None:
     plugin = LawByKeystonePlugin()
     outside = tmp_path.parent / "outside" / "dir"
     payload = {
-        "query": "test", 
-        "output_format": "json", 
+        "query": "test",
+        "output_format": "json",
         "output_path": str(outside),
     }
     state: dict[str, Any] = {}
