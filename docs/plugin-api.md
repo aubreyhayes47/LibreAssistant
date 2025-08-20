@@ -4,6 +4,12 @@
 
 Plugins extend LibreAssistant by implementing custom behavior that can be invoked through the microkernel.
 
+Documentation for built-in plugins:
+
+- [Echo](echo_plugin.md)
+- [File I/O](file_io_plugin.md)
+- [Think Tank](think_tank_plugin.md)
+
 ## Plugin Interface
 
 A plugin is any object that provides a `run` method with the following signature:

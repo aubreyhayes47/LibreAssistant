@@ -13,8 +13,7 @@ use the built‑in tools.
 
 - **Chat with models you trust** – point LibreAssistant at local or cloud
   providers and inspect every request.
-- **Do more with plugins** – read and write files, analyse goals, or integrate
-  your own tools.
+- **Do more with plugins** – read and write files, analyse goals, or integrate your own tools. Built-in plugins include [Echo](docs/echo_plugin.md), [File I/O](docs/file_io_plugin.md), and [Think Tank](docs/think_tank_plugin.md).
 - **Transparent by design** – dashboards reveal system health and every
   component that participates in a request.
 - **Fine-grained network control** – configure per-server allow/deny lists and
