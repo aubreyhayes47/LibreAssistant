@@ -136,6 +136,7 @@ def create_app() -> FastAPI:
         db.add_history(
             request.user_id, request.plugin, request.payload, request.granted
         )
+        state["history"] = db.get_history(request.user_id)
         return {"result": result, "state": state}
 
     @app.get("/api/v1/history/{user_id}")
@@ -256,12 +257,13 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/themes/{theme_id}.css")
     def theme_css(theme_id: str) -> Response:
         try:
-            css = get_theme_css(theme_id)
+            css, modified = get_theme_css(theme_id)
         except FileNotFoundError as exc:  # pragma: no cover - error branch
             raise HTTPException(
                 status_code=404, detail="Theme not found"
             ) from exc
-        return Response(css, media_type="text/css")
+        headers = {"x-theme-sanitized": "true"} if modified else None
+        return Response(css, media_type="text/css", headers=headers)
 
     @app.get("/api/v1/bom")
     def get_bom() -> Dict[str, Any]:
