@@ -32,6 +32,7 @@ def test_echo_plugin_integration(client) -> None:
     assert response.json() == {
         "result": {"echo": "hi"},
         "state": {
+            "user_id": "alice",
             "last_message": "hi",
             "history": [{"plugin": "echo", "payload": {"message": "hi"}}],
         },

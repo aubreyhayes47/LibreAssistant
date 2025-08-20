@@ -23,7 +23,7 @@ def test_register_and_invoke_updates_state() -> None:
     kernel.register_plugin("echo", EchoPlugin())
     result = kernel.invoke("echo", "user", {"msg": "hi"})
     assert result == {"echo": "hi"}
-    assert kernel.get_state("user") == {"echo": "hi"}
+    assert kernel.get_state("user") == {"echo": "hi", "user_id": "user"}
 
 
 def test_get_state_returns_same_dict() -> None:
@@ -46,6 +46,6 @@ def test_reset_clears_plugins_and_state() -> None:
     kernel.register_plugin("echo", EchoPlugin())
     kernel.invoke("echo", "user", {"msg": "hi"})
     kernel.reset()
-    assert kernel.get_state("user") == {}
+    assert kernel.get_state("user") == {"user_id": "user"}
     with pytest.raises(KeyError):
         kernel.invoke("echo", "user", {"msg": "hi"})
