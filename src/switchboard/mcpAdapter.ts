@@ -1,10 +1,12 @@
+/**
+ * Switchboard adapter that exposes MCP servers as high level "plugins".
+ *
+ * A static mapping translates plugin identifiers to MCP tool names. Destructive
+ * file operations will trigger a user consent modal before execution, and every
+ * invocation is recorded in the user's history log via HTTP.
+ */
 import { MCPClient } from '../mcp/client.js';
 
-/**
- * Adapter that exposes MCP servers as high level "plugins" to the UI.
- * Each plugin maps to a primary tool; the underlying tools/resources/prompts
- * remain hidden from the switchboard.
- */
 export class MCPAdapter {
   private toolMap: Record<string, string | ((params: any) => string)> = {
     echo: 'echo_message',
@@ -26,21 +28,25 @@ export class MCPAdapter {
   constructor(private client: MCPClient) {}
 
   /**
-   * List available plugin names.
-   * @returns Array of plugin identifiers
+   * Returns the identifiers of all available plugins.
+   *
+   * @returns Array of plugin names exposed by the adapter.
    */
   listPlugins(): string[] {
     return Object.keys(this.toolMap);
   }
 
   /**
-   * Invoke a plugin by mapping it to the underlying MCP tool.
-   * Prompts for confirmation on destructive file operations and records history.
-   * @param plugin Plugin identifier to execute
-   * @param params Parameters to forward to the underlying tool
-   * @param userId User performing the action
-   * @returns Result from the MCP client
-   * @sideeffect May display consent modal and logs invocation history via HTTP
+   * Executes the MCP tool mapped to a plugin identifier.
+   *
+   * Destructive file operations prompt the user for consent and each
+   * invocation is persisted to the user's history log.
+   *
+   * @param plugin - Plugin identifier to execute.
+   * @param params - Parameters forwarded to the underlying tool.
+   * @param userId - User performing the action.
+   * @returns Result from the MCP client.
+   * @sideeffect May display a consent modal and log invocation history via HTTP.
    */
   async invokePlugin(plugin: string, params: any, userId: string): Promise<any> {
     const mapping = this.toolMap[plugin];
