@@ -2,9 +2,6 @@
 
 # Contributor Covenant Code of Conduct
 
-## Our Pledge
-We as members, contributors, and leaders pledge to make participation in the LibreAssistant community a harassment-free experience for everyone. We commit to building an inclusive community governed by the guild structure described in our roadmap.
-
 ## Our Standards
 Examples of behavior that contributes to a positive environment include:
 
