@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Dict, Protocol
 
+from cryptography.fernet import Fernet
+
 
 class Provider(Protocol):
     """Protocol defining an AI provider."""
@@ -20,22 +22,25 @@ class ProviderManager:
 
     def __init__(self) -> None:
         self._providers: Dict[str, Provider] = {}
-        self._api_keys: Dict[str, str] = {}
+        self._api_keys: Dict[str, bytes] = {}
+        self._fernet = Fernet(Fernet.generate_key())
 
     def register(self, name: str, provider: Provider) -> None:
         """Register a provider implementation."""
         self._providers[name] = provider
 
     def set_api_key(self, name: str, key: str) -> None:
-        """Store the API key for a provider."""
-        self._api_keys[name] = key
+        """Store the API key for a provider encrypted with Fernet."""
+        token = self._fernet.encrypt(key.encode())
+        self._api_keys[name] = token
 
     def generate(self, name: str, prompt: str) -> str:
         """Generate a response using the named provider."""
         provider = self._providers.get(name)
         if provider is None:
             raise KeyError(name)
-        key = self._api_keys.get(name)
+        token = self._api_keys.get(name)
+        key = self._fernet.decrypt(token).decode() if token else None
         return provider.generate(prompt, key)
 
     def reset(self) -> None:
