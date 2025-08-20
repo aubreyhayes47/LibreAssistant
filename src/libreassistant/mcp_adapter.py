@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import select
 import subprocess
 from pathlib import Path
 from typing import Any, Callable, Dict, Tuple
@@ -15,7 +16,12 @@ RUNNER = ROOT / "src" / "mcp" / "server-runner.js"
 class MCPClient:
     """Minimal JSON-RPC client speaking to an MCP server over stdio."""
 
-    def __init__(self, module: str, env: Dict[str, str] | None = None) -> None:
+    def __init__(
+        self,
+        module: str,
+        env: Dict[str, str] | None = None,
+        timeout: float | None = 30.0,
+    ) -> None:
         mod_path = Path(module)
         if not mod_path.is_absolute():
             mod_path = (ROOT / mod_path).resolve()
@@ -37,11 +43,17 @@ class MCPClient:
             env=env_vars,
         )
         self.next_id = 1
+        self.timeout = timeout
 
         # Perform a basic handshake to ensure the server is ready
         self.request("listTools")
 
-    def request(self, method: str, params: Any | None = None) -> Any:
+    def request(
+        self,
+        method: str,
+        params: Any | None = None,
+        timeout: float | None = None,
+    ) -> Any:
         req = {"jsonrpc": "2.0", "id": self.next_id, "method": method}
         self.next_id += 1
         if params is not None:
@@ -49,6 +61,13 @@ class MCPClient:
         assert self.proc.stdin and self.proc.stdout
         self.proc.stdin.write(json.dumps(req) + "\n")
         self.proc.stdin.flush()
+        wait = self.timeout if timeout is None else timeout
+        if wait is not None:
+            ready, _, _ = select.select([self.proc.stdout], [], [], wait)
+            if not ready:
+                raise TimeoutError(
+                    f"MCP server did not respond within {wait} seconds"
+                )
         line = self.proc.stdout.readline()
         if not line:
             raise RuntimeError("no response from MCP server")
@@ -75,8 +94,9 @@ class MCPPluginAdapter:
         module: str,
         resolver: str | Resolver,
         env: Dict[str, str] | None = None,
+        timeout: float | None = None,
     ) -> None:
-        self.client = MCPClient(module, env)
+        self.client = MCPClient(module, env, timeout=timeout)
         self.resolver = resolver
 
     def close(self) -> None:
