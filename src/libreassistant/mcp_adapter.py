@@ -4,8 +4,9 @@ from __future__ import annotations
 import json
 import logging
 import os
-import select
+import queue
 import subprocess
+import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, Tuple
 
@@ -45,6 +46,17 @@ class MCPClient:
         self.next_id = 1
         self.timeout = timeout
 
+        self._queue: queue.Queue[str | None] = queue.Queue()
+
+        def _reader() -> None:
+            assert self.proc.stdout
+            for line in self.proc.stdout:
+                self._queue.put(line)
+            self._queue.put(None)
+
+        self._reader = threading.Thread(target=_reader, daemon=True)
+        self._reader.start()
+
         # Perform a basic handshake to ensure the server is ready
         self.request("listTools")
 
@@ -58,18 +70,21 @@ class MCPClient:
         self.next_id += 1
         if params is not None:
             req["params"] = params
-        assert self.proc.stdin and self.proc.stdout
+        assert self.proc.stdin
         self.proc.stdin.write(json.dumps(req) + "\n")
         self.proc.stdin.flush()
         wait = self.timeout if timeout is None else timeout
-        if wait is not None:
-            ready, _, _ = select.select([self.proc.stdout], [], [], wait)
-            if not ready:
-                raise TimeoutError(
-                    f"MCP server did not respond within {wait} seconds"
-                )
-        line = self.proc.stdout.readline()
-        if not line:
+        try:
+            line = (
+                self._queue.get(timeout=wait)
+                if wait is not None
+                else self._queue.get()
+            )
+        except queue.Empty:
+            raise TimeoutError(
+                f"MCP server did not respond within {wait} seconds"
+            ) from None
+        if line is None:
             raise RuntimeError("no response from MCP server")
         res = json.loads(line)
         if "error" in res:
@@ -85,6 +100,9 @@ class MCPClient:
             self.proc.wait()
         except Exception as exc:  # pragma: no cover - best effort
             logging.debug("Exception while terminating MCPClient process: %s", exc)
+        finally:
+            if getattr(self, "_reader", None) and self._reader.is_alive():
+                self._reader.join(timeout=0.1)
 
 
 Resolver = Callable[[Dict[str, Any]], Tuple[str, Dict[str, Any]]]
@@ -129,3 +147,4 @@ class MCPPluginAdapter:
             return self.client.invoke(tool, params)
         except Exception as exc:
             return {"error": str(exc)}
+
