@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2024 LibreAssistant contributors. Licensed under the MIT License. -->
+
 # Law Plugin
 
 The `law_by_keystone` MCP server queries public government APIs to gather legal

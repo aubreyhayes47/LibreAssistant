@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """Lightweight SQLite database for history and audit logs."""
 
 from __future__ import annotations

@@ -1,3 +1,6 @@
+// Copyright (c) 2024 LibreAssistant contributors.
+// Licensed under the MIT License.
+
 import { promises as fs } from 'fs';
 import path from 'path';
 import {

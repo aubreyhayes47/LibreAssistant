@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2024 LibreAssistant contributors. Licensed under the MIT License. -->
+
 # UI Package
 
 This directory contains standalone web components and the assets needed to style them.

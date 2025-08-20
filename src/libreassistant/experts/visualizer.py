@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """Visualization analysis module powered by a model."""
 
 from __future__ import annotations

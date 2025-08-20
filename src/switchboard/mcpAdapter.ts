@@ -1,3 +1,6 @@
+// Copyright (c) 2024 LibreAssistant contributors.
+// Licensed under the MIT License.
+
 /**
  * Switchboard adapter that exposes MCP servers as high level "plugins".
  *

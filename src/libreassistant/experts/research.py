@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """Research analysis module powered by a language model."""
 
 from __future__ import annotations

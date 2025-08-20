@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2024 LibreAssistant contributors. Licensed under the MIT License. -->
+
 # MCP Migration Plan
 
 ## Phase 1 – Client & Registry

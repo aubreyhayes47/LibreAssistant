@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2024 LibreAssistant contributors. Licensed under the MIT License. -->
+
 # Tests
 
 This directory contains the test suite for LibreAssistant.

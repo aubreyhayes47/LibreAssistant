@@ -1,3 +1,6 @@
+// Copyright (c) 2024 LibreAssistant contributors.
+// Licensed under the MIT License.
+
 import { spawn, ChildProcess } from 'child_process';
 import { MCPServer, NetworkPolicy } from './types.js';
 

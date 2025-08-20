@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2024 LibreAssistant contributors. Licensed under the MIT License. -->
+
 # Model Context Protocol Overview
 
 Model Context Protocol (MCP) defines a neutral interface between AI clients and external capability providers. It addresses the classic N×M integration problem by standardising how models discover and use tools, resources and prompts.

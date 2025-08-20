@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2024 LibreAssistant contributors. Licensed under the MIT License. -->
+
 # MCP subsystem
 
 This directory contains a minimal implementation of components that speak the Model Context Protocol (MCP).

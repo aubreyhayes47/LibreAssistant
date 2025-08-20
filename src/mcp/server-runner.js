@@ -1,3 +1,6 @@
+// Copyright (c) 2024 LibreAssistant contributors.
+// Licensed under the MIT License.
+
 /**
  * Bootstraps an MCP server module and exposes it over stdio. This script is
  * used by the registry to spawn servers in isolated processes while enforcing

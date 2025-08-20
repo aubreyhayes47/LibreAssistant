@@ -1,3 +1,6 @@
+// Copyright (c) 2024 LibreAssistant contributors.
+// Licensed under the MIT License.
+
 import { MCPClient } from './client.js';
 import { StdioTransport } from './transport.js';
 import { NetworkPolicy } from './types.js';

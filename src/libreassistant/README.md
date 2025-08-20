@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2024 LibreAssistant contributors. Licensed under the MIT License. -->
+
 # LibreAssistant Core
 
 This package contains the runtime pieces that power the LibreAssistant API server.
