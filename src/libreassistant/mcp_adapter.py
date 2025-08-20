@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """Adapters allowing MCP servers to appear as legacy Plugin objects."""
 from __future__ import annotations
 

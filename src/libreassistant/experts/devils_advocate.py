@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """Devil's advocate analysis module using a model call."""
 
 from __future__ import annotations

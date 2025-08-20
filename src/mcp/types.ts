@@ -1,3 +1,6 @@
+// Copyright (c) 2024 LibreAssistant contributors.
+// Licensed under the MIT License.
+
 /**
  * Schema describing an executable tool exposed by an MCP server.
  * Parameters and return values follow JSON Schema definitions.

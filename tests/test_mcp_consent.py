@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 from fastapi.testclient import TestClient
 
 

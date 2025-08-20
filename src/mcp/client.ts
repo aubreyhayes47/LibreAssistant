@@ -1,3 +1,6 @@
+// Copyright (c) 2024 LibreAssistant contributors.
+// Licensed under the MIT License.
+
 import { createHash } from 'crypto';
 import Ajv, { ValidateFunction } from 'ajv';
 import { MCPServer, AuditEntry, NetworkPolicy } from './types.js';

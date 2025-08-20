@@ -1,3 +1,6 @@
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """Aggregate expert analyses into a final summary via a language model."""
 
 from __future__ import annotations
