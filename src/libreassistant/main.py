@@ -53,11 +53,28 @@ def create_app() -> FastAPI:
         response.headers["Content-Security-Policy"] = csp
         return response
 
-    # Register built-in plugins
-    echo.register()
-    file_io.register()
-    law_by_keystone.register()
-    think_tank.register()
+    registry_file = Path("config/mcp.registry.json")
+    if registry_file.exists():
+        registry = json.loads(registry_file.read_text())
+    else:  # pragma: no cover - file may be missing in tests
+        registry = {"servers": []}
+
+    consent_file = Path("config/mcp.consent.json")
+    if consent_file.exists():
+        mcp_consent: Dict[str, bool] = json.loads(consent_file.read_text())
+    else:  # pragma: no cover - file may be missing in tests
+        mcp_consent = {}
+
+    # Register built-in plugins only if consent has been granted
+    plugin_modules = {
+        "echo": echo,
+        "files": file_io,
+        "law_by_keystone": law_by_keystone,
+        "think_tank": think_tank,
+    }
+    for name, mod in plugin_modules.items():
+        if mcp_consent.get(name, False):
+            mod.register()
 
     # Register default providers
     providers.register("cloud", CloudProvider())
@@ -68,15 +85,6 @@ def create_app() -> FastAPI:
     @app.on_event("shutdown")
     def _cleanup_plugins() -> None:
         kernel.shutdown()
-
-    registry_file = Path("config/mcp.registry.json")
-    if registry_file.exists():
-        registry = json.loads(registry_file.read_text())
-        mcp_plugins: List[str] = [
-            s["name"] for s in registry.get("servers", [])
-        ]
-    else:  # pragma: no cover - file may be missing in tests
-        mcp_plugins = []
 
     @app.get("/")
     def read_root() -> Dict[str, str]:
@@ -134,9 +142,26 @@ def create_app() -> FastAPI:
         )
         return {"status": "ok"}
 
-    @app.get("/api/v1/mcp/plugins")
-    def list_mcp_plugins() -> Dict[str, List[str]]:
-        return {"plugins": mcp_plugins}
+    @app.get("/api/v1/mcp/servers")
+    def list_mcp_servers() -> Dict[str, Any]:
+        servers = [
+            {"name": s["name"], "consent": mcp_consent.get(s["name"], False)}
+            for s in registry.get("servers", [])
+        ]
+        return {"servers": servers}
+
+    class ServerConsent(BaseModel):
+        consent: bool
+
+    @app.post("/api/v1/mcp/consent/{name}")
+    def set_server_consent(name: str, req: ServerConsent) -> Dict[str, str]:
+        mcp_consent[name] = req.consent
+        consent_file.write_text(json.dumps(mcp_consent))
+        return {"status": "ok"}
+
+    @app.get("/api/v1/mcp/consent/{name}")
+    def get_server_consent(name: str) -> Dict[str, bool]:
+        return {"consent": mcp_consent.get(name, False)}
 
     class VaultData(BaseModel):
         data: Dict[str, Any]

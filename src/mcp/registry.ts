@@ -9,8 +9,31 @@ interface RegistryConfig {
   allowedHosts?: string[];
 }
 
-export async function loadRegistry(configPath: string, client: MCPClient) {
-  const config: RegistryConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+/**
+ * Load MCP servers from a registry file while enforcing per-server consent.
+ * Only servers explicitly granted consent will be registered with the client.
+ *
+ * @param configPath Path to the registry configuration listing available servers
+ * @param client     MCP client instance used for registration
+ * @param consentPath Optional path to a JSON file mapping server names to
+ *                    boolean consent flags. Defaults to `mcp.consent.json`
+ *                    in the same directory as the config file.
+ */
+export async function loadRegistry(
+  configPath: string,
+  client: MCPClient,
+  consentPath?: string,
+) {
+  const config: RegistryConfig = JSON.parse(
+    fs.readFileSync(configPath, 'utf-8'),
+  );
+  const consentFile =
+    consentPath ||
+    path.resolve(path.dirname(configPath), 'mcp.consent.json');
+  let consent: Record<string, boolean> = {};
+  if (fs.existsSync(consentFile)) {
+    consent = JSON.parse(fs.readFileSync(consentFile, 'utf-8'));
+  }
   const runner = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
     'server-runner.js'
@@ -19,6 +42,7 @@ export async function loadRegistry(configPath: string, client: MCPClient) {
     client.setAllowedHosts(config.allowedHosts);
   }
   for (const entry of config.servers) {
+    if (!consent[entry.name]) continue;
     const modulePath = path.resolve(entry.module);
     const transport = new StdioTransport('node', [
       '--loader',
