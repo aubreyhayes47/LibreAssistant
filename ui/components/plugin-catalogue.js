@@ -59,9 +59,9 @@ class LAPluginCatalogue extends HTMLElement {
 
   async loadPlugins() {
     try {
-      const res = await fetch('/api/v1/mcp/plugins');
+      const res = await fetch('/api/v1/mcp/servers');
       const data = await res.json();
-      this.plugins = data.plugins.map(name => ({ name, enabled: false }));
+      this.plugins = data.servers || [];
     } catch {
       this.plugins = [];
     }
@@ -87,12 +87,21 @@ class LAPluginCatalogue extends HTMLElement {
     label.textContent = plugin.name;
     const toggle = document.createElement('input');
     toggle.type = 'checkbox';
-    toggle.checked = plugin.enabled;
-    toggle.addEventListener('change', () => {
-      plugin.enabled = toggle.checked;
-      this.dispatchEvent(new CustomEvent('plugin-toggle', {
-        detail: { name: plugin.name, enabled: plugin.enabled }
-      }));
+    toggle.checked = plugin.consent;
+    toggle.addEventListener('change', async () => {
+      plugin.consent = toggle.checked;
+      try {
+        await fetch(`/api/v1/mcp/consent/${plugin.name}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ consent: plugin.consent })
+        });
+      } catch {}
+      this.dispatchEvent(
+        new CustomEvent('plugin-toggle', {
+          detail: { name: plugin.name, consent: plugin.consent }
+        })
+      );
     });
     label.prepend(toggle);
     li.appendChild(label);
