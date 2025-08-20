@@ -7,12 +7,22 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from pydantic import BaseModel
+
 from ..kernel import kernel
 from ..mcp_adapter import MCPPluginAdapter
 
 
+class EchoInput(BaseModel):
+    """Schema for messages handled by :class:`EchoPlugin`."""
+
+    message: str = ""
+
+
 class EchoPlugin(MCPPluginAdapter):
     """Echo back a message while updating user state via MCP server."""
+
+    InputModel = EchoInput
 
     def __init__(self) -> None:
         super().__init__("servers/echo/index.ts", "echo_message")

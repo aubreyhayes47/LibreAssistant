@@ -5,13 +5,27 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
+from pydantic import BaseModel
+
 from ..kernel import kernel
 from ..mcp_adapter import MCPPluginAdapter
 from . import file_io
 
 
+class LawByKeystoneInput(BaseModel):
+    """Schema for inputs to :class:`LawByKeystonePlugin`."""
+
+    query: str
+    output_path: str
+    output_format: Literal["md", "json", "html"] = "md"
+
+
 class LawByKeystonePlugin(MCPPluginAdapter):
     """Export legal research results via the MCP law server."""
+
+    InputModel = LawByKeystoneInput
 
     def __init__(self) -> None:
         env = {"MCP_FS_BASE_DIR": file_io.ALLOWED_BASE_DIR}
