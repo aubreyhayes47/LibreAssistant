@@ -33,7 +33,10 @@ def sanitize_css(css_text: str) -> str:
             sheet.deleteRule(rule)
             continue
         for prop in list(rule.style):
-            if prop.name not in SAFE_PROPERTIES and not prop.name.startswith("--"):
+            if (
+                prop.name not in SAFE_PROPERTIES
+                and not prop.name.startswith("--")
+            ):
                 rule.style.removeProperty(prop.name)
     cssutils.ser.prefs.useMinified()
     return sheet.cssText.decode("utf-8")

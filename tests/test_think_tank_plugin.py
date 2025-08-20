@@ -20,14 +20,20 @@ def test_thinktank_generates_realistic_summary() -> None:
     assert "Argument:" in summary
     assert "Caveats:" in summary
     analysis = result["analysis"]
-    assert analysis["research"].startswith("Research findings for 'Improve education'")
+    assert analysis["research"].startswith(
+        "Research findings for 'Improve education'"
+    )
 
 
 def test_think_tank_integration(client) -> None:
     think_tank.register()
     response = client.post(
         "/api/v1/invoke",
-        json={"plugin": "think_tank", "payload": {"goal": "Improve education"}, "user_id": "alice"},
+        json={
+            "plugin": "think_tank",
+            "payload": {"goal": "Improve education"},
+            "user_id": "alice",
+        },
     )
     assert response.status_code == 200
     data = response.json()

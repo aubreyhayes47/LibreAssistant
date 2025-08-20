@@ -15,7 +15,11 @@ class LawByKeystonePlugin(MCPPluginAdapter):
 
     def __init__(self) -> None:
         env = {"MCP_FS_BASE_DIR": file_io.ALLOWED_BASE_DIR}
-        super().__init__("servers/law_by_keystone/index.ts", "generate_legal_summary", env)
+        super().__init__(
+            "servers/law_by_keystone/index.ts",
+            "generate_legal_summary",
+            env,
+        )
 
 
 def register() -> None:

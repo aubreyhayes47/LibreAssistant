@@ -17,7 +17,9 @@ class EchoPlugin(MCPPluginAdapter):
     def __init__(self) -> None:
         super().__init__("servers/echo/index.ts", "echo_message")
 
-    def run(self, user_state: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+    def run(
+        self, user_state: Dict[str, Any], payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         result = super().run(user_state, payload)
         user_state["last_message"] = payload.get("message", "")
         return result

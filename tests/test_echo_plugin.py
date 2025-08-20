@@ -22,7 +22,11 @@ def test_echo_plugin_unit() -> None:
 def test_echo_plugin_integration(client) -> None:
     response = client.post(
         "/api/v1/invoke",
-        json={"plugin": "echo", "payload": {"message": "hi"}, "user_id": "alice"},
+        json={
+            "plugin": "echo",
+            "payload": {"message": "hi"},
+            "user_id": "alice",
+        },
     )
     assert response.status_code == 200
     assert response.json() == {
@@ -32,4 +36,3 @@ def test_echo_plugin_integration(client) -> None:
             "history": [{"plugin": "echo", "payload": {"message": "hi"}}],
         },
     }
-

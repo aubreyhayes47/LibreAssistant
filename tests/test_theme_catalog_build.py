@@ -11,7 +11,11 @@ import importlib.util
 
 
 def _load_builder():
-    path = Path(__file__).resolve().parents[1] / "scripts" / "build_theme_catalog.py"
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "build_theme_catalog.py"
+    )
     spec = importlib.util.spec_from_file_location("build_theme_catalog", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None

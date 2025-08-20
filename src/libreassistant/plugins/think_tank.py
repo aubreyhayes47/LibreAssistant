@@ -17,7 +17,9 @@ class ThinkTankPlugin(MCPPluginAdapter):
     def __init__(self) -> None:
         super().__init__("servers/think_tank/index.ts", "analyze_goal")
 
-    def run(self, user_state: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+    def run(
+        self, user_state: Dict[str, Any], payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         result = super().run(user_state, payload)
         if "analysis" in result:
             dossier = user_state.setdefault("thinktank_dossier", [])
