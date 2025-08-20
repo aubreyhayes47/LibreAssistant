@@ -3,11 +3,13 @@
 
 """Application entrypoints and FastAPI app factory."""
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
+from pathlib import Path
+import json
 
 from .kernel import kernel
 from .plugins import echo, file_io, law_by_keystone, think_tank
@@ -60,6 +62,13 @@ def create_app() -> FastAPI:
 
     vault = DataVault()
 
+    registry_file = Path("config/mcp.registry.json")
+    if registry_file.exists():
+        registry = json.loads(registry_file.read_text())
+        mcp_plugins: List[str] = [s["name"] for s in registry.get("servers", [])]
+    else:  # pragma: no cover - file may be missing in tests
+        mcp_plugins = []
+
     @app.get("/")
     def read_root() -> Dict[str, str]:
         return {"message": "LibreAssistant API"}
@@ -68,6 +77,7 @@ def create_app() -> FastAPI:
         plugin: str
         payload: Dict[str, Any]
         user_id: str
+        granted: bool | None = None
 
     @app.post("/api/v1/invoke")
     def invoke(request: InvokeRequest) -> Dict[str, Any]:
@@ -78,7 +88,10 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="Plugin not found") from exc
         state = kernel.get_state(request.user_id)
         history = state.setdefault("history", [])
-        history.append({"plugin": request.plugin, "payload": request.payload})
+        entry: Dict[str, Any] = {"plugin": request.plugin, "payload": request.payload}
+        if request.granted is not None:
+            entry["granted"] = request.granted
+        history.append(entry)
         return {"result": result, "state": state}
 
     @app.get("/api/v1/history/{user_id}")
@@ -86,6 +99,28 @@ def create_app() -> FastAPI:
         """Retrieve a user's past plugin invocations."""
         state = kernel.get_state(user_id)
         return {"history": state.get("history", [])}
+
+    class HistoryEntry(BaseModel):
+        plugin: str
+        payload: Dict[str, Any]
+        granted: bool
+
+    @app.post("/api/v1/history/{user_id}")
+    def record_history(user_id: str, entry: HistoryEntry) -> Dict[str, str]:
+        state = kernel.get_state(user_id)
+        history = state.setdefault("history", [])
+        history.append(
+            {
+                "plugin": entry.plugin,
+                "payload": entry.payload,
+                "granted": entry.granted,
+            }
+        )
+        return {"status": "ok"}
+
+    @app.get("/api/v1/mcp/plugins")
+    def list_mcp_plugins() -> Dict[str, List[str]]:
+        return {"plugins": mcp_plugins}
 
     class VaultData(BaseModel):
         data: Dict[str, Any]

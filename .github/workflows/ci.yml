@@ -20,5 +20,7 @@ jobs:
       - run: python scripts/check_license_headers.py
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+      - run: npm ci
+      - run: npm test
       - run: npx --yes markdownlint-cli '**/*.md'

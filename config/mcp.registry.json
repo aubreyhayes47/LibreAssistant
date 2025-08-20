@@ -1,0 +1,9 @@
+{
+  "servers": [
+    { "name": "echo", "module": "./servers/echo/index.ts" },
+    { "name": "files", "module": "./servers/files/index.ts" },
+    { "name": "law_by_keystone", "module": "./servers/law_by_keystone/index.ts" },
+    { "name": "think_tank", "module": "./servers/think_tank/index.ts" }
+  ],
+  "allowedHosts": ["localhost"]
+}

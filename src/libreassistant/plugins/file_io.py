@@ -6,9 +6,10 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from ..kernel import kernel
+from ..mcp_adapter import MCPPluginAdapter
 
 # Filesystem operations are restricted to this base directory. Paths provided by
 # users will be resolved relative to this directory and rejected if they escape
@@ -16,53 +17,33 @@ from ..kernel import kernel
 ALLOWED_BASE_DIR = os.path.join(os.path.expanduser("~"), "desktop")
 
 
-class FileIOPlugin:
-    """Perform basic file operations with explicit confirmation for risky actions."""
+def _resolver(payload: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    op = payload.get("operation")
+    mapping = {
+        "read": "fs_read",
+        "create": "fs_create",
+        "update": "fs_update",
+        "delete": "fs_delete",
+        "list": "fs_list",
+    }
+    if op not in mapping:
+        raise ValueError("unknown operation")
+    params = dict(payload)
+    params.pop("operation")
+    return mapping[op], params
+
+
+class FileIOPlugin(MCPPluginAdapter):
+    """Perform basic file operations through the MCP file server."""
+
+    def __init__(self) -> None:
+        env = {"MCP_FS_BASE_DIR": ALLOWED_BASE_DIR}
+        super().__init__("servers/files/index.ts", _resolver, env)
 
     def run(self, user_state: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
-        operation = payload.get("operation")
-        raw_path = payload.get("path")
-        if not operation or not raw_path:
-            return {"error": "operation and path required"}
-
-        allowed_dir = os.path.realpath(os.path.expanduser(ALLOWED_BASE_DIR))
-
-        user_path = os.path.expanduser(raw_path)
-        if not os.path.isabs(user_path):
-            user_path = os.path.join(allowed_dir, user_path)
-        path = os.path.realpath(user_path)
-
-        if not (path == allowed_dir or path.startswith(allowed_dir + os.sep)):
-            return {"error": "path outside allowed directory"}
-
-        user_state["last_file_path"] = path
-
-        confirm = payload.get("confirm", False)
-        content = payload.get("content", "")
-
-        try:
-            if operation == "read":
-                with open(path, "r", encoding="utf-8") as fh:
-                    data = fh.read()
-                return {"content": data}
-            if operation == "create":
-                with open(path, "w", encoding="utf-8") as fh:
-                    fh.write(content)
-                return {"status": "created"}
-            if operation == "update":
-                if not confirm:
-                    return {"error": "explicit confirmation required"}
-                with open(path, "w", encoding="utf-8") as fh:
-                    fh.write(content)
-                return {"status": "updated"}
-            if operation == "delete":
-                if not confirm:
-                    return {"error": "explicit confirmation required"}
-                os.remove(path)
-                return {"status": "deleted"}
-            return {"error": "unknown operation"}
-        except OSError as exc:  # pragma: no cover - error branch
-            return {"error": str(exc)}
+        if "path" in payload:
+            user_state["last_file_path"] = os.path.realpath(payload["path"])
+        return super().run(user_state, payload)
 
 
 def register() -> None:

@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+node_modules/
+mcp_fs/
 
 # C extensions
 *.so

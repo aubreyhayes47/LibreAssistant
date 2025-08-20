@@ -45,23 +45,26 @@ class LAPluginCatalogue extends HTMLElement {
       </header>
       <ul id="list"></ul>
     `;
-    this.plugins = [
-      { name: 'Weather', enabled: false },
-      { name: 'Calculator', enabled: false },
-      { name: 'Notes', enabled: false },
-      { name: 'Calendar', enabled: false },
-      { name: 'File I/O', enabled: false },
-      { name: 'Law by Keystone', enabled: false },
-      { name: 'ThinkTank', enabled: false },
-    ];
+    this.plugins = [];
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    await this.loadPlugins();
     this.render();
     const search = this.shadowRoot.getElementById('search');
     search.shadowRoot.querySelector('input').addEventListener('input', e => {
       this.filter(e.target.value);
     });
+  }
+
+  async loadPlugins() {
+    try {
+      const res = await fetch('/api/v1/mcp/plugins');
+      const data = await res.json();
+      this.plugins = data.plugins.map(name => ({ name, enabled: false }));
+    } catch {
+      this.plugins = [];
+    }
   }
 
   filter(query) {
