@@ -16,13 +16,22 @@ interface JSONRPCResponse {
   error?: { code: number; message: string; data?: any };
 }
 
-// Transport interface used by the MCP client
+/**
+ * Transport interface used by the MCP client.
+ * Implementations are responsible for sending JSON-RPC requests and
+ * returning the corresponding responses.
+ */
 export interface Transport {
+  /** Send a JSON-RPC request. */
   request(method: string, params?: any): Promise<any>;
+  /** Close any underlying resources. */
   close(): void;
 }
 
-// JSON-RPC over child-process stdio
+/**
+ * JSON-RPC transport communicating with a child process over stdio.
+ * Each request is serialized as a newline-delimited JSON object.
+ */
 export class StdioTransport implements Transport {
   private proc: ChildProcess;
   private nextId = 1;
@@ -64,6 +73,7 @@ export class StdioTransport implements Transport {
     });
   }
 
+  /** Send a JSON-RPC request to the child process. */
   request(method: string, params?: any): Promise<any> {
     const id = this.nextId++;
     const req: JSONRPCRequest = { jsonrpc: '2.0', id, method, params };
@@ -73,12 +83,16 @@ export class StdioTransport implements Transport {
     });
   }
 
+  /** Terminate the child process. */
   close() {
     this.proc.kill();
   }
 }
 
-// JSON-RPC over simple HTTP POST + optional SSE stream
+/**
+ * JSON-RPC transport over HTTP POST with an optional Server-Sent Events stream
+ * for receiving notifications.
+ */
 export class HTTPTransport implements Transport {
   private abort?: AbortController;
   constructor(private endpoint: string, private sseEndpoint?: string) {
@@ -114,7 +128,8 @@ export class HTTPTransport implements Transport {
     }
   }
 
-  async request(method: string, params?: any): Promise<any> {
+    /** Send a JSON-RPC request to the HTTP endpoint. */
+    async request(method: string, params?: any): Promise<any> {
     const res = await fetch(this.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -125,13 +140,14 @@ export class HTTPTransport implements Transport {
     return json.result;
   }
 
-  close() {
-    this.abort?.abort();
+    /** Terminate the SSE connection, if any. */
+    close() {
+      this.abort?.abort();
+    }
   }
-}
 
-// Utility to serve an MCPServer over stdio
-export function serveStdio(server: MCPServer) {
+  /** Utility to serve an {@link MCPServer} over stdio. */
+  export function serveStdio(server: MCPServer) {
   process.stdin.setEncoding('utf8');
   let buffer = '';
   process.stdin.on('data', chunk => {

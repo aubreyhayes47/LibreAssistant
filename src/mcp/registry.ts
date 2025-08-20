@@ -5,8 +5,14 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+/**
+ * Shape of the registry configuration file consumed by {@link loadRegistry}.
+ * Each entry describes an MCP server module and its optional network policy.
+ */
 interface RegistryConfig {
+  /** Servers available for registration. */
   servers: { name: string; module: string; network?: NetworkPolicy }[];
+  /** Default network policy applied when a server entry omits one. */
   defaultNetwork?: NetworkPolicy;
 }
 

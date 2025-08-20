@@ -1,3 +1,8 @@
+/**
+ * Helper script that boots a module exporting an MCP server and exposes it
+ * over stdio using the {@link serveStdio} transport. Network policy restrictions
+ * are enforced based on environment variables before the server is started.
+ */
 import { serveStdio } from './transport.ts';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -9,6 +14,11 @@ if (!modArg) {
 }
 const modulePath = path.resolve(modArg);
 
+/**
+ * Patch the global {@link fetch} to enforce network policies specified via
+ * environment variables. This mirrors the client's network policy logic when
+ * executing within the server process.
+ */
 function applyPolicy() {
   const allow = (process.env.MCP_ALLOW_HOSTS || '').split(',').filter(Boolean);
   const deny = (process.env.MCP_DENY_HOSTS || '').split(',').filter(Boolean);
