@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
-
 from ..kernel import kernel
 from ..mcp_adapter import MCPPluginAdapter
 from . import file_io
