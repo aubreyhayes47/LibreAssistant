@@ -54,4 +54,10 @@ The endpoint returns empty lists when the configured directories are missing or 
 
 LibreAssistant ships with a simple `echo` plugin that returns the provided message and stores it in the user's state. It serves as a reference implementation for developing additional plugins.
 
+The `file_io` plugin offers basic filesystem access. It resolves requested
+paths to their canonical form and confines them to `ALLOWED_BASE_DIR`, which
+defaults to a `desktop` folder in the current user's home directory. This
+normalization prevents path traversal and keeps file operations within a
+designated workspace.
+
 See [docs/plugin-api.md](docs/plugin-api.md) for details on writing and registering plugins.

@@ -59,3 +59,15 @@ The plugin can then be invoked through the `/api/v1/invoke` endpoint by specifyi
 ## History
 
 Each invocation is appended to a per-user log that can be retrieved via `GET /api/v1/history/{user_id}`. This history powers the Past Requests tab in the web UI and can aid debugging during plugin development.
+
+## File I/O Plugin Security
+
+The built-in `file_io` plugin exposes basic filesystem operations. It sets
+`ALLOWED_BASE_DIR` to the user's `~/desktop` directory and passes this value to
+the MCP file server through `MCP_FS_BASE_DIR`.
+
+Before any operation, the plugin normalizes user supplied paths with
+`os.path.realpath` and verifies that the result remains within
+`ALLOWED_BASE_DIR`. Requests that resolve outside this directory are rejected,
+preventing path traversal and confining access to an explicitly approved
+workspace.
