@@ -82,3 +82,15 @@ def test_error_tracking(client):
     after_status = client.get("/api/v1/health").json()
     assert after_status["error_count"] == before_status["error_count"] + 1
     assert after_status["status"] == "error"
+
+
+def test_health_monitor_discards_old_errors():
+    from libreassistant.transparency import HealthMonitor
+
+    monitor = HealthMonitor()
+    for i in range(105):
+        monitor.record_error(f"err-{i}")
+    status = monitor.get_status()
+    assert status["error_count"] == 105
+    assert len(status["errors"]) == 100
+    assert status["errors"][0] == "err-5"

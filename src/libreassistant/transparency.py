@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import os
 import time
+from collections import deque
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Deque, Dict, List
 
 import importlib.metadata
 
@@ -20,7 +21,7 @@ class HealthMonitor:
         self.start_time = time.time()
         self.requests = 0
         self.error_count = 0
-        self.errors: List[str] = []
+        self.errors: Deque[str] = deque(maxlen=100)
 
     def record_request(self) -> None:
         """Increment the total request count."""
@@ -39,7 +40,7 @@ class HealthMonitor:
             "uptime": time.time() - self.start_time,
             "requests": self.requests,
             "error_count": self.error_count,
-            "errors": self.errors,
+            "errors": list(self.errors),
         }
 
 
