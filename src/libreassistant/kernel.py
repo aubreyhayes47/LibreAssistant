@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Protocol
+from typing import Any, Dict, Protocol, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -46,8 +46,9 @@ class Microkernel:
         state = self.get_state(user_id)
         model = getattr(plugin, "InputModel", None)
         if isinstance(model, type) and issubclass(model, BaseModel):
+            model_cls = cast(type[BaseModel], model)
             try:
-                payload = model.model_validate(payload).model_dump()
+                payload = model_cls.model_validate(payload).model_dump()
             except ValidationError as exc:
                 return {"error": exc.errors()}
         return plugin.run(state, payload)
