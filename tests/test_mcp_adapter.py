@@ -51,7 +51,8 @@ def _setup_client(client: MCPClient) -> None:
     client._queue = queue.Queue()
 
     def _reader() -> None:
-        assert client.proc.stdout
+        if client.proc.stdout is None:
+            raise RuntimeError("MCPClient process has no stdout")
         for line in client.proc.stdout:
             client._queue.put(line)
         client._queue.put(None)
@@ -83,5 +84,42 @@ def test_list_tools_mock_server(mock_mcp_server):
     _setup_client(client)
     try:
         assert client.request("listTools") == {"tools": []}
+    finally:
+        client.close()
+
+
+def test_request_no_stdin():
+    client = MCPClient.__new__(MCPClient)
+    client.proc = subprocess.Popen(
+        ["sleep", "100"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
+    )
+    client.proc.stdin.close()
+    client.proc.stdin = None
+    client.next_id = 1
+    client.timeout = None
+    try:
+        with pytest.raises(RuntimeError, match="no stdin"):
+            client.request("listTools")
+    finally:
+        client.close()
+
+
+def test_reader_no_stdout():
+    client = MCPClient.__new__(MCPClient)
+    client.proc = subprocess.Popen(
+        ["sleep", "100"], stdin=subprocess.PIPE, stdout=None, text=True
+    )
+    client._queue = queue.Queue()
+
+    def _reader() -> None:
+        if client.proc.stdout is None:
+            raise RuntimeError("MCPClient process has no stdout")
+        for line in client.proc.stdout:
+            client._queue.put(line)
+        client._queue.put(None)
+
+    try:
+        with pytest.raises(RuntimeError, match="no stdout"):
+            _reader()
     finally:
         client.close()
