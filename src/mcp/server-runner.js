@@ -1,3 +1,8 @@
+/**
+ * Bootstraps an MCP server module and exposes it over stdio. This script is
+ * used by the registry to spawn servers in isolated processes while enforcing
+ * network policies.
+ */
 import { serveStdio } from './transport.ts';
 import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
@@ -9,6 +14,11 @@ if (!modArg) {
 }
 const modulePath = path.resolve(modArg);
 
+/**
+ * Apply network policy restrictions from environment variables to the global
+ * `fetch` implementation. Hosts and protocols not explicitly allowed will
+ * cause requests to be rejected.
+ */
 function applyPolicy() {
   const allow = (process.env.MCP_ALLOW_HOSTS || '').split(',').filter(Boolean);
   const deny = (process.env.MCP_DENY_HOSTS || '').split(',').filter(Boolean);
