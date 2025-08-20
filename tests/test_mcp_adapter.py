@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import textwrap
+import queue
+import threading
 
 import pytest
 
@@ -45,6 +47,19 @@ def mock_mcp_server():
             proc.kill()
 
 
+def _setup_client(client: MCPClient) -> None:
+    client._queue = queue.Queue()
+
+    def _reader() -> None:
+        assert client.proc.stdout
+        for line in client.proc.stdout:
+            client._queue.put(line)
+        client._queue.put(None)
+
+    client._reader = threading.Thread(target=_reader, daemon=True)
+    client._reader.start()
+
+
 def test_request_times_out():
     client = MCPClient.__new__(MCPClient)
     client.proc = subprocess.Popen(
@@ -52,6 +67,7 @@ def test_request_times_out():
     )
     client.next_id = 1
     client.timeout = None
+    _setup_client(client)
     try:
         with pytest.raises(TimeoutError):
             client.request("listTools", timeout=0.1)
@@ -64,6 +80,7 @@ def test_list_tools_mock_server(mock_mcp_server):
     client.proc = mock_mcp_server
     client.next_id = 1
     client.timeout = None
+    _setup_client(client)
     try:
         assert client.request("listTools") == {"tools": []}
     finally:
