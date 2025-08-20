@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections import deque
+from collections.abc import Sequence
 from time import monotonic
 from types import SimpleNamespace
 
@@ -91,7 +92,13 @@ class CloudProvider:
         except Exception as exc:  # pragma: no cover - network error path
             raise RuntimeError(str(exc)) from exc
 
-        # The OpenAI client returns objects with ``choices`` containing message
-        # dictionaries.  Tests stub this structure so it is safe to index
-        # directly.
-        return response.choices[0].message["content"]
+        # Validate response structure before returning the content
+        choices = getattr(response, "choices", None)
+        if not isinstance(choices, Sequence) or not choices:
+            raise RuntimeError("invalid response structure")
+
+        message = getattr(choices[0], "message", None)
+        if not isinstance(message, dict) or "content" not in message:
+            raise RuntimeError("invalid response structure")
+
+        return message["content"]

@@ -2,6 +2,15 @@
 # Licensed under the MIT License.
 
 import importlib
+import importlib.util
+import pytest
+
+try:
+    spec = importlib.util.find_spec("pysqlcipher3")
+except ValueError:
+    spec = None
+if spec is None:
+    pytest.skip("pysqlcipher3 not installed", allow_module_level=True)
 
 from libreassistant import db as app_db
 

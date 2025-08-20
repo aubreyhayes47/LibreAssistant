@@ -82,7 +82,12 @@ def test_api_key_encrypted_storage() -> None:
 # Provider adapter tests with mocked API responses
 
 
-def _mock_openai(monkeypatch, result: str | None = None, error: Exception | None = None):
+def _mock_openai(
+    monkeypatch,
+    result: str | None = None,
+    error: Exception | None = None,
+    choices: list | None = None,
+):
     """Patch the ``openai`` module with a minimal stub."""
 
     class _Chat:
@@ -91,7 +96,9 @@ def _mock_openai(monkeypatch, result: str | None = None, error: Exception | None
                 create=lambda **_: (_ for _ in ()).throw(error)
                 if error
                 else SimpleNamespace(
-                    choices=[SimpleNamespace(message={"content": result or ""})]
+                    choices=choices
+                    if choices is not None
+                    else [SimpleNamespace(message={"content": result or ""})]
                 )
             )
 
@@ -120,6 +127,13 @@ def test_cloud_provider_rate_limit(monkeypatch):
     _mock_openai(monkeypatch, result="ok")
     provider = CloudProvider(CloudConfig(rate_limit_per_minute=1))
     provider.generate("hi", api_key="key")
+    with pytest.raises(RuntimeError):
+        provider.generate("hi", api_key="key")
+
+
+def test_cloud_provider_empty_choices(monkeypatch):
+    _mock_openai(monkeypatch, choices=[])
+    provider = CloudProvider(CloudConfig())
     with pytest.raises(RuntimeError):
         provider.generate("hi", api_key="key")
 
