@@ -69,6 +69,8 @@ class FileIOPlugin(MCPPluginAdapter):
     InputModel = FileIOInput
 
     def __init__(self) -> None:
+        if not os.path.isdir(ALLOWED_BASE_DIR):
+            os.makedirs(ALLOWED_BASE_DIR, exist_ok=True)
         env = {"MCP_FS_BASE_DIR": ALLOWED_BASE_DIR}
         super().__init__("servers/files/index.ts", _resolver, env)
 

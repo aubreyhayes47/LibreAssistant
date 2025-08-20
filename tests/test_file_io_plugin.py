@@ -131,3 +131,18 @@ def test_file_io_validation_missing_path(tmp_path: Path) -> None:
     file_io.register()
     result = kernel.invoke("file_io", "alice", {"operation": "read"})
     assert "error" in result
+
+
+def test_file_io_plugin_creates_missing_base_dir(tmp_path: Path) -> None:
+    base_dir = tmp_path / "missing"
+    file_io.ALLOWED_BASE_DIR = str(base_dir)
+    assert not base_dir.exists()
+    plugin = FileIOPlugin()
+    assert base_dir.exists()
+    path = base_dir / "example.txt"
+    state: dict[str, Any] = {}
+    result = plugin.run(
+        state,
+        {"operation": "create", "path": str(path), "content": "hello"},
+    )
+    assert result == {"status": "created"}
