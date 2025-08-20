@@ -92,8 +92,6 @@ class MCPClient:
         """Terminate the underlying subprocess when leaving the context."""
 
         self.close()
-        # Returning ``None``/``False`` propagates any exception
-        return None
 
     def request(
         self,
@@ -194,7 +192,6 @@ class MCPPluginAdapter:
         """Ensure the underlying client is closed when leaving the context."""
 
         self.close()
-        return None
 
     def __del__(self) -> None:  # pragma: no cover - best effort cleanup
         try:
