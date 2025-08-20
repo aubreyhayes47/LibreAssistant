@@ -26,10 +26,6 @@ dev = [
     "pytest-cov",
     "httpx",
     "types-cryptography",
-    "types-cssutils",
-    "types-fastapi",
-    "types-pydantic",
-    "types-uvicorn",
 ]
 
 [tool.setuptools.packages.find]
