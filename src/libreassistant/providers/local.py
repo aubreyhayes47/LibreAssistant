@@ -14,7 +14,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from collections import deque
 from time import monotonic
-from types import SimpleNamespace
 
 
 @dataclass
