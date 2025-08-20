@@ -1,28 +1,57 @@
 import { spawn, ChildProcess } from 'child_process';
 import { MCPServer, NetworkPolicy } from './types.js';
 
-// Basic JSON-RPC message types
+/**
+ * Basic JSON-RPC request message as exchanged over transports.
+ */
 interface JSONRPCRequest {
+  /** Version string, always `"2.0"` */
   jsonrpc: '2.0';
+  /** Sequential identifier for matching responses */
   id: number;
+  /** Method name being invoked */
   method: string;
+  /** Optional parameters for the method */
   params?: any;
 }
 
+/**
+ * Basic JSON-RPC response message as exchanged over transports.
+ */
 interface JSONRPCResponse {
+  /** Version string, always `"2.0"` */
   jsonrpc: '2.0';
+  /** Identifier of the original request */
   id: number;
+  /** Result value when the call succeeds */
   result?: any;
+  /** Error information when the call fails */
   error?: { code: number; message: string; data?: any };
 }
 
-// Transport interface used by the MCP client
+/**
+ * Transport interface used by the MCP client to send JSON-RPC messages.
+ */
 export interface Transport {
+  /**
+   * Send a JSON-RPC request and wait for the response.
+   * @param method Name of the remote method
+   * @param params Optional parameters object
+   * @returns JSON result returned by the server
+   */
   request(method: string, params?: any): Promise<any>;
-  close(): void;
+  /**
+   * Close any underlying resources such as sockets or processes.
+   * Implementations should resolve the returned promise once all handles
+   * have been fully released so tests can reliably await shutdown.
+   */
+  close(): Promise<void>;
 }
 
-// JSON-RPC over child-process stdio
+/**
+ * JSON-RPC transport implemented over a child process's stdio streams.
+ * Spawns a process and proxies JSON-RPC messages to it.
+ */
 export class StdioTransport implements Transport {
   private proc: ChildProcess;
   private nextId = 1;
@@ -32,6 +61,13 @@ export class StdioTransport implements Transport {
   >();
   private buffer = '';
 
+  /**
+   * Create a transport communicating with a child process.
+   * @param command Command to spawn
+   * @param args Arguments to pass to the command
+   * @param policy Network policy passed to the child as environment variables
+   * @sideeffect Spawns a new child process
+   */
   constructor(command: string, args: string[] = [], policy?: NetworkPolicy) {
     this.proc = spawn(command, args, {
       stdio: ['pipe', 'pipe', 'inherit'],
@@ -64,6 +100,12 @@ export class StdioTransport implements Transport {
     });
   }
 
+  /**
+   * Send a JSON-RPC request to the child process.
+   * @param method Remote method name
+   * @param params Optional parameters object
+   * @returns JSON result from the child process
+   */
   request(method: string, params?: any): Promise<any> {
     const id = this.nextId++;
     const req: JSONRPCRequest = { jsonrpc: '2.0', id, method, params };
@@ -73,14 +115,29 @@ export class StdioTransport implements Transport {
     });
   }
 
-  close() {
-    this.proc.kill();
+  /**
+   * Terminate the underlying child process.
+   * @sideeffect Kills the spawned process
+   */
+  async close() {
+    return new Promise<void>(resolve => {
+      this.proc.once('exit', () => resolve());
+      this.proc.kill();
+    });
   }
 }
 
-// JSON-RPC over simple HTTP POST + optional SSE stream
+/**
+ * JSON-RPC transport that communicates with an HTTP endpoint and optional SSE stream.
+ */
 export class HTTPTransport implements Transport {
   private abort?: AbortController;
+  /**
+   * Create an HTTP transport.
+   * @param endpoint URL accepting JSON-RPC POST requests
+   * @param sseEndpoint Optional Server-Sent Events endpoint for notifications
+   * @sideeffect Initiates a long-lived fetch when `sseEndpoint` is provided
+   */
   constructor(private endpoint: string, private sseEndpoint?: string) {
     if (sseEndpoint) {
       this.abort = new AbortController();
@@ -114,6 +171,12 @@ export class HTTPTransport implements Transport {
     }
   }
 
+  /**
+   * Send a JSON-RPC request via HTTP POST.
+   * @param method Remote method name
+   * @param params Optional parameters object
+   * @returns Parsed JSON result from the server
+   */
   async request(method: string, params?: any): Promise<any> {
     const res = await fetch(this.endpoint, {
       method: 'POST',
@@ -125,12 +188,21 @@ export class HTTPTransport implements Transport {
     return json.result;
   }
 
-  close() {
+  /**
+   * Abort any outstanding SSE connection.
+   * @sideeffect Cancels network requests
+   */
+  async close() {
     this.abort?.abort();
+    return Promise.resolve();
   }
 }
 
-// Utility to serve an MCPServer over stdio
+/**
+ * Utility helper to expose an {@link MCPServer} over the current process's stdio.
+ * @param server MCP server implementation to expose
+ * @sideeffect Reads from stdin and writes JSON-RPC responses to stdout
+ */
 export function serveStdio(server: MCPServer) {
   process.stdin.setEncoding('utf8');
   let buffer = '';

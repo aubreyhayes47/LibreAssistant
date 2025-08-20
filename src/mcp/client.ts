@@ -7,7 +7,10 @@ import path from 'path';
 
 const MAX_LOG_SIZE = 5 * 1024 * 1024; // 5MB
 
-// Wrapper around a remote MCP server accessed via a Transport.
+/**
+ * Wrapper around a remote MCP server accessed via a {@link Transport}.
+ * Caches capability lists and validates parameters before dispatching requests.
+ */
 class RemoteServer implements MCPServer {
   constructor(
     private transport: Transport,
@@ -17,18 +20,36 @@ class RemoteServer implements MCPServer {
     private validators: Map<string, ValidateFunction>
   ) {}
 
+  /**
+   * Return cached tool definitions from the server.
+   * @returns Array of tool schemas
+   */
   listTools() {
     return this.cachedTools;
   }
 
+  /**
+   * Return cached resource definitions from the server.
+   * @returns Array of resource schemas
+   */
   listResources() {
     return this.cachedResources;
   }
 
+  /**
+   * Return cached prompt templates from the server.
+   * @returns Array of prompt schemas
+   */
   listPrompts() {
     return this.cachedPrompts;
   }
 
+  /**
+   * Invoke a remote tool after validating parameters.
+   * @param tool   Tool name to execute
+   * @param params Parameter object to validate and forward
+   * @returns Result from the remote server or validation error object
+   */
   async invoke(tool: string, params: any) {
     const validator = this.validators.get(tool);
     const args = params ?? {};
@@ -39,7 +60,10 @@ class RemoteServer implements MCPServer {
   }
 }
 
-// Client that connects to MCP servers via JSON-RPC transports.
+/**
+ * Client that connects to MCP servers via JSON-RPC transports.
+ * Maintains per-server network policies and an audit log of invocations.
+ */
 export class MCPClient {
   private servers: Map<string, RemoteServer> = new Map();
   private transports: Map<string, Transport> = new Map();
@@ -55,6 +79,13 @@ export class MCPClient {
     MCPClient.patchFetch();
   }
 
+  /**
+   * Register a remote server with the client and cache its capabilities.
+   * @param name      Logical name of the server
+   * @param transport Transport used for communication
+   * @param policy    Optional network policy for requests through this server
+   * @sideeffect Adds the server to internal maps and may start background processes
+   */
   async register(name: string, transport: Transport, policy?: NetworkPolicy) {
     const tools = await transport.request('listTools');
     const resources = await transport.request('listResources');
@@ -71,16 +102,34 @@ export class MCPClient {
     if (policy) this.policies.set(name, policy);
   }
 
+  /**
+   * List the names of all registered servers.
+   * @returns Array of server identifiers
+   */
   listServers() {
     return Array.from(this.servers.keys());
   }
 
+  /**
+   * Retrieve a previously registered server by name.
+   * @param name Server identifier
+   * @returns {@link MCPServer} instance
+   */
   getServer(name: string): MCPServer {
     const server = this.servers.get(name);
     if (!server) throw new Error(`Unknown server ${name}`);
     return server;
   }
 
+  /**
+   * Invoke a tool on a registered server while applying network policies
+   * and recording an audit entry.
+   * @param serverName Server identifier
+   * @param tool       Tool to execute
+   * @param params     Parameters supplied to the tool
+   * @returns Result from the remote invocation
+   * @sideeffect Writes to audit log and may modify files referenced by `params`
+   */
   async invoke(serverName: string, tool: string, params: any) {
     const server = this.getServer(serverName);
     let beforeHash: string | undefined;
@@ -130,6 +179,11 @@ export class MCPClient {
     return result;
   }
 
+  /**
+   * Append an entry to the persistent audit log.
+   * @param entry Audit information to record
+   * @sideeffect Writes to the file system under `logs/`
+   */
   private async appendAudit(entry: AuditEntry) {
     try {
       await fs.mkdir(path.dirname(this.logPath), { recursive: true });
@@ -147,16 +201,29 @@ export class MCPClient {
     }
   }
 
-  close() {
-    for (const transport of this.transports.values()) {
-      transport.close();
-    }
+  /**
+   * Close all registered transports and release their resources.
+   * @sideeffect Terminates network connections or child processes
+   */
+  async close() {
+    await Promise.all(
+      Array.from(this.transports.values(), t => t.close()),
+    );
   }
 
+  /**
+   * Set the default network policy applied when invoking servers without a specific policy.
+   * @param policy Network policy to enforce
+   */
   setDefaultPolicy(policy?: NetworkPolicy) {
     MCPClient.defaultPolicy = policy;
   }
 
+  /**
+   * Patch the global `fetch` function to enforce active network policies.
+   * The patch is applied only once per process.
+   * @sideeffect Overrides the global `fetch`
+   */
   private static patchFetch() {
     if (MCPClient.fetchPatched) return;
     const original = globalThis.fetch.bind(globalThis);

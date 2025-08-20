@@ -5,8 +5,13 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+/**
+ * Shape of the JSON configuration consumed by {@link loadRegistry}.
+ */
 interface RegistryConfig {
+  /** Servers that may be registered */
   servers: { name: string; module: string; network?: NetworkPolicy }[];
+  /** Optional default network policy applied when none specified per server */
   defaultNetwork?: NetworkPolicy;
 }
 
@@ -19,6 +24,8 @@ interface RegistryConfig {
  * @param consentPath Optional path to a JSON file mapping server names to
  *                    boolean consent flags. Defaults to `mcp.consent.json`
  *                    in the same directory as the config file.
+ * @returns Promise that resolves when all allowed servers have been registered
+ * @sideeffect Spawns server processes and updates client state
  */
 export async function loadRegistry(
   configPath: string,

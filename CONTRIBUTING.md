@@ -33,6 +33,7 @@ Join discussions in issues and pull requests to help shape the direction of the 
 Community themes live under the `community-themes/` directory. Themes override design tokens via CSS custom properties and are sanitized server-side to a whitelist of safe properties. To submit a new theme:
 
 1. Create a folder in `community-themes/` with your theme's name.
-2. Add a `metadata.json` file describing the theme and a `theme.css` stylesheet overriding tokens via CSS custom properties. Unsupported properties will be removed during sanitization.
+2. Add a `metadata.json` file describing the theme (follow the style guidelines in `community-themes/README.md`) and a `theme.css` stylesheet overriding tokens via CSS custom properties. Unsupported properties will be removed during sanitization.
 3. Run `python scripts/build_theme_catalog.py` to regenerate the catalog and sanitized styles.
-4. Include the generated changes in your pull request. The sanitized CSS will be served at `/api/v1/themes/{name}.css` for the marketplace to load in a sandboxed iframe.
+4. Open the generated `ui/themes/<id>.css` locally to verify the theme renders as expected.
+5. Include the generated changes in your pull request. The sanitized CSS will be served at `/api/v1/themes/{name}.css` for the marketplace to load in a sandboxed iframe.
