@@ -34,7 +34,10 @@ class DataVault:
             raise PermissionError("Consent required")
 
     def store(self, user_id: str, data: Dict[str, Any]) -> None:
-        payload = json.dumps(data).encode()
+        try:
+            payload = json.dumps(data).encode()
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Vault data must be JSON-serializable") from exc
         token = self._fernet.encrypt(payload)
         with self._lock:
             self._require_consent(user_id)
