@@ -5,20 +5,22 @@
 
 from typing import Any, Dict
 
+import json
+import os
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
-from pathlib import Path
-import json
 
 from .kernel import kernel
 from .plugins import echo, file_io, law_by_keystone, think_tank
 from .providers import providers
-from .providers.cloud import CloudProvider
-from .providers.local import LocalProvider
-from .vault import DataVault
+from .providers.cloud import CloudConfig, CloudProvider
+from .providers.local import LocalConfig, LocalProvider
 from .transparency import HealthMonitor, get_bill_of_materials
 from .themes import get_theme_css
+from .vault import DataVault
 
 
 def create_app() -> FastAPI:
@@ -76,9 +78,29 @@ def create_app() -> FastAPI:
         if mcp_consent.get(name, False):
             mod.register()
 
-    # Register default providers
-    providers.register("cloud", CloudProvider())
-    providers.register("local", LocalProvider())
+    # Register default providers with environment-based configuration
+    cloud_cfg = CloudConfig(
+        model=os.getenv("OPENAI_MODEL", CloudConfig.model),
+        max_tokens=int(os.getenv("OPENAI_MAX_TOKENS", CloudConfig.max_tokens)),
+        temperature=float(
+            os.getenv("OPENAI_TEMPERATURE", CloudConfig.temperature)
+        ),
+        rate_limit_per_minute=int(
+            os.getenv("OPENAI_RATE_LIMIT", CloudConfig.rate_limit_per_minute)
+        ),
+    )
+    providers.register("cloud", CloudProvider(cloud_cfg))
+
+    local_cfg = LocalConfig(
+        url=os.getenv("LOCAL_URL", LocalConfig.url),
+        model=os.getenv("LOCAL_MODEL", LocalConfig.model),
+        max_tokens=int(os.getenv("LOCAL_MAX_TOKENS", LocalConfig.max_tokens)),
+        temperature=float(os.getenv("LOCAL_TEMPERATURE", LocalConfig.temperature)),
+        rate_limit_per_minute=int(
+            os.getenv("LOCAL_RATE_LIMIT", LocalConfig.rate_limit_per_minute)
+        ),
+    )
+    providers.register("local", LocalProvider(local_cfg))
 
     vault = DataVault()
 

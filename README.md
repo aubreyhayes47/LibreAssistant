@@ -54,6 +54,33 @@ If you modify dependencies, regenerate the lock file with:
 uv pip compile pyproject.toml -o uv.lock
 ```
 
+### Model Providers
+
+LibreAssistant ships with adapters for both hosted and local models.  The
+following environment variables control defaults and simple per-minute rate
+limits.  A value of `0` disables throttling.
+
+| Provider | Variables |
+| --- | --- |
+| OpenAI | `OPENAI_MODEL`, `OPENAI_MAX_TOKENS`, `OPENAI_TEMPERATURE`, `OPENAI_RATE_LIMIT` |
+| Local  | `LOCAL_URL`, `LOCAL_MODEL`, `LOCAL_MAX_TOKENS`, `LOCAL_TEMPERATURE`, `LOCAL_RATE_LIMIT` |
+
+Set API keys via `POST /api/v1/providers/{name}/key`.
+
+#### Local LLMs with Ollama
+
+The local provider expects an HTTP endpoint compatible with
+[Ollama](https://ollama.com/).  Install and start Ollama, then launch a model:
+
+```sh
+curl -fsSL https://ollama.com/install.sh | sh
+ollama run llama2
+```
+
+By default the provider sends requests to `http://localhost:11434/api/generate`
+and uses the model name `llama2`, matching Ollama's defaults.  Adjust any of
+the `LOCAL_` variables to point at a different server or model.
+
 ## First Steps in the UI
 
 The switchboard presents tabs for composing requests, browsing plugins, viewing

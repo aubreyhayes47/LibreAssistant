@@ -5,10 +5,22 @@
 
 from __future__ import annotations
 
+import sys
+from types import SimpleNamespace
+
+import pytest
+
 from libreassistant.providers import providers
+from libreassistant.providers.cloud import CloudConfig, CloudProvider
+from libreassistant.providers.local import LocalConfig, LocalProvider
 
 
-def test_local_provider(client) -> None:
+def test_local_provider(client, monkeypatch) -> None:
+    monkeypatch.setattr(
+        LocalProvider,
+        "generate",
+        lambda self, prompt, api_key=None: f"local:{prompt}",
+    )
     response = client.post(
         "/api/v1/generate",
         json={"provider": "local", "prompt": "hi"},
@@ -17,7 +29,16 @@ def test_local_provider(client) -> None:
     assert response.json() == {"result": "local:hi"}
 
 
-def test_cloud_provider_requires_key(client) -> None:
+def test_cloud_provider_requires_key(client, monkeypatch) -> None:
+    monkeypatch.setattr(
+        CloudProvider,
+        "generate",
+        lambda self, prompt, api_key=None: (
+            (_ for _ in ()).throw(ValueError("API key required"))
+            if api_key is None
+            else f"cloud:{prompt}"
+        ),
+    )
     bad = client.post(
         "/api/v1/generate",
         json={"provider": "cloud", "prompt": "hi"},
@@ -55,3 +76,91 @@ def test_api_key_encrypted_storage() -> None:
 
     providers.generate("capture", "hi")
     assert provider.received == "secret"
+
+
+# ---------------------------------------------------------------------------
+# Provider adapter tests with mocked API responses
+
+
+def _mock_openai(monkeypatch, result: str | None = None, error: Exception | None = None):
+    """Patch the ``openai`` module with a minimal stub."""
+
+    class _Chat:
+        def __init__(self):
+            self.completions = SimpleNamespace(
+                create=lambda **_: (_ for _ in ()).throw(error)
+                if error
+                else SimpleNamespace(
+                    choices=[SimpleNamespace(message={"content": result or ""})]
+                )
+            )
+
+    class _Client:
+        def __init__(self, api_key=None):
+            self.api_key = api_key
+            self.chat = _Chat()
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=_Client))
+
+
+def test_cloud_provider_success(monkeypatch):
+    _mock_openai(monkeypatch, result="ok")
+    provider = CloudProvider(CloudConfig())
+    assert provider.generate("hi", api_key="key") == "ok"
+
+
+def test_cloud_provider_error(monkeypatch):
+    _mock_openai(monkeypatch, error=Exception("boom"))
+    provider = CloudProvider(CloudConfig())
+    with pytest.raises(RuntimeError):
+        provider.generate("hi", api_key="key")
+
+
+def test_cloud_provider_rate_limit(monkeypatch):
+    _mock_openai(monkeypatch, result="ok")
+    provider = CloudProvider(CloudConfig(rate_limit_per_minute=1))
+    provider.generate("hi", api_key="key")
+    with pytest.raises(RuntimeError):
+        provider.generate("hi", api_key="key")
+
+
+def _mock_http(monkeypatch, response: dict | None = None, error: Exception | None = None):
+    class Resp:
+        def __init__(self, data, exc):
+            self._data = data
+            self._exc = exc
+
+        def raise_for_status(self):
+            if self._exc:
+                raise self._exc
+
+        def json(self):
+            return self._data
+
+    def fake_post(*args, **kwargs):
+        if error:
+            raise error
+        return Resp(response or {"response": ""}, None)
+
+    monkeypatch.setitem(sys.modules, "httpx", SimpleNamespace(post=fake_post))
+
+
+def test_local_provider_success(monkeypatch):
+    _mock_http(monkeypatch, {"response": "ok"})
+    provider = LocalProvider(LocalConfig())
+    assert provider.generate("hi") == "ok"
+
+
+def test_local_provider_error(monkeypatch):
+    _mock_http(monkeypatch, error=RuntimeError("bad"))
+    provider = LocalProvider(LocalConfig())
+    with pytest.raises(RuntimeError):
+        provider.generate("hi")
+
+
+def test_local_provider_rate_limit(monkeypatch):
+    _mock_http(monkeypatch, {"response": "ok"})
+    provider = LocalProvider(LocalConfig(rate_limit_per_minute=1))
+    provider.generate("hi")
+    with pytest.raises(RuntimeError):
+        provider.generate("hi")
