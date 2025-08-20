@@ -26,6 +26,21 @@ LibreAssistant exposes a FastAPI service with endpoints for plugin invocation, u
 - `POST /api/v1/providers/{name}/key` – configure an API key for a provider
 - `POST /api/v1/generate` – generate a response using the specified provider
 
+### Configuration
+
+Environment variables define default model parameters and simple rate limits:
+
+| Provider | Variables |
+| --- | --- |
+| OpenAI | `OPENAI_MODEL`, `OPENAI_MAX_TOKENS`, `OPENAI_TEMPERATURE`, `OPENAI_RATE_LIMIT` |
+| Local  | `LOCAL_URL`, `LOCAL_MODEL`, `LOCAL_MAX_TOKENS`, `LOCAL_TEMPERATURE`, `LOCAL_RATE_LIMIT` |
+
+API keys are supplied via the key endpoint above.  The local provider expects an
+HTTP server such as [Ollama](https://ollama.com/) running at
+`http://localhost:11434/api/generate` by default.  Install Ollama and launch a
+model with `ollama run llama2`, or adjust the `LOCAL_` variables to point to a
+different server or model.
+
 ## MCP Registry
 - `GET /api/v1/mcp/servers` – list servers from the MCP registry and their
   consent status
