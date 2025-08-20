@@ -62,6 +62,9 @@ LibreAssistant ships with adapters for both hosted and local models.  The
 following environment variables control defaults and simple per-minute rate
 limits.  A value of `0` disables throttling.
 
+Additional configuration details and API key endpoints are documented in
+[docs/providers.md](docs/providers.md).
+
 | Provider | Variables |
 | --- | --- |
 | OpenAI | `OPENAI_MODEL`, `OPENAI_MAX_TOKENS`, `OPENAI_TEMPERATURE`, `OPENAI_RATE_LIMIT` |

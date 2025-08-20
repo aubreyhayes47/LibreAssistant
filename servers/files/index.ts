@@ -68,17 +68,37 @@ const prompts: PromptSchema[] = [
   { name: 'file_edit_template', template: 'Update file {{path}} with new content.' }
 ];
 
+/**
+ * Resolve a user-supplied relative path against the server's base directory.
+ * @param p Relative path from the client
+ * @returns Absolute path within the base directory
+ * @sideeffect Throws if path escapes the allowed directory
+ */
 function resolve(p: string) {
   const full = path.resolve(baseDir, p);
   if (!full.startsWith(baseDir)) throw new Error('path outside allowed directory');
   return full;
 }
 
+/**
+ * Append a file operation to the audit log.
+ * @param user     Optional user identifier
+ * @param action   Performed operation
+ * @param resolved Resolved absolute path
+ * @sideeffect Writes an entry to `file_io_audit.ndjson`
+ */
 async function audit(user: string | undefined, action: string, resolved: string) {
   const entry = { user_id: user, action, path: resolved, timestamp: Date.now() };
   await fs.appendFile(auditLog, JSON.stringify(entry) + '\n');
 }
 
+/**
+ * Invoke a file system tool, performing the requested operation and auditing it.
+ * @param tool   Tool name such as `fs_read` or `fs_update`
+ * @param params Parameters supplied by the client
+ * @returns Result object varying by tool
+ * @sideeffect Reads, writes, or deletes files and appends to audit log
+ */
 async function invoke(tool: string, params: any) {
   const user = params.user_id as string | undefined;
   switch (tool) {
@@ -118,6 +138,9 @@ async function invoke(tool: string, params: any) {
   throw new Error(`Unknown tool ${tool}`);
 }
 
+/**
+ * MCP server exposing basic file system operations.
+ */
 const server: MCPServer = {
   listTools: () => tools,
   listResources: () => resources,

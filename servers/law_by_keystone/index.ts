@@ -64,20 +64,43 @@ const prompts: PromptSchema[] = [
   },
 ];
 
+/**
+ * Ensure an output directory resides within the allowed base directory.
+ * @param p Desired output path
+ * @returns Resolved absolute path
+ * @sideeffect Throws if path escapes the base directory
+ */
 function ensureDir(p: string) {
   const full = path.resolve(baseDir, p);
   if (!full.startsWith(baseDir)) throw new Error('path outside allowed directory');
   return full;
 }
 
+/**
+ * Escape characters for safe inclusion in XML content.
+ * @param str Raw string
+ * @returns Escaped string
+ */
 function escapeXml(str: string) {
   return str.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]!));
 }
 
+/**
+ * Escape characters for safe inclusion in HTML content.
+ * @param str Raw string
+ * @returns Escaped string
+ */
 function escapeHtml(str: string) {
   return str.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]!));
 }
 
+/**
+ * Fetch legal data from the specified source.
+ * @param source API source identifier
+ * @param query  Query string to search for
+ * @returns Parsed JSON response or error object
+ * @sideeffect Performs network requests to external APIs
+ */
 async function fetchApi(source: Source, query: string) {
   const govinfoKey = process.env.GOVINFO_API_KEY || 'DEMO_KEY';
   const openStatesKey = process.env.OPENSTATES_API_KEY || 'DEMO_KEY';
@@ -111,6 +134,13 @@ async function fetchApi(source: Source, query: string) {
   }
 }
 
+/**
+ * Format fetched legal data into the desired output representation.
+ * @param data   Raw data returned from the API
+ * @param format Output format such as `json`, `html`, or `md`
+ * @param meta   Metadata including query and source
+ * @returns Object containing formatted content and file extension
+ */
 function formatContent(
   data: any,
   format: string,
@@ -156,6 +186,13 @@ function formatContent(
   }
 }
 
+/**
+ * Invoke the `generate_legal_summary` tool to fetch and export legal data.
+ * @param tool   Tool name, only `generate_legal_summary` is supported
+ * @param params Parameters including query, source, and output options
+ * @returns Metadata about the exported summary
+ * @sideeffect Fetches remote data and writes files to disk
+ */
 async function invoke(tool: string, params: any) {
   if (tool !== 'generate_legal_summary')
     throw new Error(`Unknown tool ${tool}`);
@@ -182,6 +219,9 @@ async function invoke(tool: string, params: any) {
   return { status: 'exported', path: filePath, sources: [source], metadata };
 }
 
+/**
+ * MCP server providing legal research capabilities backed by government APIs.
+ */
 const server: MCPServer = {
   listTools: () => tools,
   listResources: () => resources,
