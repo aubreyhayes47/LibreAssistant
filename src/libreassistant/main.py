@@ -62,6 +62,10 @@ def create_app() -> FastAPI:
 
     vault = DataVault()
 
+    @app.on_event("shutdown")
+    def _cleanup_plugins() -> None:
+        kernel.shutdown()
+
     registry_file = Path("config/mcp.registry.json")
     if registry_file.exists():
         registry = json.loads(registry_file.read_text())
