@@ -5,6 +5,7 @@ import './primary-button.js';
 import './input-field.js';
 import './information-card.js';
 import './modal-dialog.js';
+import './confirm-dialog.js';
 import './main-tabs.js';
 import './onboarding-flow.js';
 import './switchboard.js';
