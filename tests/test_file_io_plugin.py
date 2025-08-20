@@ -31,6 +31,24 @@ def test_file_io_plugin_unit(tmp_path: Path) -> None:
     assert result == {"error": "path outside allowed directory"}
 
 
+def test_file_io_plugin_path_sanitization(tmp_path: Path) -> None:
+    file_io.ALLOWED_BASE_DIR = str(tmp_path)
+    plugin = FileIOPlugin()
+    state: dict[str, Any] = {}
+
+    # Path that includes traversal but stays within the allowed directory
+    inside = tmp_path / "folder" / ".." / "sanitized.txt"
+    result = plugin.run(state, {"operation": "create", "path": str(inside), "content": "hi"})
+    assert result == {"status": "created"}
+    assert state["last_file_path"] == str(tmp_path / "sanitized.txt")
+
+    # Path that escapes the allowed directory is rejected and does not update state
+    outside = tmp_path.parent / "other.txt"
+    result = plugin.run(state, {"operation": "read", "path": str(outside)})
+    assert result == {"error": "path outside allowed directory"}
+    assert state["last_file_path"] == str(tmp_path / "sanitized.txt")
+
+
 def test_file_io_plugin_integration(client, tmp_path: Path) -> None:
     file_io.ALLOWED_BASE_DIR = str(tmp_path)
     file_io.register()
