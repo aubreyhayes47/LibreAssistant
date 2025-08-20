@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import pathlib
+import shutil
 import sys
 from typing import Generator
 
@@ -15,6 +16,14 @@ from fastapi.testclient import TestClient
 # Add the src directory to the Python path so the package can be imported
 # without installation.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
+
+if shutil.which("node") is None:
+    # Mock out MCP-based plugins when Node.js isn't available to keep tests
+    # hermetic. In particular the law_by_keystone plugin would otherwise spawn
+    # a Node server during app creation.
+    from libreassistant.plugins import law_by_keystone as _law_by_keystone  # type: ignore  # noqa: E402
+
+    _law_by_keystone.register = lambda: None  # type: ignore
 
 from libreassistant.main import app  # noqa: E402
 from libreassistant.kernel import kernel  # noqa: E402

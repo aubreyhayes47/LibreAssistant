@@ -1,10 +1,34 @@
 import json
+import shutil
 from pathlib import Path
 
 from typing import Any
 
+import pytest
+
 from libreassistant.plugins import file_io, law_by_keystone
 from libreassistant.plugins.law_by_keystone import LawByKeystonePlugin
+
+
+if shutil.which("node") is None:
+    class _DummyClient:
+        def __init__(self, module, env=None, timeout=None):
+            pass
+
+        def request(self, method, params=None, timeout=None):
+            return {"tools": []}
+
+        def invoke(self, tool, params):
+            output = Path(params["output_path"]) / "summary.json"
+            output.write_text(json.dumps({"query": params["query"]}))
+            return {"status": "exported"}
+
+        def close(self):
+            pass
+
+    @pytest.fixture(autouse=True)
+    def _mock_mcp_client(monkeypatch):
+        monkeypatch.setattr("libreassistant.mcp_adapter.MCPClient", _DummyClient)
 
 
 def test_export_creates_file(tmp_path: Path) -> None:
