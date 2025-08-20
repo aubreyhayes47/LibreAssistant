@@ -144,6 +144,16 @@ LibreAssistant exposes a FastAPI service with endpoints for plugin invocation, u
   - `400` if `consent` field missing.
 
 - `GET /api/v1/consent/{user_id}` – get consent status
+  ```bash
+  curl http://localhost:8000/api/v1/consent/alice
+  ```
+
+  ```json
+  { "consent": true }
+  ```
+
+See [data-vault.md](data-vault.md) for consent workflow, storage format, key
+rotation, and security implications.
 
   ```bash
   curl http://localhost:8000/api/v1/consent/alice
