@@ -1,4 +1,3 @@
-import json
 import subprocess
 import sys
 import textwrap
@@ -18,20 +17,17 @@ def mock_mcp_server():
 
     script = textwrap.dedent(
         """
-        import json
         import sys
 
         for line in sys.stdin:
-            req = json.loads(line)
-            if req["method"] == "listTools":
-                res = {"jsonrpc": "2.0", "id": req["id"], "result": {"tools": []}}
+            if '"listTools"' in line:
+                res = '{"jsonrpc": "2.0", "id": 1, "result": {"tools": []}}'
             else:
-                res = {
-                    "jsonrpc": "2.0",
-                    "id": req["id"],
-                    "error": {"message": "unknown method"},
-                }
-            print(json.dumps(res))
+                res = (
+                    '{"jsonrpc": "2.0", "id": 1, '
+                    '"error": {"message": "unknown method"}}'
+                )
+            print(res)
             sys.stdout.flush()
         """
     )
