@@ -42,7 +42,15 @@ class FileIOPlugin(MCPPluginAdapter):
 
     def run(self, user_state: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
         if "path" in payload:
-            user_state["last_file_path"] = os.path.realpath(payload["path"])
+            # Resolve the path to its canonical form and ensure it remains within the
+            # allowed base directory. The resolved path is stored in ``user_state``
+            # and passed on to the server to prevent path traversal attacks.
+            resolved_path = os.path.realpath(payload["path"])
+            base_dir = os.path.realpath(ALLOWED_BASE_DIR)
+            if os.path.commonpath([resolved_path, base_dir]) != base_dir:
+                return {"error": "path outside allowed directory"}
+            user_state["last_file_path"] = resolved_path
+            payload["path"] = resolved_path
         return super().run(user_state, payload)
 
 
