@@ -21,6 +21,7 @@ from .providers.local import LocalConfig, LocalProvider
 from .transparency import HealthMonitor, get_bill_of_materials
 from .themes import get_theme_css
 from .vault import DataVault
+from . import db
 
 
 def create_app() -> FastAPI:
@@ -132,46 +133,23 @@ def create_app() -> FastAPI:
                 status_code=404, detail="Plugin not found"
             ) from exc
         state = kernel.get_state(request.user_id)
-        history = state.setdefault("history", [])
-        entry: Dict[str, Any] = {
-            "plugin": request.plugin,
-            "payload": request.payload,
-        }
-        if request.granted is not None:
-            entry["granted"] = request.granted
-        history.append(entry)
+        db.add_history(
+            request.user_id, request.plugin, request.payload, request.granted
+        )
         return {"result": result, "state": state}
 
     @app.get("/api/v1/history/{user_id}")
     def get_history(user_id: str) -> Dict[str, Any]:
         """Retrieve a user's past plugin invocations."""
-        state = kernel.get_state(user_id)
-        return {"history": state.get("history", [])}
+        return {"history": db.get_history(user_id)}
 
     @app.get("/api/v1/audit/file")
     def get_file_audit() -> Dict[str, Any]:
-        log_path = Path("logs/file_io_audit.ndjson")
-        if not log_path.exists():
-            return {"logs": []}
-        lines = [
-            json.loads(line)
-            for line in log_path.read_text().splitlines()
-            if line.strip()
-        ]
-        return {"logs": lines}
+        return {"logs": db.get_file_audit()}
 
     @app.get("/api/v1/audit/file/{user_id}")
     def get_file_audit_user(user_id: str) -> Dict[str, Any]:
-        log_path = Path("logs/file_io_audit.ndjson")
-        if not log_path.exists():
-            return {"logs": []}
-        lines = [
-            json.loads(line)
-            for line in log_path.read_text().splitlines()
-            if line.strip()
-        ]
-        filtered = [e for e in lines if e.get("user_id") == user_id]
-        return {"logs": filtered}
+        return {"logs": db.get_file_audit(user_id)}
 
     class HistoryEntry(BaseModel):
         plugin: str
@@ -180,15 +158,7 @@ def create_app() -> FastAPI:
 
     @app.post("/api/v1/history/{user_id}")
     def record_history(user_id: str, entry: HistoryEntry) -> Dict[str, str]:
-        state = kernel.get_state(user_id)
-        history = state.setdefault("history", [])
-        history.append(
-            {
-                "plugin": entry.plugin,
-                "payload": entry.payload,
-                "granted": entry.granted,
-            }
-        )
+        db.add_history(user_id, entry.plugin, entry.payload, entry.granted)
         return {"status": "ok"}
 
     @app.get("/api/v1/mcp/servers")
