@@ -158,6 +158,7 @@ dashboards track each request so you can inspect how outputs were produced.
 ## Further Reading
 
 - [docs/api.md](docs/api.md) – REST API endpoints
+- [docs/data-vault.md](docs/data-vault.md) – consent workflow and storage details
 - [ARCHITECTURE.md](ARCHITECTURE.md) – system flows and design goals
 - [OVERVIEW.md](OVERVIEW.md) – background on the Model Context Protocol
 - [docs/network-policy.md](docs/network-policy.md) – configuring server network policies

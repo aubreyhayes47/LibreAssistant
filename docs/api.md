@@ -22,6 +22,9 @@ LibreAssistant exposes a FastAPI service with endpoints for plugin invocation, u
 - `POST /api/v1/consent/{user_id}` – set consent flag
 - `GET /api/v1/consent/{user_id}` – get consent status
 
+See [data-vault.md](data-vault.md) for consent workflow, storage format, key
+rotation, and security implications.
+
 ## Provider Integration
 - `POST /api/v1/providers/{name}/key` – configure an API key for a provider
 - `POST /api/v1/generate` – generate a response using the specified provider
