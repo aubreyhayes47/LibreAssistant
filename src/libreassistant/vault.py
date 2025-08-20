@@ -32,6 +32,7 @@ class DataVault:
         key: bytes | None = None,
     ) -> None:
         self._lock = Lock()
+        self._conn: sqlite3.Connection | None = None
 
         # Key management -------------------------------------------------
         self._key_file = Path(key_file) if key_file else None
@@ -60,7 +61,6 @@ class DataVault:
             )
             self._conn.commit()
         else:
-            self._conn = None
             self._data: Dict[str, bytes] = {}
             self._consent: Dict[str, bool] = {}
 
