@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Protocol
 
+from pydantic import BaseModel, ValidationError
+
 
 class Plugin(Protocol):
     """Protocol that all plugins must implement."""
@@ -40,6 +42,12 @@ class Microkernel:
         if plugin is None:
             raise KeyError(name)
         state = self.get_state(user_id)
+        model = getattr(plugin, "InputModel", None)
+        if isinstance(model, type) and issubclass(model, BaseModel):
+            try:
+                payload = model.model_validate(payload).model_dump()
+            except ValidationError as exc:
+                return {"error": exc.errors()}
         return plugin.run(state, payload)
 
     def reset(self) -> None:

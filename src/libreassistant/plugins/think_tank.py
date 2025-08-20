@@ -7,12 +7,22 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from pydantic import BaseModel
+
 from ..kernel import kernel
 from ..mcp_adapter import MCPPluginAdapter
 
 
+class ThinkTankInput(BaseModel):
+    """Payload schema for :class:`ThinkTankPlugin`."""
+
+    goal: str
+
+
 class ThinkTankPlugin(MCPPluginAdapter):
     """Orchestrate specialist agents via the MCP ThinkTank server."""
+
+    InputModel = ThinkTankInput
 
     def __init__(self) -> None:
         super().__init__("servers/think_tank/index.ts", "analyze_goal")

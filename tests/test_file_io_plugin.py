@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from libreassistant.kernel import kernel
 from libreassistant.plugins import file_io
 from libreassistant.plugins.file_io import FileIOPlugin
 
@@ -121,3 +122,12 @@ def test_file_io_plugin_integration(client, tmp_path: Path) -> None:
     )
     assert response.status_code == 200
     assert response.json()["result"] == {"content": "hello"}
+
+
+def test_file_io_validation_missing_path(tmp_path: Path) -> None:
+    """Payload missing required fields should yield an error before execution."""
+
+    file_io.ALLOWED_BASE_DIR = str(tmp_path)
+    file_io.register()
+    result = kernel.invoke("file_io", "alice", {"operation": "read"})
+    assert "error" in result

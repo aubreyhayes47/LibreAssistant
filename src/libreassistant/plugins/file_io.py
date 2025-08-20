@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Literal, Tuple
+
+from pydantic import BaseModel, model_validator
 
 from ..kernel import kernel
 from ..mcp_adapter import MCPPluginAdapter
@@ -34,8 +36,27 @@ def _resolver(payload: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
     return mapping[op], params
 
 
+class FileIOInput(BaseModel):
+    """Schema for payloads accepted by :class:`FileIOPlugin`."""
+
+    operation: Literal["read", "create", "update", "delete", "list"]
+    path: str
+    content: str | None = None
+    confirm: bool | None = None
+
+    @model_validator(mode="after")
+    def _check_requirements(self) -> "FileIOInput":
+        if self.operation in {"create", "update"} and self.content is None:
+            raise ValueError("content required")
+        if self.operation in {"update", "delete"} and not self.confirm:
+            raise ValueError("confirm required")
+        return self
+
+
 class FileIOPlugin(MCPPluginAdapter):
     """Perform basic file operations through the MCP file server."""
+
+    InputModel = FileIOInput
 
     def __init__(self) -> None:
         env = {"MCP_FS_BASE_DIR": ALLOWED_BASE_DIR}
