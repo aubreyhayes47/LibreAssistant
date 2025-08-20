@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """Adapters allowing MCP servers to appear as legacy Plugin objects."""
+from __future__ import annotations
 
 import json
 import os
