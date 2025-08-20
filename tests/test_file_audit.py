@@ -22,7 +22,7 @@ def test_file_audit_logging_and_endpoint(client, tmp_path: Path) -> None:
     assert resp.status_code == 200
     assert resp.json()["result"] == {"status": "created"}
     assert log_file.exists()
-    lines = [json.loads(l) for l in log_file.read_text().splitlines() if l.strip()]
+    lines = [json.loads(line) for line in log_file.read_text().splitlines() if line.strip()]
     assert len(lines) >= 2
     assert any(
         e["user_id"] == "alice" and e["action"] == "create" and e["path"] == str(path.resolve())
