@@ -39,7 +39,11 @@ def get_conn() -> sqlite3.Connection:
             raise RuntimeError("LIBRE_DB_KEY environment variable must be set for encrypted database access")
         DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         _conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
-        _conn.execute(f"PRAGMA key='{DB_KEY}'")
+        try:
+            _conn.execute("PRAGMA key=?", (DB_KEY,))
+        except sqlite3.OperationalError:
+            quoted_key = _conn.execute("SELECT quote(?)", (DB_KEY,)).fetchone()[0]
+            _conn.execute(f"PRAGMA key={quoted_key}")
         _initialize(_conn)
     return _conn
 
