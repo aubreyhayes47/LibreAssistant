@@ -24,25 +24,28 @@ SAFE_PROPERTIES = {
 THEME_DIR = Path(__file__).resolve().parents[2] / "ui" / "themes"
 
 
-def sanitize_css(css_text: str) -> str:
-    """Return a sanitized CSS string allowing only whitelisted properties."""
+def sanitize_css(css_text: str) -> tuple[str, bool]:
+    """Return sanitized CSS and whether any content was removed."""
     parser = cssutils.CSSParser()
     sheet = parser.parseString(css_text)
+    modified = False
     for rule in list(sheet.cssRules):
         if rule.type != rule.STYLE_RULE:
             sheet.deleteRule(rule)
+            modified = True
             continue
         for prop in list(rule.style):
             if (
                 prop.name not in SAFE_PROPERTIES
                 and not prop.name.startswith("--")
-            ):
+            ) or "url(" in prop.value.lower():
                 rule.style.removeProperty(prop.name)
+                modified = True
     cssutils.ser.prefs.useMinified()
-    return sheet.cssText.decode("utf-8")
+    return sheet.cssText.decode("utf-8"), modified
 
 
-def get_theme_css(theme_id: str) -> str:
+def get_theme_css(theme_id: str) -> tuple[str, bool]:
     """Load and sanitize CSS for the given theme id."""
     allowed = {p.stem for p in THEME_DIR.glob("*.css")}
     if theme_id not in allowed:

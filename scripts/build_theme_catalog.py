@@ -27,7 +27,7 @@ def build_catalog(repo_dir: Path, dest_dir: Path, catalog_path: Path) -> None:
             continue
         meta = json.loads(meta_file.read_text())
         css = css_file.read_text()
-        sanitized = sanitize_css(css)
+        sanitized, _ = sanitize_css(css)
         (dest_dir / f"{meta['id']}.css").write_text(sanitized)
         themes.append(meta)
     catalog_path.write_text(json.dumps(themes, indent=2))
