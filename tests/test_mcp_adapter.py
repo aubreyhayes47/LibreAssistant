@@ -79,6 +79,19 @@ def test_request_times_out():
         client.close()
 
 
+def test_process_terminates_on_context_exit(mock_mcp_server):
+    client = MCPClient.__new__(MCPClient)
+    client.proc = mock_mcp_server
+    client.next_id = 1
+    client.timeout = None
+    _setup_client(client)
+
+    with client:
+        assert client.request("listTools") == {"tools": []}
+
+    assert client.proc.poll() is not None
+
+
 def test_list_tools_mock_server(mock_mcp_server):
     client = MCPClient.__new__(MCPClient)
     client.proc = mock_mcp_server
