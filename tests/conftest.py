@@ -32,6 +32,20 @@ if shutil.which("node") is None:
     _law_by_keystone.register = lambda: None  # type: ignore
     _think_tank.register = lambda: None  # type: ignore
 
+# pysqlcipher3 is an optional dependency used for encrypted SQLite. Tests run
+# in environments where it may not be installed, so provide a lightweight stub
+# that proxies to the standard library ``sqlite3`` module when necessary.
+try:  # pragma: no cover - exercised in CI only
+    import pysqlcipher3.dbapi2  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - fallback for environments without sqlcipher
+    import sqlite3 as _sqlite3
+    import types
+
+    _stub = types.ModuleType("pysqlcipher3")
+    _stub.dbapi2 = _sqlite3  # type: ignore
+    sys.modules["pysqlcipher3"] = _stub
+    sys.modules["pysqlcipher3.dbapi2"] = _sqlite3  # type: ignore
+
 from libreassistant.main import app  # noqa: E402
 from libreassistant.kernel import kernel  # noqa: E402
 from libreassistant.plugins.echo import (  # noqa: E402

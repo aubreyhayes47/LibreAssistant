@@ -126,3 +126,24 @@ def test_reader_no_stdout():
             _reader()
     finally:
         client.close()
+
+
+def test_context_manager_terminates_subprocess():
+    """The client's subprocess should stop once the context exits."""
+
+    client = MCPClient.__new__(MCPClient)
+    client.proc = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(100)"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        with client:
+            # Inside the context the process should be running
+            assert client.proc.poll() is None
+        # After leaving the context manager the process must be terminated
+        assert client.proc.poll() is not None
+    finally:
+        if client.proc.poll() is None:  # pragma: no cover - safety net
+            client.proc.kill()

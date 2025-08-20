@@ -70,6 +70,31 @@ class MCPClient:
         # Perform a basic handshake to ensure the server is ready
         self.request("listTools")
 
+    # ------------------------------------------------------------------
+    # Context manager protocol
+    # ------------------------------------------------------------------
+
+    def __enter__(self) -> "MCPClient":
+        """Return ``self`` to allow ``with`` statements.
+
+        The client is already initialised in ``__init__`` so entering the
+        context simply returns the instance.
+        """
+
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: Any,
+    ) -> None:
+        """Terminate the underlying subprocess when leaving the context."""
+
+        self.close()
+        # Returning ``None``/``False`` propagates any exception
+        return None
+
     def request(
         self,
         method: str,
@@ -150,6 +175,26 @@ class MCPPluginAdapter:
     def close(self) -> None:
         """Release resources held by the underlying MCP client."""
         self.client.close()
+
+    # ------------------------------------------------------------------
+    # Context manager protocol
+    # ------------------------------------------------------------------
+
+    def __enter__(self) -> "MCPPluginAdapter":
+        """Return ``self`` so adapters can be used in ``with`` statements."""
+
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: Any,
+    ) -> None:
+        """Ensure the underlying client is closed when leaving the context."""
+
+        self.close()
+        return None
 
     def __del__(self) -> None:  # pragma: no cover - best effort cleanup
         try:
