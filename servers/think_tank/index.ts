@@ -9,6 +9,13 @@ import { fileURLToPath } from 'url';
 // variable is unset we attempt to use the OpenAI client.  The call is lazily
 // imported so the dependency is optional.
 
+/**
+ * Call the backing language model to generate structured analysis.
+ * Uses a mock response when `THINK_TANK_MODEL_RESPONSE` is set.
+ * @param prompt Prompt string to send to the model
+ * @returns Parsed JSON response from the model
+ * @sideeffect Performs network requests when no mock is provided
+ */
 async function callModel(prompt: string): Promise<any> {
   const mock = process.env.THINK_TANK_MODEL_RESPONSE;
   if (mock) {
@@ -122,6 +129,13 @@ const prompts: PromptSchema[] = [
   { name: 'thinktank_question_template', template: 'Consider the goal: {{goal}}' }
 ];
 
+/**
+ * Invoke the `analyze_goal` tool to generate a think tank analysis.
+ * @param tool   Tool name, only `analyze_goal` is supported
+ * @param params Parameters containing the goal string
+ * @returns Structured analysis produced by the language model
+ * @sideeffect Calls the language model and updates `lastDossier`
+ */
 async function invoke(tool: string, params: any) {
   if (tool !== 'analyze_goal') throw new Error(`Unknown tool ${tool}`);
   const goal = params.goal;
@@ -144,6 +158,9 @@ Analyze the goal: ${goal}`;
   return result;
 }
 
+/**
+ * MCP server providing structured analysis of user goals.
+ */
 const server: MCPServer = {
   listTools: () => tools,
   listResources: () => resources,

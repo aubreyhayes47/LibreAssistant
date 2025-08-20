@@ -33,6 +33,14 @@ const prompts: PromptSchema[] = [
   { name: 'echo_template', template: 'Repeat: {{message}}' }
 ];
 
+/**
+ * Invoke the requested tool for the echo server.
+ * Updates internal state when handling `echo_message`.
+ * @param tool   Tool name to execute
+ * @param params Parameters supplied by the client
+ * @returns Result object containing the echoed message
+ * @sideeffect Mutates `lastMessage` with the provided input
+ */
 async function invoke(tool: string, params: any) {
   if (tool === 'echo_message') {
     lastMessage = params?.message ?? '';
@@ -41,6 +49,9 @@ async function invoke(tool: string, params: any) {
   throw new Error(`Unknown tool ${tool}`);
 }
 
+/**
+ * MCP server implementation exposing a single echo tool.
+ */
 const server: MCPServer = {
   listTools: () => tools,
   listResources: () => resources,
