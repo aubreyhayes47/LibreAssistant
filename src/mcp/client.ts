@@ -12,6 +12,14 @@ const MAX_LOG_SIZE = 5 * 1024 * 1024; // 5MB
  * Caches capability lists and validates parameters before dispatching requests.
  */
 class RemoteServer implements MCPServer {
+  /**
+   * Create a wrapper around a remote MCP server.
+   * @param transport       Underlying transport used for JSON-RPC communication
+   * @param cachedTools     Tool capability list retrieved during registration
+   * @param cachedResources Resource capability list retrieved during registration
+   * @param cachedPrompts   Prompt templates available on the server
+   * @param validators      Precompiled AJV validators keyed by tool name
+   */
   constructor(
     private transport: Transport,
     private cachedTools: any[],
@@ -75,6 +83,11 @@ export class MCPClient {
   private static fetchPatched = false;
   private logPath = path.resolve('logs/audit.ndjson');
 
+  /**
+   * Create a new client instance.
+   * The constructor ensures the global `fetch` is patched once so that
+   * network policies can be enforced by {@link MCPClient}.
+   */
   constructor() {
     MCPClient.patchFetch();
   }
