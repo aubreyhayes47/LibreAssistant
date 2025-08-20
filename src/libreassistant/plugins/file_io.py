@@ -5,7 +5,9 @@
 
 from __future__ import annotations
 
+import json
 import os
+from pathlib import Path
 from typing import Any, Dict, Literal, Tuple
 
 from pydantic import BaseModel, model_validator
@@ -18,6 +20,14 @@ from ..mcp_adapter import MCPPluginAdapter
 # rejected if they escape it. The default uses a "desktop" directory in
 # the user's home folder.
 ALLOWED_BASE_DIR = os.path.join(os.path.expanduser("~"), "desktop")
+
+AUDIT_LOG = Path("logs/file_io_audit.ndjson")
+
+
+def _write_audit(entry: Dict[str, Any]) -> None:
+    AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with AUDIT_LOG.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(entry) + "\n")
 
 
 def _resolver(payload: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
@@ -65,6 +75,7 @@ class FileIOPlugin(MCPPluginAdapter):
     def run(
         self, user_state: Dict[str, Any], payload: Dict[str, Any]
     ) -> Dict[str, Any]:
+        user_id = user_state.get("user_id")
         if "path" in payload:
             # Resolve the path to its canonical form and ensure it remains
             # within the allowed base directory. The resolved path is stored
@@ -76,6 +87,10 @@ class FileIOPlugin(MCPPluginAdapter):
                 return {"error": "path outside allowed directory"}
             user_state["last_file_path"] = resolved_path
             payload["path"] = resolved_path
+            payload["user_id"] = user_id
+            _write_audit(
+                {"user_id": user_id, "action": payload.get("operation"), "path": resolved_path}
+            )
         return super().run(user_state, payload)
 
 

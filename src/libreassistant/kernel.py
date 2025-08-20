@@ -32,7 +32,9 @@ class Microkernel:
 
     def get_state(self, user_id: str) -> Dict[str, Any]:
         """Retrieve mutable state for a user, creating it if necessary."""
-        return self._states.setdefault(user_id, {})
+        state = self._states.setdefault(user_id, {})
+        state.setdefault("user_id", user_id)
+        return state
 
     def invoke(
         self, name: str, user_id: str, payload: Dict[str, Any]

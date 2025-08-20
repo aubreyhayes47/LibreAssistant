@@ -116,6 +116,31 @@ def create_app() -> FastAPI:
         state = kernel.get_state(user_id)
         return {"history": state.get("history", [])}
 
+    @app.get("/api/v1/audit/file")
+    def get_file_audit() -> Dict[str, Any]:
+        log_path = Path("logs/file_io_audit.ndjson")
+        if not log_path.exists():
+            return {"logs": []}
+        lines = [
+            json.loads(l)
+            for l in log_path.read_text().splitlines()
+            if l.strip()
+        ]
+        return {"logs": lines}
+
+    @app.get("/api/v1/audit/file/{user_id}")
+    def get_file_audit_user(user_id: str) -> Dict[str, Any]:
+        log_path = Path("logs/file_io_audit.ndjson")
+        if not log_path.exists():
+            return {"logs": []}
+        lines = [
+            json.loads(l)
+            for l in log_path.read_text().splitlines()
+            if l.strip()
+        ]
+        filtered = [e for e in lines if e.get("user_id") == user_id]
+        return {"logs": filtered}
+
     class HistoryEntry(BaseModel):
         plugin: str
         payload: Dict[str, Any]

@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 
 const baseDir = path.resolve(process.env.MCP_FS_BASE_DIR || './mcp_fs');
 await fs.mkdir(baseDir, { recursive: true });
+const auditLog = path.resolve('logs/file_io_audit.ndjson');
+await fs.mkdir(path.dirname(auditLog), { recursive: true });
 
 const tools: ToolSchema[] = [
   {
@@ -72,28 +74,44 @@ function resolve(p: string) {
   return full;
 }
 
+async function audit(user: string | undefined, action: string, resolved: string) {
+  const entry = { user_id: user, action, path: resolved, timestamp: Date.now() };
+  await fs.appendFile(auditLog, JSON.stringify(entry) + '\n');
+}
+
 async function invoke(tool: string, params: any) {
+  const user = params.user_id as string | undefined;
   switch (tool) {
     case 'fs_read': {
-      const content = await fs.readFile(resolve(params.path), 'utf-8');
+      const full = resolve(params.path);
+      await audit(user, 'read', full);
+      const content = await fs.readFile(full, 'utf-8');
       return { content };
     }
     case 'fs_create': {
-      await fs.writeFile(resolve(params.path), params.content, { flag: 'wx' });
+      const full = resolve(params.path);
+      await audit(user, 'create', full);
+      await fs.writeFile(full, params.content, { flag: 'wx' });
       return { status: 'created' };
     }
     case 'fs_update': {
       if (!params.confirm) throw new Error('confirm required');
-      await fs.writeFile(resolve(params.path), params.content, { flag: 'w' });
+      const full = resolve(params.path);
+      await audit(user, 'update', full);
+      await fs.writeFile(full, params.content, { flag: 'w' });
       return { status: 'updated' };
     }
     case 'fs_delete': {
       if (!params.confirm) throw new Error('confirm required');
-      await fs.unlink(resolve(params.path));
+      const full = resolve(params.path);
+      await audit(user, 'delete', full);
+      await fs.unlink(full);
       return { status: 'deleted' };
     }
     case 'fs_list': {
-      const entries = await fs.readdir(resolve(params.path));
+      const full = resolve(params.path);
+      await audit(user, 'list', full);
+      const entries = await fs.readdir(full);
       return entries;
     }
   }

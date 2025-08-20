@@ -10,6 +10,10 @@ LibreAssistant exposes a FastAPI service with endpoints for plugin invocation, u
 ## History
 - `GET /api/v1/history/{user_id}` – return a user's past plugin invocations
 
+## Audit
+- `GET /api/v1/audit/file` – return file operation audit logs
+- `GET /api/v1/audit/file/{user_id}` – return file operation logs for a user
+
 ## Personal Data Vault
 - `POST /api/v1/vault/{user_id}` – store data
 - `GET /api/v1/vault/{user_id}` – retrieve stored data
