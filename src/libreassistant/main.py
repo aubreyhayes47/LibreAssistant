@@ -3,7 +3,7 @@
 
 """Application entrypoints and FastAPI app factory."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
@@ -130,9 +130,9 @@ def create_app() -> FastAPI:
         if not log_path.exists():
             return {"logs": []}
         lines = [
-            json.loads(l)
-            for l in log_path.read_text().splitlines()
-            if l.strip()
+            json.loads(line)
+            for line in log_path.read_text().splitlines()
+            if line.strip()
         ]
         return {"logs": lines}
 
@@ -142,9 +142,9 @@ def create_app() -> FastAPI:
         if not log_path.exists():
             return {"logs": []}
         lines = [
-            json.loads(l)
-            for l in log_path.read_text().splitlines()
-            if l.strip()
+            json.loads(line)
+            for line in log_path.read_text().splitlines()
+            if line.strip()
         ]
         filtered = [e for e in lines if e.get("user_id") == user_id]
         return {"logs": filtered}
