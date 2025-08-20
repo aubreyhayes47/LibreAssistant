@@ -49,6 +49,12 @@ class MCPClient:
         self._queue: queue.Queue[str | None] = queue.Queue()
 
         def _reader() -> None:
+            """Background thread streaming server responses into ``_queue``.
+
+            Lines read from the server's stdout are enqueued for the main
+            thread to process. When the stream ends a ``None`` sentinel is
+            placed on the queue to signal shutdown.
+            """
             if self.proc.stdout is None:
                 raise RuntimeError("MCPClient process has no stdout")
             for line in self.proc.stdout:
@@ -67,6 +73,15 @@ class MCPClient:
         params: Any | None = None,
         timeout: float | None = None,
     ) -> Any:
+        """Send a JSON-RPC request and return the ``result`` field.
+
+        Parameters are encoded in the standard JSON-RPC 2.0 shape containing
+        ``jsonrpc``, ``id`` and ``method`` keys plus an optional ``params``
+        object. A response is awaited for ``timeout`` seconds (defaulting to
+        ``self.timeout``); if no response arrives a :class:`TimeoutError` is
+        raised. The server may report failures by including an ``error`` member
+        in its response, which is surfaced here as ``RuntimeError``.
+        """
         req = {"jsonrpc": "2.0", "id": self.next_id, "method": method}
         self.next_id += 1
         if params is not None:
@@ -94,6 +109,12 @@ class MCPClient:
         return res["result"]
 
     def invoke(self, tool: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Invoke a remote tool via JSON-RPC.
+
+        This is a thin wrapper over :meth:`request` that always calls the
+        ``invoke`` method on the MCP server, passing the tool name and
+        arguments as parameters.
+        """
         return self.request("invoke", {"tool": tool, "params": params})
 
     def close(self) -> None:
@@ -134,6 +155,12 @@ class MCPPluginAdapter:
             pass
 
     def _resolve(self, payload: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+        """Map an incoming payload to a tool name and parameters.
+
+        ``resolver`` may be a callable that produces a ``(tool, params)`` pair
+        or a fixed tool name, in which case the raw payload is used as the
+        parameter dictionary.
+        """
         if callable(self.resolver):
             return self.resolver(payload)
         return self.resolver, payload
@@ -141,6 +168,13 @@ class MCPPluginAdapter:
     def run(
         self, user_state: Dict[str, Any], payload: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Execute the resolved tool against the MCP server.
+
+        The payload is first translated into a target tool and parameter set
+        using :meth:`_resolve`. Invocation errors or resolver failures are
+        caught and returned as ``{"error": <message>}`` dictionaries so that
+        callers receive structured failure information instead of exceptions.
+        """
         try:
             tool, params = self._resolve(payload)
         except Exception as exc:  # pragma: no cover - defensive
