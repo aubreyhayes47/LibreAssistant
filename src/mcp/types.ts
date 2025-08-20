@@ -31,4 +31,5 @@ export interface AuditEntry {
   timestamp: number;
   beforeHash?: string;
   afterHash?: string;
+  dataSources?: string[];
 }
