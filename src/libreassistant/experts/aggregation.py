@@ -1,12 +1,18 @@
-"""Aggregate expert analyses into a final summary."""
-from typing import Dict
+"""Aggregate expert analyses into a final summary via a language model."""
+
+from __future__ import annotations
+
+import json
+from typing import Any, Dict
+
+from ..providers import providers
 
 
-def summarize(analysis: Dict[str, str]) -> str:
-    """Combine expert outputs into a concise summary."""
-    parts = [
-        analysis["communications"],
-        f"Argument: {analysis['argument']}",
-        f"Caveats: {analysis['devils_advocate']}",
-    ]
-    return "\n".join(parts)
+def summarize(analysis: Dict[str, Any]) -> str:
+    """Combine expert outputs into a concise, human-readable summary."""
+
+    prompt = (
+        "Summarize the following analysis in a few sentences highlighting "
+        "communications, arguments and caveats. Return plain text.\n" + json.dumps(analysis)
+    )
+    return providers.generate("cloud", prompt)
