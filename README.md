@@ -17,6 +17,8 @@ use the built‑in tools.
   your own tools.
 - **Transparent by design** – dashboards reveal system health and every
   component that participates in a request.
+- **Fine-grained network control** – configure per-server allow/deny lists and
+  protocol restrictions to limit egress.
 - **Customisable UI** – switch between light, dark, or community themes.
 
 ## Quick Start
@@ -158,3 +160,4 @@ dashboards track each request so you can inspect how outputs were produced.
 - [docs/api.md](docs/api.md) – REST API endpoints
 - [ARCHITECTURE.md](ARCHITECTURE.md) – system flows and design goals
 - [OVERVIEW.md](OVERVIEW.md) – background on the Model Context Protocol
+- [docs/network-policy.md](docs/network-policy.md) – configuring server network policies

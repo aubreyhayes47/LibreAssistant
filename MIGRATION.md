@@ -14,5 +14,6 @@
 
 ## Phase 4 – Security & CI
 * Prompt for destructive file operations
-* Capture audit logs and enforce network deny‑list
+* Capture audit logs and enforce per‑server network policies with allow/deny
+  lists and protocol restrictions
 * Add tests to CI pipeline
