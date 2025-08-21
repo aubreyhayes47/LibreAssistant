@@ -80,7 +80,9 @@ export class MCPClient {
   private transports: Map<string, Transport> = new Map();
   private policies: Map<string, NetworkPolicy> = new Map();
   public auditLog: AuditEntry[] = [];
-  private ajv = new Ajv({ useDefaults: true });
+  // Ajv's module default export can appear under `default` with Node16 resolution.
+  // Use `any` cast to construct whichever form is provided.
+  private ajv = new ((Ajv as any).default ?? Ajv)({ useDefaults: true });
   private static defaultPolicy?: NetworkPolicy;
   private static activePolicy?: NetworkPolicy;
   private static fetchPatched = false;
