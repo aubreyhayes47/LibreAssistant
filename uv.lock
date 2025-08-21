@@ -3,7 +3,13 @@
 annotated-types==0.7.0
     # via pydantic
 anyio==4.10.0
-    # via starlette
+    # via
+    #   httpx
+    #   starlette
+certifi==2025.8.3
+    # via
+    #   httpcore
+    #   httpx
 cffi==1.17.1
     # via cryptography
 click==8.2.1
@@ -15,9 +21,17 @@ cssutils==2.11.1
 fastapi==0.116.1
     # via libreassistant (pyproject.toml)
 h11==0.16.0
-    # via uvicorn
+    # via
+    #   httpcore
+    #   uvicorn
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via libreassistant (pyproject.toml)
 idna==3.10
-    # via anyio
+    # via
+    #   anyio
+    #   httpx
 more-itertools==10.7.0
     # via cssutils
 pycparser==2.22
