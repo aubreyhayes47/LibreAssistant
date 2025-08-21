@@ -127,14 +127,11 @@ def create_app() -> FastAPI:
     @app.post("/api/v1/invoke")
     def invoke(request: InvokeRequest) -> Dict[str, Any]:
         """Invoke a registered plugin through the microkernel."""
-        try:
-            result = kernel.invoke(
-                request.plugin, request.user_id, request.payload
-            )
-        except KeyError as exc:  # pragma: no cover - error branch
-            raise HTTPException(
-                status_code=404, detail="Plugin not found"
-            ) from exc
+        result = kernel.invoke(
+            request.plugin, request.user_id, request.payload
+        )
+        if result.get("error") == "unknown_plugin":
+            raise HTTPException(status_code=404, detail="Plugin not found")
         state = kernel.get_state(request.user_id)
         db.add_history(
             request.user_id, request.plugin, request.payload, request.granted
