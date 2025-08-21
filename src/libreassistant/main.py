@@ -8,6 +8,7 @@ from typing import Any, Dict
 import json
 import os
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
@@ -26,7 +27,13 @@ from . import db
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
-    app = FastAPI(title="LibreAssistant")
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        yield
+        kernel.shutdown()
+
+    app = FastAPI(title="LibreAssistant", lifespan=lifespan)
 
     monitor = HealthMonitor()
 
@@ -106,10 +113,6 @@ def create_app() -> FastAPI:
     vault_key = Path("config/vault.key")
     vault_db = Path("config/vault.db")
     vault = DataVault(key_file=vault_key, db_path=vault_db)
-
-    @app.on_event("shutdown")
-    def _cleanup_plugins() -> None:
-        kernel.shutdown()
 
     @app.get("/")
     def read_root() -> Dict[str, str]:
