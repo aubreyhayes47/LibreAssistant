@@ -27,6 +27,8 @@ use the built‑in tools.
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - [Python 3.10+](https://www.python.org/downloads/)
 - [Node.js 20+](https://nodejs.org/en/download) for TypeScript components
+- [httpx](https://www.python-httpx.org/) for local model HTTP access
+- [pysqlcipher3](https://pypi.org/project/pysqlcipher3/) for encrypted SQLite
 
 ### Clone and Launch
 

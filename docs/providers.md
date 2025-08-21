@@ -4,6 +4,11 @@
 
 LibreAssistant supports both hosted and local language models through adapter classes.  Each provider can be configured via environment variables and exposes an API endpoint for configuring API keys.  Simple per-minute rate limits guard against accidental overuse.
 
+## Required Packages
+
+- `httpx` – enables HTTP communication with locally hosted models.
+- `pysqlcipher3` – provides encrypted SQLite storage for API keys.
+
 ## CloudProvider
 
 The `CloudProvider` integrates with OpenAI's Chat Completions API.
