@@ -33,7 +33,11 @@ detail developers expect.
 - [Python 3.10+](https://www.python.org/downloads/)
 - [Node.js 20+](https://nodejs.org/en/download) for TypeScript components
 - [httpx](https://www.python-httpx.org/) for local model HTTP access
-- [pysqlcipher3](https://pypi.org/project/pysqlcipher3/) for encrypted SQLite
+- [pysqlcipher3](https://pypi.org/project/pysqlcipher3/) for encrypted SQLite.
+  Building this package requires the [SQLCipher](https://www.zetetic.net/sqlcipher/)
+  libraries on your system (for example, `libsqlcipher-dev` on Debian/Ubuntu).
+  Without SQLCipher, installation of `pysqlcipher3` will fail and LibreAssistant
+  will fall back to the standard `sqlite3` module without encryption.
 
 ### Clone and Launch
 

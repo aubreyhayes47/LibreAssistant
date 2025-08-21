@@ -8,10 +8,11 @@ Thank you for your interest in contributing! We welcome all contributions that u
 1. Fork the repository and create your feature branch from `develop`.
 2. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
 3. Write clear, self-documented code and include tests when relevant. UI styling must use the tokenized design system in `ui/tokens.css`, which includes Light, Dark, and High-Contrast themes.
-4. Run `pytest` to make sure all tests pass.
-5. Lint documentation with `npx markdownlint-cli '**/*.md'`.
-6. Verify files contain the MIT license header using `python scripts/check_license_headers.py`.
-7. Submit a pull request to `develop` describing your change.
+4. Install the system SQLCipher libraries if you need encrypted SQLite support so [`pysqlcipher3`](https://pypi.org/project/pysqlcipher3/) can compile (e.g., `sudo apt-get install libsqlcipher-dev` on Debian/Ubuntu). Without SQLCipher, the project will fall back to the standard `sqlite3` module without encryption.
+5. Run `pytest` to make sure all tests pass.
+6. Lint documentation with `npx markdownlint-cli '**/*.md'`.
+7. Verify files contain the MIT license header using `python scripts/check_license_headers.py`.
+8. Submit a pull request to `develop` describing your change.
 
 All changes should target the `develop` branch. The `main` branch is protected and reserved for production-ready releases.
 
