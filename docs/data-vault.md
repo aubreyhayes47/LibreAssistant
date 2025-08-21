@@ -36,4 +36,3 @@ application process.
   accesses and deletions.
 - **Export & Deletion** – users may export or purge their data, supporting data
   portability and the right to be forgotten.
-
