@@ -2,23 +2,28 @@
 
 # LibreAssistant
 
-LibreAssistant is an open‑source AI assistant you can run locally. It pairs a
-Python microkernel with auditable plugins and a themeable web interface so you
-stay in control of every request.
+LibreAssistant is a free, open‑source assistant you can run entirely on your own
+computer. It combines a small Python core with reviewable add‑on tools (called
+plugins) and a web page you can style to your liking, so you stay in control of
+what the assistant does and how it looks.
 
-This guide focuses on getting you up and running and showcasing creative ways to
-use the built‑in tools.
+This guide introduces the project in plain language while keeping the technical
+detail developers expect.
 
-## Highlights
+## What It Can Do
 
-- **Chat with models you trust** – point LibreAssistant at local or cloud
-  providers and inspect every request.
-- **Do more with plugins** – read and write files, analyse goals, or integrate your own tools. Built-in plugins include [Echo](docs/echo_plugin.md), [File I/O](docs/file_io_plugin.md), and [Think Tank](docs/think_tank_plugin.md).
-- **Transparent by design** – dashboards reveal system health and every
-  component that participates in a request.
-- **Fine-grained network control** – configure per-server allow/deny lists and
-  protocol restrictions to limit egress.
-- **Customisable UI** – switch between light, dark, or community themes.
+- **Talk to models you choose** – connect to well‑known cloud models or ones you
+  host yourself and inspect every request and response.
+- **Use built‑in plugins** – repeat messages with [Echo](docs/echo_plugin.md),
+  read and write files through [File I/O](docs/file_io_plugin.md), gather ideas
+  with [Think Tank](docs/think_tank_plugin.md), or search public legislation via
+  the [Law](docs/law_api.md) plugin.
+- **Apply network rules** – whitelist or block specific sites and protocols for
+  each plugin.
+- **Customise the interface** – switch between light, dark, or community themes
+  and tailor the look of the web page.
+- **Stay transparent** – dashboards reveal system health and every component
+  that participates in a request.
 
 ## Quick Start
 
@@ -87,11 +92,13 @@ By default the provider sends requests to `http://localhost:11434/api/generate`
 and uses the model name `llama2`, matching Ollama's defaults.  Adjust any of
 the `LOCAL_` variables to point at a different server or model.
 
-## First Steps in the UI
+## Using LibreAssistant
 
-The switchboard presents tabs for composing requests, browsing plugins, viewing
-past activity, and updating your profile. Start a conversation by entering a
-prompt in the request tab and choosing a model provider.
+Open your browser to [http://localhost:8000](http://localhost:8000) to reach the
+switchboard. It presents tabs for writing prompts, browsing plugins, reviewing
+past activity, and editing your profile. Start a chat by typing a prompt and
+selecting which model provider to use. Add API keys for new providers, apply
+themes, or write your own plugins to extend the assistant.
 
 ## Example Requests
 
@@ -159,10 +166,21 @@ Under the hood, LibreAssistant uses a Python microkernel with plugins that may
 delegate to TypeScript MCP servers. History, audit logs, and transparency
 dashboards track each request so you can inspect how outputs were produced.
 
-## Further Reading
+## Documentation Table of Contents
 
-- [docs/api.md](docs/api.md) – REST API endpoints
-- [docs/data-vault.md](docs/data-vault.md) – consent workflow and storage details
-- [ARCHITECTURE.md](ARCHITECTURE.md) – system flows and design goals
 - [OVERVIEW.md](OVERVIEW.md) – background on the Model Context Protocol
+- [ARCHITECTURE.md](ARCHITECTURE.md) – system flows and design goals
+- [docs/configuration.md](docs/configuration.md) – environment variables and setup
+- [docs/providers.md](docs/providers.md) – model provider settings
+- [docs/api.md](docs/api.md) – REST API endpoints
+- [docs/plugin-api.md](docs/plugin-api.md) – building and registering plugins
+- [docs/echo_plugin.md](docs/echo_plugin.md) – Echo plugin usage
+- [docs/file_io_plugin.md](docs/file_io_plugin.md) – File I/O plugin usage
+- [docs/think_tank_plugin.md](docs/think_tank_plugin.md) – Think Tank plugin usage
+- [docs/law_api.md](docs/law_api.md) – Law plugin API details
+- [docs/data-vault.md](docs/data-vault.md) – consent workflow and storage details
 - [docs/network-policy.md](docs/network-policy.md) – configuring server network policies
+- [docs/transparency.md](docs/transparency.md) – audit and transparency features
+- [CONTRIBUTING.md](CONTRIBUTING.md) – contribution guidelines
+- [SECURITY.md](SECURITY.md) – security policies
+- [CONSTITUTION.md](CONSTITUTION.md) – project principles
