@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import threading
 import sys
 from types import SimpleNamespace
 
@@ -178,3 +179,41 @@ def test_local_provider_rate_limit(monkeypatch):
     provider.generate("hi")
     with pytest.raises(RuntimeError):
         provider.generate("hi")
+
+
+def _concurrent_throttle(provider, threads: int) -> list[str]:
+    """Run ``provider._throttle`` concurrently in multiple threads."""
+
+    barrier = threading.Barrier(threads)
+    results: list[str] = [""] * threads
+
+    def worker(idx: int) -> None:
+        barrier.wait()
+        try:
+            provider._throttle()
+            results[idx] = "ok"
+        except Exception as exc:  # pragma: no cover - unexpected
+            results[idx] = str(exc)
+
+    tlist = [threading.Thread(target=worker, args=(i,)) for i in range(threads)]
+    for t in tlist:
+        t.start()
+    for t in tlist:
+        t.join()
+    return results
+
+
+def test_cloud_provider_concurrent_throttle() -> None:
+    provider = CloudProvider(CloudConfig(rate_limit_per_minute=1))
+    results = _concurrent_throttle(provider, 5)
+    assert results.count("ok") == 1
+    assert results.count("Rate limit exceeded") == 4
+    assert len(provider._request_times) == 1
+
+
+def test_local_provider_concurrent_throttle() -> None:
+    provider = LocalProvider(LocalConfig(rate_limit_per_minute=1))
+    results = _concurrent_throttle(provider, 5)
+    assert results.count("ok") == 1
+    assert results.count("Rate limit exceeded") == 4
+    assert len(provider._request_times) == 1
