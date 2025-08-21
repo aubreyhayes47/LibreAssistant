@@ -13,26 +13,58 @@ import { fileURLToPath } from 'url';
 // imported so the dependency is optional.
 
 /**
+ * Produce an empty analysis object used when no model response is available.
+ * @param goal Goal string being analysed
+ */
+function fallback(goal: string) {
+  return {
+    summary: '',
+    analysis: {
+      goal,
+      executive: { tasks: [] as string[] },
+      research: { summary: '', sources: [] as string[] },
+      devils_advocate: { concerns: [] as string[] },
+      argument: { points: [] as string[] },
+      communications: { message: '', audience: '' },
+      visualizer: {
+        description: '',
+        data: { type: '', labels: [] as string[], values: [] as number[] },
+      },
+    },
+  };
+}
+
+/**
  * Call the backing language model to generate structured analysis.
  * Uses a mock response when `THINK_TANK_MODEL_RESPONSE` is set.
+ * Falls back to an empty structure if the OpenAI client is unavailable.
  * @param prompt Prompt string to send to the model
+ * @param goal   Goal string used for the fallback response
  * @returns Parsed JSON response from the model
  * @sideeffect Performs network requests when no mock is provided
  */
-async function callModel(prompt: string): Promise<any> {
+async function callModel(prompt: string, goal: string): Promise<any> {
   const mock = process.env.THINK_TANK_MODEL_RESPONSE;
   if (mock) {
-    return JSON.parse(mock);
+    try {
+      return JSON.parse(mock);
+    } catch {
+      return fallback(goal);
+    }
   }
 
-  const mod: any = await (eval('import'))('openai');
-  const client = new mod.OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const completion = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: prompt }],
-  });
-  const text = completion.choices[0].message?.content || '{}';
-  return JSON.parse(text);
+  try {
+    const mod: any = await (eval('import'))('openai');
+    const client = new mod.OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const text = completion.choices[0].message?.content || '{}';
+    return JSON.parse(text);
+  } catch {
+    return fallback(goal);
+  }
 }
 
 let lastDossier: any = null;
@@ -156,7 +188,7 @@ async function invoke(tool: string, params: any) {
   }
 }
 Analyze the goal: ${goal}`;
-  const result = await callModel(prompt);
+  const result = await callModel(prompt, goal);
   lastDossier = result;
   return result;
 }
