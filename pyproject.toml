@@ -19,6 +19,7 @@ dependencies = [
     "cryptography",
     "cssutils",
     "httpx",
+    "pysqlcipher3",
 ]
 
 [project.optional-dependencies]
