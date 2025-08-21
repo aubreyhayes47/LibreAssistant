@@ -7,9 +7,18 @@ from __future__ import annotations
 
 import json
 import os
-import pysqlcipher3.dbapi2 as sqlite3
 from pathlib import Path
 from typing import Any, Dict, List
+
+# Try to use SQLCipher for transparent database encryption. If the optional
+# dependency isn't available we fall back to the standard library's ``sqlite3``
+# module and operate on an unencrypted database.
+try:  # pragma: no cover - import is environment dependent
+    import pysqlcipher3.dbapi2 as sqlite3  # type: ignore
+    SQLCIPHER_AVAILABLE = True
+except ImportError:  # pragma: no cover - fallback path
+    import sqlite3  # type: ignore
+    SQLCIPHER_AVAILABLE = False
 
 DB_PATH = Path(os.getenv("LIBRE_DB_PATH", "config/app.db"))
 DB_KEY = os.getenv("LIBRE_DB_KEY")
@@ -20,11 +29,11 @@ _conn: sqlite3.Connection | None = None
 
 
 def get_conn() -> sqlite3.Connection:
-    """Return a shared connection to the encrypted database.
+    """Return a shared connection to the database.
 
-    Initializes the database on first use, creating the directory and tables
-    as needed. The connection is cached globally so subsequent calls reuse the
-    same handle.
+    The connection is encrypted with SQLCipher when the optional
+    ``pysqlcipher3`` dependency is installed. Otherwise a standard SQLite
+    connection is returned.
 
     Returns:
         sqlite3.Connection: Active connection to the SQLite database.
@@ -35,15 +44,20 @@ def get_conn() -> sqlite3.Connection:
     """
     global _conn
     if _conn is None:
-        if not DB_KEY:
-            raise RuntimeError("LIBRE_DB_KEY environment variable must be set for encrypted database access")
         DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         _conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
-        try:
-            _conn.execute("PRAGMA key=?", (DB_KEY,))
-        except sqlite3.OperationalError:
-            quoted_key = _conn.execute("SELECT quote(?)", (DB_KEY,)).fetchone()[0]
-            _conn.execute(f"PRAGMA key={quoted_key}")
+        if SQLCIPHER_AVAILABLE:
+            if not DB_KEY:
+                _conn.close()
+                _conn = None
+                raise RuntimeError(
+                    "LIBRE_DB_KEY environment variable must be set for encrypted database access"
+                )
+            try:
+                _conn.execute("PRAGMA key=?", (DB_KEY,))
+            except sqlite3.OperationalError:
+                quoted_key = _conn.execute("SELECT quote(?)", (DB_KEY,)).fetchone()[0]
+                _conn.execute(f"PRAGMA key={quoted_key}")
         _initialize(_conn)
     return _conn
 
