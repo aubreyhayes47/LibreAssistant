@@ -2,7 +2,6 @@
 # Licensed under the MIT License.
 
 import json
-import shutil
 from pathlib import Path
 
 from typing import Any

@@ -27,6 +27,8 @@ dev = [
     "pytest",
     "pytest-cov",
     "types-cryptography",
+    "ruff",
+    "mypy",
 ]
 
 [tool.setuptools.packages.find]
@@ -34,4 +36,35 @@ where = ["src"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E501"]
+
+[tool.mypy]
+mypy_path = "typings"
+
+[[tool.mypy.overrides]]
+module = ["cryptography", "cryptography.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["fastapi", "fastapi.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["pydantic", "pydantic.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["uvicorn", "uvicorn.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["pysqlcipher3", "pysqlcipher3.*"]
+ignore_missing_imports = true
 
