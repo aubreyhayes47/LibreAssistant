@@ -18,13 +18,13 @@ dependencies = [
     "uvicorn",
     "cryptography",
     "cssutils",
+    "httpx",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
     "pytest-cov",
-    "httpx",
     "types-cryptography",
 ]
 
