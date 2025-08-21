@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from libreassistant.kernel import Microkernel
 
 
@@ -35,10 +33,10 @@ def test_get_state_returns_same_dict() -> None:
     assert second["x"] == 1
 
 
-def test_invoke_missing_plugin_raises() -> None:
+def test_invoke_missing_plugin_returns_error() -> None:
     kernel = Microkernel()
-    with pytest.raises(KeyError):
-        kernel.invoke("missing", "user", {})
+    result = kernel.invoke("missing", "user", {})
+    assert result == {"error": "unknown_plugin", "plugin": "missing"}
 
 
 def test_reset_clears_plugins_and_state() -> None:
@@ -47,5 +45,7 @@ def test_reset_clears_plugins_and_state() -> None:
     kernel.invoke("echo", "user", {"msg": "hi"})
     kernel.reset()
     assert kernel.get_state("user") == {"user_id": "user"}
-    with pytest.raises(KeyError):
-        kernel.invoke("echo", "user", {"msg": "hi"})
+    assert kernel.invoke("echo", "user", {"msg": "hi"}) == {
+        "error": "unknown_plugin",
+        "plugin": "echo",
+    }

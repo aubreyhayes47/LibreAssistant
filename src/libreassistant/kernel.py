@@ -42,7 +42,7 @@ class Microkernel:
         """Invoke a registered plugin for the given user."""
         plugin = self._plugins.get(name)
         if plugin is None:
-            raise KeyError(name)
+            return {"error": "unknown_plugin", "plugin": name}
         state = self.get_state(user_id)
         model = getattr(plugin, "InputModel", None)
         if isinstance(model, type) and issubclass(model, BaseModel):
