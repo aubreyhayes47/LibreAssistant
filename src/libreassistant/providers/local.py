@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections import deque
+from threading import Lock
 from time import monotonic
 
 
@@ -42,18 +43,20 @@ class LocalProvider:
     def __init__(self, config: LocalConfig | None = None) -> None:
         self.config = config or LocalConfig()
         self._request_times: deque[float] = deque()
+        self._lock = Lock()
 
     # ------------------------------------------------------------------
     def _throttle(self) -> None:
         limit = self.config.rate_limit_per_minute
         if limit <= 0:
             return
-        now = monotonic()
-        while self._request_times and now - self._request_times[0] > 60:
-            self._request_times.popleft()
-        if len(self._request_times) >= limit:
-            raise RuntimeError("Rate limit exceeded")
-        self._request_times.append(now)
+        with self._lock:
+            now = monotonic()
+            while self._request_times and now - self._request_times[0] > 60:
+                self._request_times.popleft()
+            if len(self._request_times) >= limit:
+                raise RuntimeError("Rate limit exceeded")
+            self._request_times.append(now)
 
     # ------------------------------------------------------------------
     def generate(self, prompt: str, api_key: str | None = None) -> str:

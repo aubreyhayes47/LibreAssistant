@@ -19,6 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from collections import deque
 from collections.abc import Sequence
+from threading import Lock
 from time import monotonic
 from types import SimpleNamespace
 
@@ -48,20 +49,21 @@ class CloudProvider:
         self.config = config or CloudConfig()
         self._client: SimpleNamespace | None = None
         self._request_times: deque[float] = deque()
+        self._lock = Lock()
 
     # ------------------------------------------------------------------
     def _throttle(self) -> None:
         """Enforce a simple requests-per-minute rate limit."""
-
         limit = self.config.rate_limit_per_minute
         if limit <= 0:
             return
-        now = monotonic()
-        while self._request_times and now - self._request_times[0] > 60:
-            self._request_times.popleft()
-        if len(self._request_times) >= limit:
-            raise RuntimeError("Rate limit exceeded")
-        self._request_times.append(now)
+        with self._lock:
+            now = monotonic()
+            while self._request_times and now - self._request_times[0] > 60:
+                self._request_times.popleft()
+            if len(self._request_times) >= limit:
+                raise RuntimeError("Rate limit exceeded")
+            self._request_times.append(now)
 
     # ------------------------------------------------------------------
     def _get_client(self, api_key: str):
