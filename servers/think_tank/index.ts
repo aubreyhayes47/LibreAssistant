@@ -54,15 +54,17 @@ async function callModel(prompt: string, goal: string): Promise<any> {
   }
 
   try {
-    const mod: any = await (eval('import'))('openai');
-    const client = new mod.OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // @ts-ignore: Optional dependency
+    const { OpenAI } = await import('openai');
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
     });
     const text = completion.choices[0].message?.content || '{}';
     return JSON.parse(text);
-  } catch {
+  } catch (err) {
+    console.warn('OpenAI import or request failed, using fallback', err);
     return fallback(goal);
   }
 }
