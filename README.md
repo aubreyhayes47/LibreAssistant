@@ -66,6 +66,25 @@ If you modify dependencies, regenerate the lock file with:
 uv pip compile pyproject.toml -o uv.lock
 ```
 
+### TypeScript Development and Testing
+
+Install the JavaScript dependencies before running the TypeScript test suite or
+compiling sources. These steps require **Node.js 20+**:
+
+```sh
+npm install
+```
+
+This command installs `ts-node`, `typescript`, and related packages. Run the
+tests with:
+
+```sh
+npm test
+```
+
+Use your preferred TypeScript build tooling (for example, `npx tsc`) after the
+dependencies are installed.
+
 ### Model Providers
 
 LibreAssistant ships with adapters for both hosted and local models.  The
