@@ -59,15 +59,14 @@ class MCPClient:
         self.next_id = 1
         self.timeout = timeout
 
+        # Queue of raw lines from the server's stdout and structures for
+        # matching responses to their request ``id``.
         self._queue: queue.Queue[str | None] = queue.Queue()
+        self._responses: Dict[int, queue.Queue[Dict[str, Any] | None]] = {}
+        self._lock = threading.Lock()
 
         def _reader() -> None:
-            """Background thread streaming server responses into ``_queue``.
-
-            Lines read from the server's stdout are enqueued for the main
-            thread to process. When the stream ends a ``None`` sentinel is
-            placed on the queue to signal shutdown.
-            """
+            """Background thread streaming raw server responses into ``_queue``."""
             if self.proc.stdout is None:
                 raise RuntimeError("MCPClient process has no stdout")
             for line in self.proc.stdout:
@@ -76,6 +75,25 @@ class MCPClient:
 
         self._reader = threading.Thread(target=_reader, daemon=True)
         self._reader.start()
+
+        def _dispatcher() -> None:
+            """Parse queued lines and dispatch them to waiting callers."""
+            while True:
+                line = self._queue.get()
+                if line is None:
+                    with self._lock:
+                        for q in self._responses.values():
+                            q.put(None)
+                    break
+                res = json.loads(line)
+                req_id = res.get("id")
+                with self._lock:
+                    q = self._responses.get(req_id) if req_id is not None else None
+                if q is not None:
+                    q.put(res)
+
+        self._dispatcher = threading.Thread(target=_dispatcher, daemon=True)
+        self._dispatcher.start()
 
         # Perform a basic handshake to ensure the server is ready
         self.request("listTools")
@@ -95,8 +113,38 @@ class MCPClient:
         raised. The server may report failures by including an ``error`` member
         in its response, which is surfaced here as ``RuntimeError``.
         """
-        req = {"jsonrpc": "2.0", "id": self.next_id, "method": method}
-        self.next_id += 1
+        # Lazily initialise concurrency primitives when constructed via ``__new__``.
+        if not hasattr(self, "_lock"):
+            self._lock = threading.Lock()
+        if not hasattr(self, "_responses"):
+            self._responses = {}
+        if not hasattr(self, "_queue"):
+            self._queue = queue.Queue()
+        if not hasattr(self, "_dispatcher"):
+            def _dispatcher() -> None:
+                while True:
+                    line = self._queue.get()
+                    if line is None:
+                        with self._lock:
+                            for q in self._responses.values():
+                                q.put(None)
+                        break
+                    res = json.loads(line)
+                    req_id = res.get("id")
+                    with self._lock:
+                        q = self._responses.get(req_id) if req_id is not None else None
+                    if q is not None:
+                        q.put(res)
+            self._dispatcher = threading.Thread(target=_dispatcher, daemon=True)
+            self._dispatcher.start()
+
+        with self._lock:
+            req_id = self.next_id
+            self.next_id += 1
+            resp_queue: queue.Queue[Dict[str, Any] | None] = queue.Queue()
+            self._responses[req_id] = resp_queue
+
+        req = {"jsonrpc": "2.0", "id": req_id, "method": method}
         if params is not None:
             req["params"] = params
         if self.proc.stdin is None:
@@ -105,18 +153,20 @@ class MCPClient:
         self.proc.stdin.flush()
         wait = self.timeout if timeout is None else timeout
         try:
-            line = (
-                self._queue.get(timeout=wait)
+            res = (
+                resp_queue.get(timeout=wait)
                 if wait is not None
-                else self._queue.get()
+                else resp_queue.get()
             )
         except queue.Empty:
             raise TimeoutError(
-                f"MCP server did not respond within {wait} seconds"
+                f"MCP server did not respond within {wait} seconds",
             ) from None
-        if line is None:
+        finally:
+            with self._lock:
+                self._responses.pop(req_id, None)
+        if res is None:
             raise RuntimeError("no response from MCP server")
-        res = json.loads(line)
         if "error" in res:
             raise RuntimeError(res["error"]["message"])
         return res["result"]
