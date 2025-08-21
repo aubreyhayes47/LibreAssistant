@@ -11,7 +11,7 @@ import queue
 import subprocess
 import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple, Literal
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNNER = ROOT / "src" / "mcp" / "server-runner.js"
@@ -82,13 +82,15 @@ class MCPClient:
                 line = self._queue.get()
                 if line is None:
                     with self._lock:
-                        for q in self._responses.values():
-                            q.put(None)
+                        for resp_queue in self._responses.values():
+                            resp_queue.put(None)
                     break
                 res = json.loads(line)
                 req_id = res.get("id")
                 with self._lock:
-                    q = self._responses.get(req_id) if req_id is not None else None
+                    q: queue.Queue[dict[str, Any] | None] | None = (
+                        self._responses.get(req_id) if req_id is not None else None
+                    )
                 if q is not None:
                     q.put(res)
 
@@ -126,13 +128,15 @@ class MCPClient:
                     line = self._queue.get()
                     if line is None:
                         with self._lock:
-                            for q in self._responses.values():
-                                q.put(None)
+                            for resp_queue in self._responses.values():
+                                resp_queue.put(None)
                         break
                     res = json.loads(line)
                     req_id = res.get("id")
                     with self._lock:
-                        q = self._responses.get(req_id) if req_id is not None else None
+                        q: queue.Queue[dict[str, Any] | None] | None = (
+                            self._responses.get(req_id) if req_id is not None else None
+                        )
                     if q is not None:
                         q.put(res)
             self._dispatcher = threading.Thread(target=_dispatcher, daemon=True)
@@ -202,7 +206,7 @@ class MCPClient:
         exc_type: type[BaseException] | None,
         exc: BaseException | None,
         tb: object | None,
-    ) -> bool:
+    ) -> Literal[False]:
         """Ensure the subprocess is terminated on context exit."""
 
         self.close()
@@ -239,7 +243,7 @@ class MCPPluginAdapter:
         exc_type: type[BaseException] | None,
         exc: BaseException | None,
         tb: object | None,
-    ) -> bool:
+    ) -> Literal[False]:
         self.close()
         return False
 
