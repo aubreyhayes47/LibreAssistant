@@ -79,7 +79,10 @@ const prompts: PromptSchema[] = [
  */
 function resolve(p: string) {
   const full = path.resolve(baseDir, p);
-  if (!full.startsWith(baseDir)) throw new Error('path outside allowed directory');
+  const relative = path.relative(baseDir, full);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error('path outside allowed directory');
+  }
   return full;
 }
 
