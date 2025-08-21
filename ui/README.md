@@ -4,7 +4,7 @@
 
 This directory contains standalone web components and the assets needed to style them.
 
-```
+```text
 ui/
   components/          # individual custom element modules
   tokens.css           # shared design tokens and built-in theme variables
