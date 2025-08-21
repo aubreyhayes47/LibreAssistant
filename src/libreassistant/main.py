@@ -133,6 +133,8 @@ def create_app() -> FastAPI:
         )
         if result.get("error") == "unknown_plugin":
             raise HTTPException(status_code=404, detail="Plugin not found")
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
         state = kernel.get_state(request.user_id)
         db.add_history(
             request.user_id, request.plugin, request.payload, request.granted
