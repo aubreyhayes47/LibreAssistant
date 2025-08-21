@@ -23,7 +23,9 @@ import types
 
 # Provide a lightweight stub for the optional pysqlcipher3 dependency used by
 # the database module so tests can run without the compiled extension.
-sys.modules.setdefault("pysqlcipher3", types.SimpleNamespace(dbapi2=sqlite3))
+pysqlcipher3_stub = types.ModuleType("pysqlcipher3")
+setattr(pysqlcipher3_stub, "dbapi2", sqlite3)
+sys.modules.setdefault("pysqlcipher3", pysqlcipher3_stub)
 sys.modules.setdefault("pysqlcipher3.dbapi2", sqlite3)
 
 os.environ["LIBRE_DB_PATH"] = ":memory:"
