@@ -73,10 +73,12 @@ class FileIOPlugin(MCPPluginAdapter):
             # Resolve the path to its canonical form and ensure it remains
             # within the allowed base directory. The resolved path is stored
             # in ``user_state`` and passed on to the server to prevent path
-            # traversal attacks.
+            # traversal attacks. ``os.path.commonpath`` raises ``ValueError``
+            # for paths on different drives; such requests are rejected.
             resolved_path = os.path.realpath(payload["path"])
             base_dir = os.path.realpath(ALLOWED_BASE_DIR)
             try:
+                # ``commonpath`` may raise ``ValueError`` on cross-drive inputs
                 common = os.path.commonpath([resolved_path, base_dir])
             except ValueError:
                 return {"error": "path outside allowed directory"}
