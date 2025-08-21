@@ -36,8 +36,7 @@ array so requests can be traced back to their origins.
     "query": "education",
     "source": "govinfo",
     "output_format": "md",
-    "output_path": "law"
+  "output_path": "law"
   }
 }
 ```
-
