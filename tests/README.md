@@ -7,6 +7,10 @@ This directory contains the test suite for LibreAssistant.
 ## Layout
 
 * Python tests live at the root of this folder (e.g., `test_cli.py`, `test_kernel.py`).
+* Expert analysis modules have dedicated tests such as `test_experts_argumentation.py`,
+  `test_experts_communications.py`, `test_experts_devils_advocate.py`,
+  `test_experts_executive.py`, `test_experts_research.py`, and
+  `test_experts_visualizer.py`.
 * TypeScript tests for the Model Context Protocol (MCP) adapters live in `mcp/*.test.ts`.
 
 ## Running Python tests
