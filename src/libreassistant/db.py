@@ -48,6 +48,14 @@ def get_conn() -> sqlite3.Connection:
     return _conn
 
 
+def close_conn() -> None:
+    """Close the global database connection if it exists."""
+    global _conn
+    if _conn is not None:
+        _conn.close()
+        _conn = None
+
+
 def _initialize(conn: sqlite3.Connection) -> None:
     """Create required tables and indexes in the database.
 
