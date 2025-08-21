@@ -59,6 +59,44 @@ def test_bom_handles_empty_dirs(client, tmp_path, monkeypatch):
     assert data["datasets"] == []
 
 
+def test_bom_caches_results(monkeypatch, tmp_path):
+    from libreassistant import transparency
+
+    models_dir = tmp_path / "models"
+    datasets_dir = tmp_path / "datasets"
+    models_dir.mkdir()
+    datasets_dir.mkdir()
+    monkeypatch.setenv("LA_MODELS_DIR", str(models_dir))
+    monkeypatch.setenv("LA_DATASETS_DIR", str(datasets_dir))
+
+    calls = {"dist": 0, "scan": 0}
+
+    def fake_distributions():
+        calls["dist"] += 1
+        return []
+
+    def counting_scan(path):
+        calls["scan"] += 1
+        return []
+
+    monkeypatch.setattr(transparency.importlib.metadata, "distributions", fake_distributions)
+    monkeypatch.setattr(transparency, "_scan", counting_scan)
+
+    transparency._DEPENDENCIES = None
+    transparency._MODELS_CACHE.clear()
+    transparency._DATASETS_CACHE.clear()
+
+    transparency.get_bill_of_materials()
+    transparency.get_bill_of_materials()
+
+    assert calls["dist"] == 1
+    assert calls["scan"] == 2
+
+    transparency._DEPENDENCIES = None
+    transparency._MODELS_CACHE.clear()
+    transparency._DATASETS_CACHE.clear()
+
+
 def test_health_reports_metrics(client):
     first = client.get("/api/v1/health").json()["requests"]
     client.get("/")
