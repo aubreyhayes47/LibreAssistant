@@ -1,15 +1,16 @@
 # Copyright (c) 2024 LibreAssistant contributors.
 # Licensed under the MIT License.
 
+import queue
 import subprocess
 import sys
 import textwrap
-import queue
 import threading
+from unittest.mock import MagicMock
 
 import pytest
 
-from libreassistant.mcp_adapter import MCPClient
+from libreassistant.mcp_adapter import MCPClient, MCPPluginAdapter
 
 
 @pytest.fixture
@@ -139,3 +140,37 @@ def test_reader_no_stdout():
             _reader()
     finally:
         client.close()
+
+
+def test_close_terminates_process_and_joins_thread():
+    client = MCPClient.__new__(MCPClient)
+    client.proc = MagicMock()
+    reader = MagicMock()
+    reader.is_alive.return_value = True
+    client._reader = reader
+
+    client.close()
+
+    client.proc.terminate.assert_called_once()
+    client.proc.wait.assert_called_once()
+    reader.join.assert_called_once_with(timeout=0.1)
+
+
+def test_context_exit_invokes_close():
+    client = MCPClient.__new__(MCPClient)
+    client.close = MagicMock()
+
+    with client:
+        pass
+
+    client.close.assert_called_once()
+
+
+def test_plugin_adapter_context_exit_closes_client():
+    adapter = MCPPluginAdapter.__new__(MCPPluginAdapter)
+    adapter.client = MagicMock()
+
+    with adapter:
+        pass
+
+    adapter.client.close.assert_called_once()
