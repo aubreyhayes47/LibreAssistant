@@ -11,7 +11,7 @@ async function setup() {
   return client;
 }
 
-test('law summary generation', async () => {
+test('law summary generation txt', async () => {
   const client = await setup();
   try {
     const res = await client.invoke('law_by_keystone', 'generate_legal_summary', {
@@ -25,6 +25,26 @@ test('law summary generation', async () => {
     assert.ok(res.sources.includes('govinfo'));
     assert.equal(res.metadata.source, 'govinfo');
     assert.equal(res.metadata.format, 'txt');
+    assert.ok(fs.existsSync(res.path));
+  } finally {
+    client.close();
+  }
+});
+
+test('law summary generation xml', async () => {
+  const client = await setup();
+  try {
+    const res = await client.invoke('law_by_keystone', 'generate_legal_summary', {
+      query: 'test',
+      source: 'ecfr',
+      output_format: 'xml',
+      output_path: 'law_xml',
+    });
+    assert.equal(res.status, 'exported');
+    assert.ok(Array.isArray(res.sources));
+    assert.ok(res.sources.includes('ecfr'));
+    assert.equal(res.metadata.source, 'ecfr');
+    assert.equal(res.metadata.format, 'xml');
     assert.ok(fs.existsSync(res.path));
   } finally {
     client.close();

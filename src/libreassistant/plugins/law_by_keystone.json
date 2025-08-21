@@ -3,7 +3,8 @@
   "intent": "export_legal_research",
   "parameters": {
     "query": "string",
-    "output_format": "md|json|html",
+    "source": "govinfo|ecfr|courtlistener|openstates|govtrack",
+    "output_format": "md|json|html|txt|xml",
     "output_path": "string"
   }
 }
