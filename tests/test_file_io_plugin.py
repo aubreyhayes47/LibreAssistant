@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -75,6 +76,22 @@ def test_file_io_plugin_path_sanitization(tmp_path: Path) -> None:
     result = plugin.run(state, {"operation": "read", "path": str(outside)})
     assert result == {"error": "path outside allowed directory"}
     assert state["last_file_path"] == str(tmp_path / "sanitized.txt")
+
+
+def test_file_io_plugin_handles_commonpath_value_error(
+    tmp_path: Path, monkeypatch
+) -> None:
+    file_io.ALLOWED_BASE_DIR = str(tmp_path)
+    plugin = FileIOPlugin()
+    state: dict[str, Any] = {}
+    path = tmp_path / "file.txt"
+
+    def raise_value_error(paths: list[str]) -> str:
+        raise ValueError("no common path")
+
+    monkeypatch.setattr(os.path, "commonpath", raise_value_error)
+    result = plugin.run(state, {"operation": "read", "path": str(path)})
+    assert result == {"error": "path outside allowed directory"}
 
 
 def test_file_io_plugin_integration(client, tmp_path: Path) -> None:

@@ -76,7 +76,11 @@ class FileIOPlugin(MCPPluginAdapter):
             # traversal attacks.
             resolved_path = os.path.realpath(payload["path"])
             base_dir = os.path.realpath(ALLOWED_BASE_DIR)
-            if os.path.commonpath([resolved_path, base_dir]) != base_dir:
+            try:
+                common = os.path.commonpath([resolved_path, base_dir])
+            except ValueError:
+                return {"error": "path outside allowed directory"}
+            if common != base_dir:
                 return {"error": "path outside allowed directory"}
             user_state["last_file_path"] = resolved_path
             payload["path"] = resolved_path
