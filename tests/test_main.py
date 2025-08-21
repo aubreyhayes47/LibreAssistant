@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from libreassistant.kernel import kernel
+from pydantic import BaseModel
 
 
 def test_read_root(client) -> None:
@@ -32,3 +33,28 @@ def test_user_state_persists(client) -> None:
     assert first.json()["result"] == {"count": 1}
     assert second.json()["result"] == {"count": 2}
     assert second.json()["state"]["count"] == 2
+
+
+def test_invoke_invalid_payload_returns_400(client) -> None:
+    class RequiredFieldPlugin:
+        class InputModel(BaseModel):
+            value: int
+
+        def run(self, state, payload):
+            return payload
+
+    kernel.register_plugin("required", RequiredFieldPlugin())
+    response = client.post(
+        "/api/v1/invoke",
+        json={"plugin": "required", "payload": {}, "user_id": "alice"},
+    )
+    assert response.status_code == 400
+
+
+def test_unknown_plugin_returns_404(client) -> None:
+    response = client.post(
+        "/api/v1/invoke",
+        json={"plugin": "missing", "payload": {}, "user_id": "alice"},
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Plugin not found"
