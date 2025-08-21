@@ -4,6 +4,7 @@
 """Tests for the personal data vault and consent endpoints."""
 from __future__ import annotations
 
+import shutil
 import pytest
 
 from libreassistant.vault import DataVault
@@ -115,3 +116,42 @@ def test_vault_key_rotation(tmp_path):
     assert old_key != new_key
     assert (tmp_path / "vault.key.bak").exists()
     assert vault.retrieve(user_id) == {"x": 1}
+
+
+def test_vault_key_rotation_custom_backup(tmp_path):
+    key_file = tmp_path / "vault.key"
+    db_path = tmp_path / "vault.db"
+    backup_file = tmp_path / "backup" / "old.key"
+    user_id = "henry"
+
+    vault = DataVault(key_file=key_file, db_path=db_path)
+    vault.set_consent(user_id, True)
+    vault.store(user_id, {"v": 1})
+
+    old_key = key_file.read_bytes()
+    vault.rotate_key(backup_path=backup_file)
+    assert backup_file.read_bytes() == old_key
+    assert key_file.read_bytes() != old_key
+    assert vault.retrieve(user_id) == {"v": 1}
+
+
+def test_vault_key_rotation_restore(tmp_path):
+    key_file = tmp_path / "vault.key"
+    db_path = tmp_path / "vault.db"
+    user_id = "isabella"
+    payload = {"secret": "value"}
+
+    vault = DataVault(key_file=key_file, db_path=db_path)
+    vault.set_consent(user_id, True)
+    vault.store(user_id, payload)
+
+    db_backup = tmp_path / "backup" / "vault.db"
+    db_backup.parent.mkdir()
+    shutil.copy2(db_path, db_backup)
+
+    vault.rotate_key()
+    assert vault.retrieve(user_id) == payload
+
+    backup_key = tmp_path / "vault.key.bak"
+    restored = DataVault(key_file=backup_key, db_path=db_backup)
+    assert restored.retrieve(user_id) == payload
