@@ -57,6 +57,6 @@ curl -X POST http://localhost:8000/api/v1/invoke \
 
 ## Security Considerations
 
-- Access is limited to the `~/desktop` directory via `ALLOWED_BASE_DIR` and validated with `os.path.realpath` to prevent path traversal.
+- Access is limited to the `~/desktop` directory via `ALLOWED_BASE_DIR` and validated with `os.path.realpath` and `os.path.commonpath` to prevent path traversal. Cross-drive paths that cannot be compared are rejected.
 - Destructive operations (`update`, `delete`) require an explicit `confirm` flag.
 - Each operation is logged with `db.add_file_audit` for accountability.

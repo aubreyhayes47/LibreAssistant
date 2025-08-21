@@ -105,6 +105,7 @@ the MCP file server through `MCP_FS_BASE_DIR`.
 
 Before any operation, the plugin normalizes user supplied paths with
 `os.path.realpath` and verifies that the result remains within
-`ALLOWED_BASE_DIR`. Requests that resolve outside this directory are rejected,
-preventing path traversal and confining access to an explicitly approved
-workspace.
+`ALLOWED_BASE_DIR`. The check uses `os.path.commonpath`; if it raises
+`ValueError` (for example, on cross-drive inputs) or the common path differs,
+the request is rejected. This prevents path traversal and confines access to an
+explicitly approved workspace.
