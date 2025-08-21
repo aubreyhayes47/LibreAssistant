@@ -28,6 +28,16 @@ npm test
 
 This executes all `*.test.ts` files under `tests/mcp`.
 
+### npm proxy warnings
+
+If running `npm` commands produces a warning like `npm warn Unknown env config "http-proxy"`, clear any old proxy settings by running:
+
+```bash
+npm_config_http_proxy="" npm_config_https_proxy="" npm test
+```
+
+Setting the variables to empty strings removes the deprecated `http-proxy` configuration.
+
 ## Environment variables and mocks
 
 Some tests rely on environment variables to inject test data:
@@ -37,4 +47,3 @@ Some tests rely on environment variables to inject test data:
 * `LA_MODELS_DIR` and `LA_DATASETS_DIR` – temporary directories for transparency tests in `tests/test_transparency.py`.
 
 These variables are typically set by the tests themselves via monkeypatch but can be set manually when running individual tests.
-
