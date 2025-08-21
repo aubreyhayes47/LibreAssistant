@@ -13,14 +13,14 @@ LibreAssistant supports both hosted and local language models through adapter cl
 
 The `CloudProvider` integrates with OpenAI's Chat Completions API.
 
-### Environment Variables
+### CloudProvider Environment Variables
 
 - `OPENAI_MODEL` – model name (default `gpt-3.5-turbo`)
 - `OPENAI_MAX_TOKENS` – maximum tokens to generate
 - `OPENAI_TEMPERATURE` – sampling temperature
 - `OPENAI_RATE_LIMIT` – requests allowed per minute (`0` disables)
 
-### API Key Endpoint
+### CloudProvider API Key Endpoint
 
 Set the OpenAI API key via the REST API.  Keys are encrypted before storage.
 
@@ -29,7 +29,7 @@ POST /api/v1/providers/cloud/key
 {"key": "sk-..."}
 ```
 
-### Rate Limiting
+### CloudProvider Rate Limiting
 
 The provider tracks request timestamps and raises an error when the limit is exceeded.  Adjust `OPENAI_RATE_LIMIT` to control throttling.
 
@@ -37,7 +37,7 @@ The provider tracks request timestamps and raises an error when the limit is exc
 
 The `LocalProvider` sends prompts to a locally hosted model over HTTP (e.g. [Ollama](https://ollama.com/)).
 
-### Environment Variables
+### LocalProvider Environment Variables
 
 - `LOCAL_URL` – endpoint of the local model API
 - `LOCAL_MODEL` – model identifier
@@ -45,7 +45,7 @@ The `LocalProvider` sends prompts to a locally hosted model over HTTP (e.g. [Oll
 - `LOCAL_TEMPERATURE` – sampling temperature
 - `LOCAL_RATE_LIMIT` – requests allowed per minute (`0` disables)
 
-### API Key Endpoint
+### LocalProvider API Key Endpoint
 
 Local models typically do not require authentication, but a key can be stored if needed:
 
@@ -54,7 +54,6 @@ POST /api/v1/providers/local/key
 {"key": "optional-token"}
 ```
 
-### Rate Limiting
+### LocalProvider Rate Limiting
 
 Requests are throttled using the same per-minute mechanism as the cloud provider.  Configure the limit with `LOCAL_RATE_LIMIT`.
-
