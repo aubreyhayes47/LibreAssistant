@@ -19,7 +19,8 @@ class LawByKeystoneInput(BaseModel):
 
     query: str
     output_path: str
-    output_format: Literal["md", "json", "html"] = "md"
+    source: Literal["govinfo", "ecfr", "courtlistener", "openstates", "govtrack"] = "govinfo"
+    output_format: Literal["md", "json", "html", "txt", "xml"] = "md"
 
 
 class LawByKeystonePlugin(MCPPluginAdapter):
