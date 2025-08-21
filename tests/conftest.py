@@ -69,3 +69,4 @@ def reset_kernel() -> Generator[None, None, None]:
     providers.register("local", LocalProvider())
     app_db.clear()
     yield
+    app_db.close_conn()

@@ -9,6 +9,8 @@ from typing import Any, Dict, Protocol, cast
 
 from pydantic import BaseModel, ValidationError
 
+from . import db
+
 
 class Plugin(Protocol):
     """Protocol that all plugins must implement."""
@@ -67,6 +69,7 @@ class Microkernel:
                     close()
                 except Exception:  # pragma: no cover - best effort cleanup
                     pass
+        db.close_conn()
 
 
 kernel = Microkernel()

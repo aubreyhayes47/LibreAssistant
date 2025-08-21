@@ -32,6 +32,7 @@ def create_app() -> FastAPI:
     async def lifespan(_: FastAPI):
         yield
         kernel.shutdown()
+        db.close_conn()
 
     app = FastAPI(title="LibreAssistant", lifespan=lifespan)
 
