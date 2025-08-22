@@ -10,18 +10,25 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-# Try to use SQLCipher for transparent database encryption. If the optional
-# dependency isn't available we fall back to the standard library's ``sqlite3``
-# module and operate on an unencrypted database.
+# Try to use SQLCipher for transparent database encryption. If either the
+# optional dependency or the encryption key is missing we fall back to the
+# standard library's ``sqlite3`` module and operate on an unencrypted database.
 try:  # pragma: no cover - import is environment dependent
-    import pysqlcipher3.dbapi2 as sqlite3  # type: ignore
-    SQLCIPHER_AVAILABLE = True
+    import pysqlcipher3.dbapi2 as _sqlcipher  # type: ignore
+    _HAS_SQLCIPHER = True
 except ImportError:  # pragma: no cover - fallback path
-    import sqlite3  # type: ignore
-    SQLCIPHER_AVAILABLE = False
+    _HAS_SQLCIPHER = False
+import sqlite3 as _sqlite3  # type: ignore
 
 DB_PATH = Path(os.getenv("LIBRE_DB_PATH", "config/app.db"))
 DB_KEY = os.getenv("LIBRE_DB_KEY")
+
+if _HAS_SQLCIPHER and DB_KEY:
+    sqlite3 = _sqlcipher  # type: ignore
+    SQLCIPHER_AVAILABLE = True
+else:
+    sqlite3 = _sqlite3  # type: ignore
+    SQLCIPHER_AVAILABLE = False
 HISTORY_RETENTION_DAYS = int(os.getenv("HISTORY_RETENTION_DAYS", "30"))
 AUDIT_RETENTION_DAYS = int(os.getenv("AUDIT_RETENTION_DAYS", "30"))
 
@@ -47,12 +54,6 @@ def get_conn() -> sqlite3.Connection:
         DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         _conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
         if SQLCIPHER_AVAILABLE:
-            if not DB_KEY:
-                _conn.close()
-                _conn = None
-                raise RuntimeError(
-                    "LIBRE_DB_KEY environment variable must be set for encrypted database access"
-                )
             try:
                 _conn.execute("PRAGMA key=?", (DB_KEY,))
             except sqlite3.OperationalError:
