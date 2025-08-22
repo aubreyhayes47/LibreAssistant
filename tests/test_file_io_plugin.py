@@ -127,10 +127,8 @@ def test_file_io_plugin_integration(client, tmp_path: Path) -> None:
             "user_id": "alice",
         },
     )
-    assert response.status_code == 200
-    assert response.json()["result"] == {
-        "error": "path outside allowed directory"
-    }
+    assert response.status_code == 400
+    assert response.json() == {"detail": "path outside allowed directory"}
 
     response = client.post(
         "/api/v1/invoke",
