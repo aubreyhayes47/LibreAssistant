@@ -29,7 +29,21 @@ sys.modules.setdefault("pysqlcipher3", pysqlcipher3_stub)
 sys.modules.setdefault("pysqlcipher3.dbapi2", sqlite3)
 
 os.environ["LIBRE_DB_PATH"] = ":memory:"
-os.environ["LIBRE_DB_KEY"] = "test-key"
+
+
+@pytest.fixture(autouse=True)
+def _ensure_db_key() -> Generator[None, None, None]:
+    """Ensure ``LIBRE_DB_KEY`` is set during tests."""
+    orig = os.environ.get("LIBRE_DB_KEY")
+    if orig is None:
+        os.environ["LIBRE_DB_KEY"] = "test-db-key"
+    try:
+        yield
+    finally:
+        if orig is None:
+            os.environ.pop("LIBRE_DB_KEY", None)
+        else:
+            os.environ["LIBRE_DB_KEY"] = orig
 
 if shutil.which("node") is None:
     # Mock out MCP-based plugins when Node.js isn't available to keep tests
