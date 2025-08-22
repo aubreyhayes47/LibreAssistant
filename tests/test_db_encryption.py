@@ -4,24 +4,24 @@
 import importlib
 import os
 import sys
+import sqlite3
 
 import pytest
 
 from libreassistant import db as app_db
 
 
-def test_falls_back_to_plain_sqlite_without_key(tmp_path):
-    """When SQLCipher lacks a key, the module uses plain SQLite."""
+def test_falls_back_to_plain_sqlite_without_key(tmp_path, monkeypatch):
+    """When ``LIBRE_DB_KEY`` is unset a plain SQLite connection is returned."""
     db_file = tmp_path / "plain.db"
-    orig_db_path = os.environ.get("LIBRE_DB_PATH")
-    orig_db_key = os.environ.get("LIBRE_DB_KEY")
-
-    os.environ["LIBRE_DB_PATH"] = str(db_file)
-    os.environ.pop("LIBRE_DB_KEY", None)
+    monkeypatch.setenv("LIBRE_DB_PATH", str(db_file))
+    monkeypatch.delenv("LIBRE_DB_KEY", raising=False)
     importlib.reload(app_db)
 
     try:
+        conn = app_db.get_conn()
         assert not app_db.SQLCIPHER_AVAILABLE
+        assert isinstance(conn, sqlite3.Connection)
         app_db.add_history("bob", "test", {"data": "value"}, True)
         app_db.get_history("bob")
         data = db_file.read_bytes()
@@ -29,14 +29,6 @@ def test_falls_back_to_plain_sqlite_without_key(tmp_path):
         assert b"value" in data
     finally:
         app_db.close_conn()
-        if orig_db_path is not None:
-            os.environ["LIBRE_DB_PATH"] = orig_db_path
-        else:
-            os.environ.pop("LIBRE_DB_PATH", None)
-        if orig_db_key is not None:
-            os.environ["LIBRE_DB_KEY"] = orig_db_key
-        else:
-            os.environ.pop("LIBRE_DB_KEY", None)
         importlib.reload(app_db)
 
 
