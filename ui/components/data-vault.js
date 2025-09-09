@@ -7,22 +7,67 @@ class LADataVault extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
+        :host {
+          display: block;
+          font-family: var(--font-family-sans);
+          color: var(--color-text);
+        }
         textarea {
           width: 100%;
           min-height: 6rem;
           font-family: var(--font-family-mono);
+          font-size: var(--font-size-sm);
+          padding: var(--spacing-sm);
           margin-bottom: var(--spacing-sm);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          background: var(--color-background);
+          color: var(--color-text);
+          resize: vertical;
+        }
+        textarea:focus {
+          outline: 2px solid var(--color-primary);
+          border-color: var(--color-primary);
+        }
+        .controls {
+          display: flex;
+          gap: var(--spacing-sm);
+          margin-bottom: var(--spacing-md);
         }
         button {
-          margin-right: var(--spacing-sm);
+          background-color: var(--color-primary);
+          color: var(--color-background);
+          font-family: var(--font-family-sans);
+          font-size: var(--font-size-base);
+          padding: var(--spacing-xs) var(--spacing-sm);
+          border: none;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+        }
+        button:hover:not(:disabled) {
+          background-color: var(--color-primary-hover);
+        }
+        button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        button#delete {
+          background-color: var(--color-secondary);
         }
         pre {
           background: var(--color-surface);
+          color: var(--color-text);
           padding: var(--spacing-sm);
+          border-radius: var(--radius-sm);
+          font-family: var(--font-family-mono);
+          font-size: var(--font-size-sm);
+          overflow-x: auto;
+          white-space: pre-wrap;
+          word-wrap: break-word;
         }
       </style>
       <textarea id="data" placeholder="{}"></textarea>
-      <div>
+      <div class="controls">
         <button id="save">Save</button>
         <button id="export">Export</button>
         <button id="delete">Delete</button>
