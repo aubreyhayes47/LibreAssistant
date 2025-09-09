@@ -16,3 +16,4 @@ import './user-profile.js';
 import './bill-of-materials.js';
 import './system-health.js';
 import './theme-marketplace.js';
+import './theme-selector.js';
