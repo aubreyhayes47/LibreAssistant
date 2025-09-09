@@ -37,11 +37,17 @@ class LAMainTabs extends HTMLElement {
         <button role="tab" aria-selected="false" id="tab-catalogue">Catalogue</button>
         <button role="tab" aria-selected="false" id="tab-past">Past Requests</button>
         <button role="tab" aria-selected="false" id="tab-profile">User Profile</button>
+        <button role="tab" aria-selected="false" id="tab-bom">Bill of Materials</button>
+        <button role="tab" aria-selected="false" id="tab-health">System Health</button>
+        <button role="tab" aria-selected="false" id="tab-themes">Theme Marketplace</button>
       </nav>
       <section id="panel-switchboard" role="tabpanel" data-active="true"><slot name="switchboard"></slot></section>
       <section id="panel-catalogue" role="tabpanel"><slot name="catalogue"></slot></section>
       <section id="panel-past" role="tabpanel"><slot name="past"></slot></section>
       <section id="panel-profile" role="tabpanel"><slot name="profile"></slot></section>
+      <section id="panel-bom" role="tabpanel"><slot name="bom"></slot></section>
+      <section id="panel-health" role="tabpanel"><slot name="health"></slot></section>
+      <section id="panel-themes" role="tabpanel"><slot name="themes"></slot></section>
     `;
   }
 
