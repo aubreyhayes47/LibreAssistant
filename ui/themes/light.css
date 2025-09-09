@@ -1,0 +1,16 @@
+/* Copyright (c) 2024 LibreAssistant contributors.
+   Licensed under the MIT License. */
+
+/* Light theme - Default theme colors */
+:root {
+  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  --color-primary: #0d6efd;
+  --color-primary-hover: #0b5ed7;
+  --color-secondary: #6c757d;
+  --color-background: #ffffff;
+  --color-surface: #f8f9fa;
+  --color-text: #212529;
+  --color-border: #dee2e6;
+  --color-backdrop: rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

@@ -1,1 +1,12 @@
-:root[data-theme="solarized"]{--color-background:#fdf6e3;--color-surface:#eee8d5;--color-primary:#268bd2;--color-secondary:#2aa198;--color-border:#93a1a1;--color-text:#073642}
+:root {
+  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  --color-background: #fdf6e3;
+  --color-surface: #eee8d5;
+  --color-primary: #268bd2;
+  --color-primary-hover: #2078a3;
+  --color-secondary: #2aa198;
+  --color-border: #93a1a1;
+  --color-text: #073642;
+  --color-backdrop: rgba(7, 54, 66, 0.5);
+  --shadow-card: 0 2px 4px rgba(7, 54, 66, 0.1);
+}
