@@ -125,7 +125,7 @@ class LAMainTabs extends HTMLElement {
     `;
 
     this._tabList = shadow.querySelector('[role="tablist"]');
-    this._panelsContainer = shadow.querySelector('.panels');
+    this._panelsContainer = shadow; // Use shadow root as container since panels are direct children
     this._tabs = [];
     this._panels = [];
     this._activeIndex = 0;
@@ -143,15 +143,19 @@ class LAMainTabs extends HTMLElement {
     if (tabsConfig) {
       try {
         const tabs = JSON.parse(tabsConfig);
+        // Clear existing hardcoded tabs first
+        this._clearExistingTabs();
         tabs.forEach((tab, index) => {
           this.addTab(tab.label, tab.id, tab.content, index === 0);
         });
       } catch (e) {
         console.warn('Invalid tabs configuration:', e);
+        // Fall back to initializing existing tabs
+        this._initializeExistingTabs();
       }
     } else {
-      // Default tabs if none specified
-      this._createDefaultTabs();
+      // Initialize existing hardcoded tabs
+      this._initializeExistingTabs();
     }
   }
 
@@ -168,10 +172,81 @@ class LAMainTabs extends HTMLElement {
     });
   }
 
+  _clearExistingTabs() {
+    // Remove all existing tabs and panels
+    const existingTabs = this.shadowRoot.querySelectorAll('button[role="tab"]');
+    const existingPanels = this.shadowRoot.querySelectorAll('section[role="tabpanel"]');
+    
+    existingTabs.forEach(tab => tab.remove());
+    existingPanels.forEach(panel => panel.remove());
+    
+    this._tabs = [];
+    this._panels = [];
+    this._activeIndex = 0;
+  }
+
+  _initializeExistingTabs() {
+    // Get existing tabs and panels from the DOM
+    const existingTabs = Array.from(this.shadowRoot.querySelectorAll('button[role="tab"]'));
+    const existingPanels = Array.from(this.shadowRoot.querySelectorAll('section[role="tabpanel"]'));
+    
+    this._tabs = existingTabs;
+    this._panels = existingPanels;
+    
+    // Find the active tab
+    this._activeIndex = existingTabs.findIndex(tab => tab.getAttribute('aria-selected') === 'true');
+    if (this._activeIndex === -1) this._activeIndex = 0;
+    
+    // Add missing attributes and event handlers
+    existingTabs.forEach((tab, index) => {
+      this._setupTabAttributes(tab, index);
+      this._setupTabEventHandlers(tab, index);
+    });
+    
+    existingPanels.forEach((panel, index) => {
+      this._setupPanelAttributes(panel, index);
+    });
+  }
+
+  _setupTabAttributes(tab, index) {
+    // Ensure proper accessibility attributes
+    if (!tab.hasAttribute('aria-controls')) {
+      const panelId = this._panels[index]?.id || `panel-${index}`;
+      tab.setAttribute('aria-controls', panelId);
+    }
+    
+    if (!tab.hasAttribute('tabindex')) {
+      tab.setAttribute('tabindex', index === this._activeIndex ? '0' : '-1');
+    }
+    
+    if (!tab.hasAttribute('aria-selected')) {
+      tab.setAttribute('aria-selected', index === this._activeIndex ? 'true' : 'false');
+    }
+  }
+
+  _setupPanelAttributes(panel, index) {
+    // Ensure proper accessibility attributes for panels
+    if (!panel.hasAttribute('aria-labelledby')) {
+      const tabId = this._tabs[index]?.id || `tab-${index}`;
+      panel.setAttribute('aria-labelledby', tabId);
+    }
+    
+    if (!panel.hasAttribute('tabindex')) {
+      panel.setAttribute('tabindex', '0');
+    }
+  }
+
+  _setupTabEventHandlers(tab, index) {
+    // Add click handler if not already present
+    tab.addEventListener('click', () => {
+      this._activateTab(index);
+    });
+  }
+
   _setupKeyboardNavigation() {
     this._tabList.addEventListener('keydown', (e) => {
       const tabs = this._tabs;
-      const currentIndex = tabs.findIndex(tab => tab === document.activeElement);
+      const currentIndex = tabs.findIndex(tab => tab === this.shadowRoot.activeElement);
 
       switch (e.key) {
         case 'ArrowRight':
