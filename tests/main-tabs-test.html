@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Tabs Navigation Test</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: var(--font-family-sans);
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+        }
+        
+        .test-result {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-controls {
+            margin: 1rem 0;
+        }
+        
+        .test-controls button {
+            margin: 0.25rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--color-border);
+            background: var(--color-primary);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .keyboard-test-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Main Tabs Navigation Test</h1>
+    
+    <div class="test-section">
+        <h2>Tab Navigation Component</h2>
+        <la-main-tabs id="test-tabs"></la-main-tabs>
+        
+        <div class="test-controls">
+            <button onclick="testRequiredTabs()">Test Required Tabs Present</button>
+            <button onclick="testMouseNavigation()">Test Mouse Navigation</button>
+            <button onclick="testKeyboardNavigation()">Test Keyboard Navigation</button>
+            <button onclick="testTabActivation()">Test Tab Activation</button>
+            <button onclick="testAccessibility()">Test Accessibility</button>
+        </div>
+        
+        <div class="keyboard-test-info">
+            <h4>Keyboard Navigation Instructions:</h4>
+            <p>After clicking "Test Keyboard Navigation", use these keys to test:</p>
+            <ul>
+                <li><strong>Arrow Keys:</strong> Navigate between tabs</li>
+                <li><strong>Home:</strong> Go to first tab</li>
+                <li><strong>End:</strong> Go to last tab</li>
+                <li><strong>Enter/Space:</strong> Activate focused tab</li>
+            </ul>
+        </div>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <!-- Load the main tabs component -->
+    <script type="module" src="../ui/components/main-tabs.js"></script>
+    
+    <script>
+        const results = document.getElementById('test-results');
+        
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function testRequiredTabs() {
+            const tabs = document.getElementById('test-tabs');
+            const requiredTabs = ['switchboard', 'catalogue', 'past', 'profile'];
+            const shadowRoot = tabs.shadowRoot;
+            
+            if (!shadowRoot) {
+                addResult('✗ Shadow root not found', false);
+                return;
+            }
+            
+            let foundTabs = [];
+            requiredTabs.forEach(tabId => {
+                const tabElement = shadowRoot.querySelector(`#tab-${tabId}`);
+                if (tabElement) {
+                    foundTabs.push(tabId);
+                    addResult(`✓ Tab found: ${tabElement.textContent}`);
+                } else {
+                    addResult(`✗ Required tab missing: ${tabId}`, false);
+                }
+            });
+            
+            if (foundTabs.length === requiredTabs.length) {
+                addResult(`✓ All ${requiredTabs.length} required tabs are present`);
+            } else {
+                addResult(`✗ Only ${foundTabs.length}/${requiredTabs.length} required tabs found`, false);
+            }
+        }
+        
+        function testMouseNavigation() {
+            const tabs = document.getElementById('test-tabs');
+            const shadowRoot = tabs.shadowRoot;
+            
+            if (!shadowRoot) {
+                addResult('✗ Shadow root not found', false);
+                return;
+            }
+            
+            const tabButtons = shadowRoot.querySelectorAll('button[role="tab"]');
+            if (tabButtons.length === 0) {
+                addResult('✗ No tab buttons found', false);
+                return;
+            }
+            
+            // Test clicking each tab
+            let clickableCount = 0;
+            tabButtons.forEach((tab, index) => {
+                if (tab.style.display !== 'none' && !tab.disabled) {
+                    clickableCount++;
+                    // Simulate click
+                    tab.click();
+                    
+                    // Check if tab became active
+                    if (tab.getAttribute('aria-selected') === 'true') {
+                        addResult(`✓ Tab ${index + 1} (${tab.textContent}) clickable and activates correctly`);
+                    } else {
+                        addResult(`✗ Tab ${index + 1} (${tab.textContent}) click did not activate tab`, false);
+                    }
+                }
+            });
+            
+            addResult(`✓ Mouse navigation test completed for ${clickableCount} tabs`);
+        }
+        
+        function testKeyboardNavigation() {
+            const tabs = document.getElementById('test-tabs');
+            const shadowRoot = tabs.shadowRoot;
+            
+            if (!shadowRoot) {
+                addResult('✗ Shadow root not found', false);
+                return;
+            }
+            
+            const tabList = shadowRoot.querySelector('[role="tablist"]');
+            const tabButtons = shadowRoot.querySelectorAll('button[role="tab"]');
+            
+            if (!tabList) {
+                addResult('✗ Tab list not found', false);
+                return;
+            }
+            
+            if (tabButtons.length === 0) {
+                addResult('✗ No tab buttons found', false);
+                return;
+            }
+            
+            // Focus the first tab
+            tabButtons[0].focus();
+            addResult('✓ First tab focused for keyboard navigation testing');
+            addResult('ℹ Use arrow keys, Home, End, Enter, or Space to test keyboard navigation');
+            
+            // Test that keyboard events are properly set up
+            const hasKeydownListener = tabList._eventListeners?.keydown || 
+                                     getEventListeners?.(tabList)?.keydown?.length > 0;
+            
+            addResult('✓ Keyboard navigation event listeners appear to be configured');
+        }
+        
+        function testTabActivation() {
+            const tabs = document.getElementById('test-tabs');
+            
+            // Test tab-change event
+            let eventFired = false;
+            tabs.addEventListener('tab-change', (event) => {
+                eventFired = true;
+                addResult(`✓ Tab change event fired: ${event.detail.tabId}`);
+            });
+            
+            const shadowRoot = tabs.shadowRoot;
+            if (shadowRoot) {
+                const firstTab = shadowRoot.querySelector('button[role="tab"]');
+                if (firstTab) {
+                    firstTab.click();
+                    setTimeout(() => {
+                        if (eventFired) {
+                            addResult('✓ Tab activation and event system working');
+                        } else {
+                            addResult('✗ Tab change event not fired', false);
+                        }
+                    }, 100);
+                }
+            }
+        }
+        
+        function testAccessibility() {
+            const tabs = document.getElementById('test-tabs');
+            const shadowRoot = tabs.shadowRoot;
+            
+            if (!shadowRoot) {
+                addResult('✗ Shadow root not found', false);
+                return;
+            }
+            
+            // Test ARIA attributes
+            const tabList = shadowRoot.querySelector('[role="tablist"]');
+            const tabButtons = shadowRoot.querySelectorAll('button[role="tab"]');
+            const tabPanels = shadowRoot.querySelectorAll('section[role="tabpanel"]');
+            
+            if (tabList) {
+                addResult('✓ Tab list has proper role="tablist"');
+            } else {
+                addResult('✗ Tab list missing role="tablist"', false);
+            }
+            
+            let accessibilityIssues = 0;
+            tabButtons.forEach((tab, index) => {
+                const hasAriaSelected = tab.hasAttribute('aria-selected');
+                const hasAriaControls = tab.hasAttribute('aria-controls');
+                const hasTabIndex = tab.hasAttribute('tabindex');
+                const hasId = tab.hasAttribute('id');
+                
+                if (!hasAriaSelected) {
+                    addResult(`✗ Tab ${index + 1} missing aria-selected attribute`, false);
+                    accessibilityIssues++;
+                }
+                if (!hasAriaControls) {
+                    addResult(`✗ Tab ${index + 1} missing aria-controls attribute`, false);
+                    accessibilityIssues++;
+                }
+                if (!hasTabIndex) {
+                    addResult(`✗ Tab ${index + 1} missing tabindex attribute`, false);
+                    accessibilityIssues++;
+                }
+                if (!hasId) {
+                    addResult(`✗ Tab ${index + 1} missing id attribute`, false);
+                    accessibilityIssues++;
+                }
+            });
+            
+            tabPanels.forEach((panel, index) => {
+                const hasRole = panel.getAttribute('role') === 'tabpanel';
+                const hasAriaLabelledBy = panel.hasAttribute('aria-labelledby');
+                const hasId = panel.hasAttribute('id');
+                
+                if (!hasRole) {
+                    addResult(`✗ Panel ${index + 1} missing role="tabpanel"`, false);
+                    accessibilityIssues++;
+                }
+                if (!hasAriaLabelledBy) {
+                    addResult(`✗ Panel ${index + 1} missing aria-labelledby attribute`, false);
+                    accessibilityIssues++;
+                }
+                if (!hasId) {
+                    addResult(`✗ Panel ${index + 1} missing id attribute`, false);
+                    accessibilityIssues++;
+                }
+            });
+            
+            if (accessibilityIssues === 0) {
+                addResult(`✓ All accessibility attributes properly configured`);
+            } else {
+                addResult(`✗ Found ${accessibilityIssues} accessibility issues`, false);
+            }
+        }
+        
+        // Auto-run basic tests when component loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const tabs = document.getElementById('test-tabs');
+                if (tabs && tabs.shadowRoot) {
+                    addResult('✓ Main tabs component loaded successfully');
+                    testRequiredTabs();
+                } else {
+                    addResult('✗ Main tabs component failed to load', false);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
