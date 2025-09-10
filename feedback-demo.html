@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreAssistant Feedback Demo</title>
+    <style>
+        :root {
+            --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --color-background: #ffffff;
+            --color-text: #1f2937;
+            --color-text-secondary: #6b7280;
+            --color-border: #d1d5db;
+            --color-surface: #f9fafb;
+            --color-primary: #3b82f6;
+            --color-success: #22c55e;
+            --color-error: #ef4444;
+            --color-warning: #f59e0b;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --radius-sm: 0.375rem;
+            --radius-xs: 0.25rem;
+        }
+        body {
+            font-family: var(--font-family-sans);
+            background: var(--color-background);
+            color: var(--color-text);
+            margin: 0;
+            padding: var(--spacing-md);
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .demo-section {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface);
+        }
+        .demo-button {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            cursor: pointer;
+            margin: var(--spacing-xs);
+            font-size: var(--font-size-sm);
+        }
+        .demo-button:hover {
+            opacity: 0.9;
+        }
+        .demo-button:disabled {
+            background: var(--color-border);
+            cursor: not-allowed;
+        }
+        .demo-result {
+            margin-top: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--color-background);
+            border-radius: var(--radius-sm);
+            font-family: monospace;
+            font-size: var(--font-size-sm);
+            border: 1px solid var(--color-border);
+        }
+        h1, h2 {
+            margin-top: 0;
+            color: var(--color-text);
+        }
+        .success { color: var(--color-success); }
+        .error { color: var(--color-error); }
+        .warning { color: var(--color-warning); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LibreAssistant Feedback Mechanisms Demo</h1>
+        <p>This demo shows the enhanced user feedback for all major actions in LibreAssistant.</p>
+        
+        <div class="demo-section">
+            <h2>1. Request Generation Feedback</h2>
+            <p>Simulates sending requests with progress, success, and error feedback.</p>
+            <button class="demo-button" onclick="simulateRequest(true)">Simulate Successful Request</button>
+            <button class="demo-button" onclick="simulateRequest(false)">Simulate Failed Request</button>
+            <div class="demo-result" id="request-result">Results will appear here...</div>
+        </div>
+
+        <div class="demo-section">
+            <h2>2. Provider Switching Feedback</h2>
+            <p>Simulates switching between AI providers with status indicators.</p>
+            <button class="demo-button" onclick="simulateProviderSwitch(true)">Switch Provider (Success)</button>
+            <button class="demo-button" onclick="simulateProviderSwitch(false)">Switch Provider (Error)</button>
+            <div class="demo-result" id="provider-result">Results will appear here...</div>
+        </div>
+
+        <div class="demo-section">
+            <h2>3. Plugin Installation Feedback</h2>
+            <p>Simulates plugin enable/disable operations with clear status updates.</p>
+            <button class="demo-button" onclick="simulatePluginToggle(true)">Enable Plugin (Success)</button>
+            <button class="demo-button" onclick="simulatePluginToggle(false)">Enable Plugin (Error)</button>
+            <div class="demo-result" id="plugin-result">Results will appear here...</div>
+        </div>
+
+        <div class="demo-section">
+            <h2>4. Theme Installation Feedback</h2>
+            <p>Simulates theme installation with progress and success/error feedback.</p>
+            <button class="demo-button" onclick="simulateThemeInstall(true)">Install Theme (Success)</button>
+            <button class="demo-button" onclick="simulateThemeInstall(false)">Install Theme (Error)</button>
+            <div class="demo-result" id="theme-result">Results will appear here...</div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Summary of Implemented Feedback</h2>
+            <ul>
+                <li><strong>Progress Indicators:</strong> Loading spinners, disabled states, progress messages</li>
+                <li><strong>Success Feedback:</strong> Success notifications, visual confirmations, status updates</li>
+                <li><strong>Error Handling:</strong> Error notifications, revert on failure, detailed error messages</li>
+                <li><strong>Consistent UX:</strong> Unified notification system across all components</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function log(section, message, type = 'info') {
+            const resultDiv = document.getElementById(`${section}-result`);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : '';
+            resultDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+        }
+
+        function simulateRequest(success) {
+            const section = 'request';
+            log(section, '→ Starting request...', 'info');
+            log(section, '⟳ Loading: Sending request...', 'warning');
+            
+            setTimeout(() => {
+                if (success) {
+                    log(section, '✓ Success: Request processed successfully', 'success');
+                    log(section, '← Response: "Hello, this is a successful response"', 'success');
+                } else {
+                    log(section, '✗ Error: API key missing or invalid', 'error');
+                    log(section, '← Failed to process request', 'error');
+                }
+            }, 2000);
+        }
+
+        function simulateProviderSwitch(success) {
+            const section = 'provider';
+            log(section, '⟳ Loading: Switching to OpenAI Cloud provider...', 'warning');
+            
+            setTimeout(() => {
+                if (success) {
+                    log(section, '✓ Success: Successfully switched to OpenAI Cloud', 'success');
+                    log(section, '● Status: Connected (green indicator)', 'success');
+                } else {
+                    log(section, '✗ Error: Provider OpenAI Cloud is not available', 'error');
+                    log(section, '● Status: Error (red indicator)', 'error');
+                    log(section, '↶ Reverted to previous provider', 'warning');
+                }
+            }, 1500);
+        }
+
+        function simulatePluginToggle(success) {
+            const section = 'plugin';
+            log(section, '⟳ Loading: Enabling plugin file_processor...', 'warning');
+            log(section, '● Status: Enabling...', 'warning');
+            
+            setTimeout(() => {
+                if (success) {
+                    log(section, '✓ Success: Plugin file_processor enabled successfully', 'success');
+                    log(section, '● Status: Enabled', 'success');
+                } else {
+                    log(section, '✗ Error: Failed to enable plugin file_processor: HTTP 500', 'error');
+                    log(section, '● Status: Error', 'error');
+                    log(section, '↶ Checkbox reverted to disabled state', 'warning');
+                }
+            }, 1800);
+        }
+
+        function simulateThemeInstall(success) {
+            const section = 'theme';
+            log(section, '⟳ Loading: Installing theme Dark Professional...', 'warning');
+            log(section, '● Button: Installing... (with spinner)', 'warning');
+            
+            setTimeout(() => {
+                if (success) {
+                    log(section, '✓ Success: Theme Dark Professional installed successfully', 'success');
+                    log(section, '🎨 Applied: Theme is now active on the page', 'success');
+                    log(section, '💾 Saved: Theme preference stored in localStorage', 'success');
+                } else {
+                    log(section, '✗ Error: Failed to install theme: HTTP 404 - Theme not found', 'error');
+                    log(section, '🎨 Unchanged: Page theme remains the same', 'warning');
+                    log(section, '● Button: Returned to normal state', 'warning');
+                }
+            }, 2200);
+        }
+
+        // Clear results on page load
+        window.addEventListener('load', () => {
+            ['request', 'provider', 'plugin', 'theme'].forEach(section => {
+                document.getElementById(`${section}-result`).innerHTML = 'Ready for testing...';
+            });
+        });
+    </script>
+</body>
+</html>

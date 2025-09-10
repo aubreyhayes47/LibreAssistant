@@ -36,8 +36,10 @@ class LAThemeSelector extends HTMLElement {
           outline: 2px solid var(--color-primary);
           outline-offset: 2px;
         }
-        select:hover {
-          border-color: var(--color-primary);
+        select:disabled {
+          background: var(--color-border);
+          cursor: not-allowed;
+          opacity: 0.6;
         }
         .preview {
           width: 20px;
@@ -71,20 +73,24 @@ class LAThemeSelector extends HTMLElement {
 
   async loadThemes() {
     try {
+      const loadingId = window.notifications?.loading('Loading available themes...');
+      
       const response = await fetch(this.catalogUrl);
+      
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      
       if (response.ok) {
         const data = await response.json();
         this.themes = data.themes || data; // Handle both /api/v1/themes and direct catalog formats
+        
+        if (this.themes.length > 0) {
+          window.notifications?.success(`Loaded ${this.themes.length} themes`);
+        }
       } else {
-        // Fallback to built-in themes if catalog fails to load
-        this.themes = [
-          { id: 'light', name: 'Light', preview: '#f8f9fa' },
-          { id: 'dark', name: 'Dark', preview: '#1e1e1e' },
-          { id: 'high-contrast', name: 'High Contrast', preview: '#000000' }
-        ];
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.warn('Failed to load theme catalog:', error);
+      window.notifications?.error(`Failed to load theme catalog: ${error.message}`);
       // Fallback to built-in themes
       this.themes = [
         { id: 'light', name: 'Light', preview: '#f8f9fa' },
@@ -147,50 +153,70 @@ class LAThemeSelector extends HTMLElement {
     const theme = this.themes.find(t => t.id === themeId);
     if (!theme) return;
 
-    this.currentTheme = themeId;
+    const select = this.shadowRoot.getElementById('theme-select');
+    const originalValue = this.currentTheme;
+    
+    select.disabled = true;
+    const loadingId = window.notifications?.loading(`Applying theme ${theme.name}...`);
 
-    // Remove any previously loaded community theme
-    const existingStyle = document.getElementById('community-theme');
-    if (existingStyle) {
-      existingStyle.remove();
-    }
+    try {
+      this.currentTheme = themeId;
 
-    // For built-in themes, just set the data-theme attribute
-    const builtinThemes = ['light', 'dark', 'high-contrast'];
-    if (builtinThemes.includes(themeId)) {
-      document.documentElement.setAttribute('data-theme', themeId);
-    } else {
-      // For community themes, load the CSS file
-      try {
-        const response = await fetch(`/api/v1/themes/${themeId}.css`);
-        if (response.ok) {
-          const css = await response.text();
-          const style = document.createElement('style');
-          style.id = 'community-theme';
-          style.textContent = css;
-          document.head.appendChild(style);
-          document.documentElement.setAttribute('data-theme', themeId);
-        } else {
-          console.error('Failed to load theme:', themeId);
-          return;
-        }
-      } catch (error) {
-        console.error('Error loading theme:', error);
-        return;
+      // Remove any previously loaded community theme
+      const existingStyle = document.getElementById('community-theme');
+      if (existingStyle) {
+        existingStyle.remove();
       }
+
+      // For built-in themes, just set the data-theme attribute
+      const builtinThemes = ['light', 'dark', 'high-contrast'];
+      if (builtinThemes.includes(themeId)) {
+        document.documentElement.setAttribute('data-theme', themeId);
+      } else {
+        // For community themes, load the CSS file
+        const response = await fetch(`/api/v1/themes/${themeId}.css`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const css = await response.text();
+        const style = document.createElement('style');
+        style.id = 'community-theme';
+        style.textContent = css;
+        document.head.appendChild(style);
+        document.documentElement.setAttribute('data-theme', themeId);
+      }
+
+      // Save theme preference
+      localStorage.setItem('selected-theme', themeId);
+
+      // Update preview
+      this.updateUI();
+
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      window.notifications?.success(`Theme ${theme.name} applied successfully`);
+
+      // Dispatch theme change event
+      this.dispatchEvent(new CustomEvent('theme-change', {
+        detail: { themeId, theme, success: true },
+        bubbles: true
+      }));
+    } catch (error) {
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      
+      // Revert to original theme on error
+      this.currentTheme = originalValue;
+      select.value = originalValue;
+      
+      window.notifications?.error(`Failed to apply theme ${theme.name}: ${error.message}`);
+      
+      this.dispatchEvent(new CustomEvent('theme-change', {
+        detail: { themeId, theme, success: false, error: error.message },
+        bubbles: true
+      }));
+    } finally {
+      select.disabled = false;
     }
-
-    // Save theme preference
-    localStorage.setItem('selected-theme', themeId);
-
-    // Update preview
-    this.updateUI();
-
-    // Dispatch theme change event
-    this.dispatchEvent(new CustomEvent('theme-change', {
-      detail: { themeId, theme },
-      bubbles: true
-    }));
   }
 
   // Public API for external theme switching
