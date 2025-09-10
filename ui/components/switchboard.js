@@ -70,6 +70,32 @@ class LASwitchboard extends HTMLElement {
       try {
         let res;
         if (plugin.value) {
+          // Check if this is a dangerous operation that needs confirmation
+          const isDangerous = await this.isDangerousOperation(plugin.value, value);
+          if (isDangerous) {
+            const confirmed = await this.showDangerousOperationConfirm(plugin.value, value);
+            if (!confirmed) {
+              const cancelItem = document.createElement('li');
+              cancelItem.textContent = 'Operation cancelled by user';
+              cancelItem.style.color = 'orange';
+              log.appendChild(cancelItem);
+              return;
+            }
+          }
+
+          // Check consent for server before first invocation
+          const hasConsent = await this.checkServerConsent(plugin.value);
+          if (!hasConsent) {
+            const consentGranted = await this.requestServerConsent(plugin.value);
+            if (!consentGranted) {
+              const consentItem = document.createElement('li');
+              consentItem.textContent = 'Server access denied by user';
+              consentItem.style.color = 'red';
+              log.appendChild(consentItem);
+              return;
+            }
+          }
+
           res = await fetch('/api/v1/invoke', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -127,6 +153,86 @@ class LASwitchboard extends HTMLElement {
       });
     } catch {
       // ignore errors
+    }
+  }
+
+  /**
+   * Check if a server operation is dangerous and requires confirmation
+   */
+  async isDangerousOperation(serverName, message) {
+    // Check for file operations that might be destructive
+    const dangerousPatterns = [
+      /delete/i, /remove/i, /rm\s/i, /update/i, /modify/i, /write/i, /overwrite/i
+    ];
+    
+    if (serverName === 'files') {
+      return dangerousPatterns.some(pattern => pattern.test(message));
+    }
+    
+    return false;
+  }
+
+  /**
+   * Show confirmation dialog for dangerous operations
+   */
+  async showDangerousOperationConfirm(serverName, message) {
+    if (typeof window.showConsentModal !== 'function') {
+      // Fallback to basic confirm if showConsentModal not available
+      return confirm(`This operation may be dangerous. Continue with "${message}" on ${serverName}?`);
+    }
+    
+    const confirmMessage = `This operation may modify or delete data.\n\nServer: ${serverName}\nOperation: ${message}\n\nDo you want to proceed?`;
+    return await window.showConsentModal(confirmMessage, 'Dangerous Operation');
+  }
+
+  /**
+   * Check if user has already consented to this server
+   */
+  async checkServerConsent(serverName) {
+    try {
+      const res = await fetch(`/api/v1/mcp/consent/${serverName}`);
+      if (!res.ok) return false;
+      const data = await res.json();
+      return data.consent === true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Request consent for server access
+   */
+  async requestServerConsent(serverName) {
+    if (typeof window.showConsentModal !== 'function') {
+      // Fallback to basic confirm if showConsentModal not available
+      const granted = confirm(`Allow "${serverName}" server access to your data?`);
+      if (granted) {
+        await this.saveServerConsent(serverName, true);
+      }
+      return granted;
+    }
+
+    const consentMessage = `Allow "${serverName}" server access?\n\nThis server will be able to process your requests and access the data you share with it.`;
+    const granted = await window.showConsentModal(consentMessage, 'Server Access');
+    
+    // Save consent decision to API
+    await this.saveServerConsent(serverName, granted);
+    
+    return granted;
+  }
+
+  /**
+   * Save consent decision to the API
+   */
+  async saveServerConsent(serverName, consent) {
+    try {
+      await fetch(`/api/v1/mcp/consent/${serverName}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consent })
+      });
+    } catch {
+      // Ignore save failures - consent still tracked in memory for this session
     }
   }
 }
