@@ -17,6 +17,8 @@ class LAModalDialog extends HTMLElement {
           align-items: center;
           justify-content: center;
           z-index: 1000;
+          /* Ensure proper centering with safer flexbox approach */
+          box-sizing: border-box;
         }
         :host([open]) {
           display: flex;
@@ -37,12 +39,17 @@ class LAModalDialog extends HTMLElement {
           padding: var(--spacing-lg, 1.5rem);
           border-radius: var(--radius-md, 8px);
           min-width: 300px;
-          max-width: 90vw;
-          max-height: 90vh;
+          max-width: min(90vw, 600px);
+          max-height: min(90vh, 800px);
           font-family: var(--font-family-sans, sans-serif);
           box-shadow: var(--shadow-modal, 0 4px 12px rgba(0, 0, 0, 0.15));
           animation: slideIn 0.2s ease-out;
           overflow: auto;
+          /* Ensure proper centering and mobile compatibility */
+          margin: auto;
+          box-sizing: border-box;
+          /* Better mobile touch targets */
+          touch-action: manipulation;
         }
         .close {
           position: absolute;
@@ -53,13 +60,17 @@ class LAModalDialog extends HTMLElement {
           font-size: var(--font-size-lg, 1.25rem);
           cursor: pointer;
           color: var(--color-text-secondary, #6b7280);
-          width: 2rem;
-          height: 2rem;
+          width: 2.5rem;
+          height: 2.5rem;
           display: flex;
           align-items: center;
           justify-content: center;
           border-radius: var(--radius-sm, 4px);
           transition: background-color 0.2s ease, color 0.2s ease;
+          /* Better touch targets for mobile */
+          min-height: 44px;
+          min-width: 44px;
+          touch-action: manipulation;
         }
         .close:hover {
           background-color: var(--color-surface, #f3f4f6);
@@ -94,17 +105,59 @@ class LAModalDialog extends HTMLElement {
         }
         :host([size="small"]) .dialog {
           min-width: 250px;
-          max-width: 400px;
+          max-width: min(400px, 95vw);
         }
         :host([size="large"]) .dialog {
           min-width: 600px;
-          max-width: 80vw;
+          max-width: min(80vw, 1200px);
         }
         :host([size="full"]) .dialog {
-          width: 95vw;
-          height: 95vh;
+          width: min(95vw, 1400px);
+          height: min(95vh, 1000px);
           max-width: none;
           max-height: none;
+        }
+        
+        /* Mobile-specific optimizations */
+        @media (max-width: 768px) {
+          .dialog {
+            min-width: 280px;
+            max-width: 95vw;
+            max-height: 90vh;
+            margin: 1rem auto;
+          }
+          
+          :host([size="large"]) .dialog,
+          :host([size="full"]) .dialog {
+            width: 95vw;
+            height: 90vh;
+            max-width: none;
+            max-height: none;
+          }
+          
+          .title {
+            padding-right: 3rem; /* More space for close button on mobile */
+          }
+        }
+        
+        /* Handle landscape orientation on mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+          .dialog {
+            max-height: 85vh;
+            margin: 0.5rem auto;
+          }
+          
+          :host([size="full"]) .dialog {
+            height: 85vh;
+          }
+        }
+        
+        /* Ensure safe area on devices with notches */
+        @supports (padding: max(0px)) {
+          .dialog {
+            padding-left: max(var(--spacing-lg, 1.5rem), env(safe-area-inset-left));
+            padding-right: max(var(--spacing-lg, 1.5rem), env(safe-area-inset-right));
+          }
         }
       </style>
       <div class="backdrop" part="backdrop"></div>

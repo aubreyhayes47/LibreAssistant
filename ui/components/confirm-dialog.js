@@ -17,6 +17,8 @@ class LAConfirmDialog extends HTMLElement {
           align-items: center;
           justify-content: center;
           z-index: 1000;
+          /* Ensure proper centering with safer flexbox approach */
+          box-sizing: border-box;
         }
         :host([open]) {
           display: flex;
@@ -36,9 +38,16 @@ class LAConfirmDialog extends HTMLElement {
           padding: var(--spacing-lg, 1.5rem);
           border-radius: var(--radius-md, 8px);
           min-width: 300px;
-          max-width: 90%;
+          max-width: min(90vw, 500px);
+          max-height: min(90vh, 600px);
           font-family: var(--font-family-sans, sans-serif);
           box-shadow: var(--shadow-modal, 0 4px 12px rgba(0, 0, 0, 0.15));
+          /* Ensure proper centering and mobile compatibility */
+          margin: auto;
+          box-sizing: border-box;
+          overflow: auto;
+          /* Better mobile touch targets */
+          touch-action: manipulation;
         }
         .close {
           position: absolute;
@@ -49,6 +58,24 @@ class LAConfirmDialog extends HTMLElement {
           font-size: var(--font-size-lg, 1.25rem);
           cursor: pointer;
           color: var(--color-text, black);
+          width: 2.5rem;
+          height: 2.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: var(--radius-sm, 4px);
+          transition: background-color 0.2s ease, color 0.2s ease;
+          /* Better touch targets for mobile */
+          min-height: 44px;
+          min-width: 44px;
+          touch-action: manipulation;
+        }
+        .close:hover {
+          background-color: var(--color-surface, #f3f4f6);
+        }
+        .close:focus {
+          outline: 2px solid var(--color-primary, #3b82f6);
+          outline-offset: 2px;
         }
         .title {
           font-size: var(--font-size-lg, 1.25rem);
@@ -72,6 +99,10 @@ class LAConfirmDialog extends HTMLElement {
           border-radius: var(--radius-sm, 4px);
           cursor: pointer;
           transition: background-color 0.2s ease;
+          /* Better touch targets for mobile */
+          min-height: 44px;
+          min-width: 80px;
+          touch-action: manipulation;
         }
         .cancel {
           background-color: var(--color-secondary, #6b7280);
@@ -86,6 +117,46 @@ class LAConfirmDialog extends HTMLElement {
         }
         .confirm:hover {
           background-color: var(--color-primary-hover, #2563eb);
+        }
+        
+        /* Mobile-specific optimizations */
+        @media (max-width: 768px) {
+          .dialog {
+            min-width: 280px;
+            max-width: 95vw;
+            max-height: 90vh;
+            margin: 1rem auto;
+          }
+          
+          .title {
+            padding-right: 3rem; /* More space for close button on mobile */
+          }
+          
+          .actions {
+            flex-direction: column;
+            gap: var(--spacing-md, 1rem);
+          }
+          
+          button {
+            width: 100%;
+            padding: var(--spacing-md, 1rem);
+          }
+        }
+        
+        /* Handle landscape orientation on mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+          .dialog {
+            max-height: 85vh;
+            margin: 0.5rem auto;
+          }
+        }
+        
+        /* Ensure safe area on devices with notches */
+        @supports (padding: max(0px)) {
+          .dialog {
+            padding-left: max(var(--spacing-lg, 1.5rem), env(safe-area-inset-left));
+            padding-right: max(var(--spacing-lg, 1.5rem), env(safe-area-inset-right));
+          }
         }
       </style>
       <div class="backdrop" part="backdrop"></div>
