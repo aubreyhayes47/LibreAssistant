@@ -257,6 +257,39 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"result": result}
 
+    @app.get("/api/v1/themes")
+    def list_themes() -> Dict[str, Any]:
+        """Return the theme catalog with available themes."""
+        catalog_path = Path(__file__).resolve().parents[2] / "ui" / "theme-catalog.json"
+        try:
+            catalog_data = json.loads(catalog_path.read_text())
+            return {"themes": catalog_data}
+        except FileNotFoundError:  # pragma: no cover - error branch
+            # Return built-in themes if catalog is missing
+            builtin_themes = [
+                {"id": "light", "name": "Light", "author": "LibreAssistant", "preview": "#f8f9fa", "rating": 5},
+                {"id": "dark", "name": "Dark", "author": "LibreAssistant", "preview": "#1e1e1e", "rating": 4},
+                {"id": "high-contrast", "name": "High Contrast", "author": "LibreAssistant", "preview": "#000000", "rating": 4},
+            ]
+            return {"themes": builtin_themes}
+
+    class ThemePreference(BaseModel):
+        theme_id: str
+
+    @app.post("/api/v1/themes/preference/{user_id}")
+    def set_theme_preference(user_id: str, request: ThemePreference) -> Dict[str, str]:
+        """Set theme preference for a user."""
+        # For now, we'll just acknowledge the preference
+        # In a real implementation, this could be stored in the database
+        return {"status": "ok", "theme": request.theme_id}
+
+    @app.get("/api/v1/themes/preference/{user_id}")
+    def get_theme_preference(user_id: str) -> Dict[str, str]:
+        """Get theme preference for a user."""
+        # For now, return a default theme
+        # In a real implementation, this would be retrieved from the database
+        return {"theme": "light"}
+
     @app.get("/api/v1/themes/{theme_id}.css")
     def theme_css(theme_id: str) -> Response:
         try:

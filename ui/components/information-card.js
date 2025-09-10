@@ -107,6 +107,7 @@ class LAInformationCard extends HTMLElement {
         :host([size="large"]) .title {
           font-size: var(--font-size-xl, 1.25rem);
           margin-bottom: var(--spacing-md, 1rem);
+
         }
       </style>
       <div class="card" role="group" aria-labelledby="title">

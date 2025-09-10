@@ -7,10 +7,32 @@ class LAPastRequests extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
+        :host {
+          display: block;
+          font-family: var(--font-family-sans);
+          color: var(--color-text);
+        }
         ul {
           list-style: disc;
           padding-left: var(--spacing-md);
+          margin: 0;
           font-family: var(--font-family-sans);
+          font-size: var(--font-size-base);
+        }
+        li {
+          margin-bottom: var(--spacing-xs);
+          color: var(--color-text);
+          font-family: var(--font-family-mono);
+          font-size: var(--font-size-sm);
+          word-wrap: break-word;
+        }
+        ul:empty::before {
+          content: "No past requests found.";
+          color: var(--color-secondary);
+          font-style: italic;
+          display: block;
+          padding: var(--spacing-md);
+          text-align: center;
         }
       </style>
       <ul id="list"></ul>

@@ -100,6 +100,7 @@ class LAPrimaryButton extends HTMLElement {
           width: 1rem;
           height: 1rem;
           fill: currentColor;
+
         }
       </style>
       <button type="button">

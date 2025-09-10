@@ -1,0 +1,16 @@
+/* Copyright (c) 2024 LibreAssistant contributors.
+   Licensed under the MIT License. */
+
+/* Dark theme - Dark color scheme for low-light environments */
+:root {
+  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  --color-primary: #66b2ff;
+  --color-primary-hover: #3399ff;
+  --color-secondary: #a2a9b1;
+  --color-background: #121212;
+  --color-surface: #1e1e1e;
+  --color-text: #f1f1f1;
+  --color-border: #343a40;
+  --color-backdrop: rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.5);
+}

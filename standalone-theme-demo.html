@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Switching Demo - LibreAssistant</title>
+    <style>
+        /* Base design tokens and theme definitions */
+        :root {
+          /* Typography */
+          --font-family-sans: 'Helvetica Neue', Arial, sans-serif;
+          --font-size-base: 16px;
+          --font-size-lg: 18px;
+          --font-size-sm: 14px;
+          --font-weight-normal: 400;
+          --font-weight-bold: 600;
+
+          /* Spacing scale */
+          --spacing-xs: 4px;
+          --spacing-sm: 8px;
+          --spacing-md: 16px;
+          --spacing-lg: 24px;
+          --spacing-xl: 32px;
+
+          /* Border radii */
+          --radius-sm: 4px;
+          --radius-md: 8px;
+          --radius-lg: 16px;
+
+          /* Light theme (default) */
+          --color-primary: #0d6efd;
+          --color-primary-hover: #0b5ed7;
+          --color-secondary: #6c757d;
+          --color-background: #ffffff;
+          --color-surface: #f8f9fa;
+          --color-text: #212529;
+          --color-border: #dee2e6;
+          --color-backdrop: rgba(0, 0, 0, 0.5);
+          --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        :root[data-theme="dark"] {
+          --color-primary: #66b2ff;
+          --color-primary-hover: #3399ff;
+          --color-secondary: #a2a9b1;
+          --color-background: #121212;
+          --color-surface: #1e1e1e;
+          --color-text: #f1f1f1;
+          --color-border: #343a40;
+          --color-backdrop: rgba(0, 0, 0, 0.7);
+          --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        :root[data-theme="high-contrast"] {
+          --color-primary: #ffff00;
+          --color-primary-hover: #e6e600;
+          --color-secondary: #ffffff;
+          --color-background: #000000;
+          --color-surface: #000000;
+          --color-text: #ffffff;
+          --color-border: #ffffff;
+          --color-backdrop: rgba(0, 0, 0, 1);
+          --shadow-card: none;
+        }
+
+        /* Demo styles */
+        body {
+            margin: 0;
+            padding: var(--spacing-lg);
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: var(--font-family-sans);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-md);
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-card);
+        }
+        
+        .demo-content {
+            display: grid;
+            gap: var(--spacing-lg);
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .demo-card {
+            padding: var(--spacing-lg);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-card);
+        }
+        
+        .demo-card h3 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        
+        .demo-button {
+            background: var(--color-primary);
+            color: var(--color-background);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: var(--font-weight-bold);
+            margin-right: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+            transition: background-color 0.2s;
+        }
+        
+        .demo-button:hover {
+            background: var(--color-primary-hover);
+        }
+        
+        .demo-button.secondary {
+            background: var(--color-secondary);
+        }
+        
+        .input-field {
+            width: 100%; 
+            padding: var(--spacing-sm); 
+            border: 1px solid var(--color-border); 
+            border-radius: var(--radius-sm);
+            background: var(--color-background);
+            color: var(--color-text);
+            margin-top: var(--spacing-sm);
+            font-family: inherit;
+        }
+        
+        .input-field:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            margin-right: var(--spacing-xs);
+        }
+
+        /* Simple theme selector styles */
+        .theme-selector {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .theme-selector label {
+            font-size: var(--font-size-sm);
+            color: var(--color-text);
+            font-weight: var(--font-weight-normal);
+        }
+        
+        .theme-selector select {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            color: var(--color-text);
+            font-family: inherit;
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            min-width: 120px;
+        }
+        
+        .theme-selector select:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+        
+        .theme-selector select:hover {
+            border-color: var(--color-primary);
+        }
+        
+        .theme-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--color-border);
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-md);
+        }
+
+        .theme-item {
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .theme-item:hover {
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-card);
+        }
+
+        .theme-item.active {
+            border-color: var(--color-primary);
+            background: var(--color-primary);
+            color: var(--color-background);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1>LibreAssistant Theme Switching Demo</h1>
+        <div class="theme-selector">
+            <label for="theme-select">Theme:</label>
+            <span class="theme-preview" id="theme-preview"></span>
+            <select id="theme-select">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="high-contrast">High Contrast</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="demo-content">
+        <div class="demo-card">
+            <h3>UI Components Preview</h3>
+            <p>This demonstrates how various UI elements look with different themes. Try switching themes using the selector above!</p>
+            <button class="demo-button">Primary Button</button>
+            <button class="demo-button secondary">Secondary Button</button>
+            <input type="text" class="input-field" placeholder="Sample input field" value="Type something here...">
+        </div>
+        
+        <div class="demo-card">
+            <h3>Theme Information</h3>
+            <p>The theme selector provides easy switching between available themes with visual previews.</p>
+            <div>
+                <span class="status-indicator"></span>
+                <span>Current theme: <strong id="current-theme">light</strong></span>
+            </div>
+            <div style="margin-top: var(--spacing-md);">
+                <strong>Features:</strong>
+                <ul>
+                    <li>✓ Real-time theme switching</li>
+                    <li>✓ Theme persistence via localStorage</li>
+                    <li>✓ Visual theme previews</li>
+                    <li>✓ Smooth transitions</li>
+                    <li>✓ Accessible design tokens</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="demo-card">
+            <h3>Available Themes</h3>
+            <p>Click on any theme below to switch to it:</p>
+            <div class="theme-grid">
+                <div class="theme-item" data-theme="light">
+                    <div class="theme-preview" style="background: #f8f9fa; margin: 0 auto var(--spacing-xs);"></div>
+                    <div>Light</div>
+                </div>
+                <div class="theme-item" data-theme="dark">
+                    <div class="theme-preview" style="background: #1e1e1e; margin: 0 auto var(--spacing-xs);"></div>
+                    <div>Dark</div>
+                </div>
+                <div class="theme-item" data-theme="high-contrast">
+                    <div class="theme-preview" style="background: #000000; margin: 0 auto var(--spacing-xs);"></div>
+                    <div>High Contrast</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-card">
+            <h3>Implementation Details</h3>
+            <p><strong>Theme Switching:</strong></p>
+            <ul>
+                <li>Uses CSS custom properties (variables) for dynamic theming</li>
+                <li>Applies <code>data-theme</code> attribute to document root</li>
+                <li>Stores user preference in localStorage</li>
+                <li>Graceful fallback to light theme</li>
+            </ul>
+            <p><strong>Customization:</strong></p>
+            <ul>
+                <li>Community themes can be added via CSS files</li>
+                <li>Theme catalog supports metadata (author, preview, rating)</li>
+                <li>Sanitized CSS loading for security</li>
+                <li>API endpoints for theme management</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Theme data
+        const themes = {
+            light: { name: 'Light', preview: '#f8f9fa' },
+            dark: { name: 'Dark', preview: '#1e1e1e' },
+            'high-contrast': { name: 'High Contrast', preview: '#000000' }
+        };
+
+        let currentTheme = 'light';
+
+        // Initialize theme selector
+        function initThemeSelector() {
+            const select = document.getElementById('theme-select');
+            const preview = document.getElementById('theme-preview');
+            const currentThemeSpan = document.getElementById('current-theme');
+
+            // Load saved theme
+            const savedTheme = localStorage.getItem('selected-theme');
+            if (savedTheme && themes[savedTheme]) {
+                currentTheme = savedTheme;
+            }
+
+            // Apply current theme
+            applyTheme(currentTheme);
+
+            // Set up event listener
+            select.addEventListener('change', (e) => {
+                applyTheme(e.target.value);
+            });
+
+            // Set up theme grid click handlers
+            document.querySelectorAll('.theme-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const theme = item.getAttribute('data-theme');
+                    select.value = theme;
+                    applyTheme(theme);
+                });
+            });
+
+            function applyTheme(themeId) {
+                currentTheme = themeId;
+                
+                // Apply theme to document
+                document.documentElement.setAttribute('data-theme', themeId);
+                
+                // Update UI
+                select.value = themeId;
+                currentThemeSpan.textContent = themes[themeId].name;
+                preview.style.backgroundColor = themes[themeId].preview;
+                
+                // Update active theme in grid
+                document.querySelectorAll('.theme-item').forEach(item => {
+                    item.classList.toggle('active', item.getAttribute('data-theme') === themeId);
+                });
+                
+                // Save preference
+                localStorage.setItem('selected-theme', themeId);
+                
+                console.log('Theme switched to:', themeId);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initThemeSelector);
+    </script>
+</body>
+</html>
