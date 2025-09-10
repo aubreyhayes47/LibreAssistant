@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding Flow Test</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: var(--font-family-sans);
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+        }
+        
+        .test-result {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-controls {
+            margin: 1rem 0;
+        }
+        
+        .test-controls button {
+            margin: 0.25rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--color-border);
+            background: var(--color-primary);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Onboarding Flow Component Test</h1>
+    
+    <div class="test-section">
+        <h2>Onboarding Flow Component</h2>
+        <la-onboarding-flow id="test-onboarding"></la-onboarding-flow>
+        
+        <div class="test-controls">
+            <button onclick="testComponentLoaded()">Test Component Loaded</button>
+            <button onclick="testStepNavigation()">Test Step Navigation</button>
+            <button onclick="testErrorScenarios()">Test Error Scenarios</button>
+            <button onclick="resetComponent()">Reset Component</button>
+        </div>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <!-- Load the onboarding flow component -->
+    <script type="module" src="../ui/components/onboarding-flow.js"></script>
+    
+    <script>
+        const results = document.getElementById('test-results');
+        
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function testComponentLoaded() {
+            const onboarding = document.getElementById('test-onboarding');
+            if (onboarding && onboarding.shadowRoot) {
+                addResult('✓ Onboarding flow component loaded successfully');
+                
+                // Test shadow DOM structure
+                const steps = onboarding.shadowRoot.querySelectorAll('.step');
+                addResult(`✓ Found ${steps.length} steps in the flow`);
+                
+                const controls = onboarding.shadowRoot.querySelector('.controls');
+                if (controls) {
+                    addResult('✓ Navigation controls found');
+                } else {
+                    addResult('✗ Navigation controls not found', false);
+                }
+            } else {
+                addResult('✗ Onboarding flow component failed to load', false);
+            }
+        }
+        
+        function testStepNavigation() {
+            const onboarding = document.getElementById('test-onboarding');
+            if (!onboarding) {
+                addResult('✗ Component not found for navigation test', false);
+                return;
+            }
+            
+            // Test initial state
+            if (onboarding.step === 0) {
+                addResult('✓ Component starts at step 0');
+            } else {
+                addResult(`✗ Component starts at step ${onboarding.step}, expected 0`, false);
+            }
+            
+            // Test back button disabled state
+            const backBtn = onboarding.shadowRoot.getElementById('back');
+            if (backBtn && backBtn.disabled) {
+                addResult('✓ Back button correctly disabled at first step');
+            } else {
+                addResult('✗ Back button should be disabled at first step', false);
+            }
+        }
+        
+        function testErrorScenarios() {
+            // This will test once we implement proper error handling
+            addResult('ℹ Error scenario testing will be available after implementing error handling');
+        }
+        
+        function resetComponent() {
+            const onboarding = document.getElementById('test-onboarding');
+            if (onboarding) {
+                onboarding.step = 0;
+                onboarding.update();
+                addResult('✓ Component reset to initial state');
+            }
+        }
+        
+        // Listen for onboarding completion events
+        document.addEventListener('onboarding-complete', (event) => {
+            addResult(`✓ Onboarding completion event fired with data: ${JSON.stringify(event.detail)}`);
+        });
+        
+        // Test component loading
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                testComponentLoaded();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
