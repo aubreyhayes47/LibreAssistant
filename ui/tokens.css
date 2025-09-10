@@ -69,3 +69,34 @@
   --shadow-card: none;
 }
 
+/* Mobile responsive design tokens */
+@media (max-width: 768px) {
+  :root {
+    /* Responsive typography - slightly larger base size for mobile */
+    --font-size-base: 18px;
+    --font-size-lg: 20px;
+    --font-size-sm: 16px;
+    
+    /* Responsive spacing - optimized for touch interaction */
+    --spacing-xs: 6px;
+    --spacing-sm: 12px;
+    --spacing-md: 20px;
+    --spacing-lg: 28px;
+    --spacing-xl: 36px;
+    
+    /* Mobile-specific design tokens */
+    --touch-target-min: 44px; /* Apple's recommended minimum touch target */
+    --mobile-padding: var(--spacing-md);
+    --mobile-margin: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    /* Small mobile adjustments */
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --mobile-padding: var(--spacing-sm);
+  }
+}
+

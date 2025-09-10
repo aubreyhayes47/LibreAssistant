@@ -92,6 +92,34 @@ class LAModalDialog extends HTMLElement {
             transform: translateY(0) scale(1);
           }
         }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          .dialog {
+            min-width: 280px;
+            margin: var(--mobile-margin, var(--spacing-sm));
+            padding: var(--mobile-padding, var(--spacing-md));
+            max-width: calc(100vw - 2 * var(--mobile-margin, var(--spacing-sm)));
+          }
+          .close {
+            width: var(--touch-target-min, 44px);
+            height: var(--touch-target-min, 44px);
+            font-size: var(--font-size-lg);
+          }
+          .title {
+            font-size: var(--font-size-lg);
+            padding-right: calc(var(--touch-target-min, 44px) + var(--spacing-sm));
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .dialog {
+            max-width: calc(100vw - var(--spacing-xs));
+            max-height: calc(100vh - var(--spacing-xs));
+            margin: calc(var(--spacing-xs) / 2);
+          }
+        }
+        
         :host([size="small"]) .dialog {
           min-width: 250px;
           max-width: 400px;
@@ -105,6 +133,18 @@ class LAModalDialog extends HTMLElement {
           height: 95vh;
           max-width: none;
           max-height: none;
+        }
+        
+        /* Mobile overrides for dialog sizes */
+        @media (max-width: 768px) {
+          :host([size="small"]) .dialog {
+            min-width: 280px;
+            max-width: calc(100vw - 2 * var(--mobile-margin, var(--spacing-sm)));
+          }
+          :host([size="large"]) .dialog {
+            min-width: 300px;
+            max-width: calc(100vw - 2 * var(--mobile-margin, var(--spacing-sm)));
+          }
         }
       </style>
       <div class="backdrop" part="backdrop"></div>

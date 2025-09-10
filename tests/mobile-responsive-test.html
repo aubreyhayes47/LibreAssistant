@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Responsive Test</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: var(--spacing-md);
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: var(--font-family-sans);
+            transition: all 0.3s ease;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: var(--spacing-md);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+        }
+        
+        .responsive-info {
+            padding: var(--spacing-sm);
+            background: var(--color-primary);
+            color: var(--color-background);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .token-display {
+            display: grid;
+            gap: var(--spacing-sm);
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .token-item {
+            padding: var(--spacing-xs);
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-sm);
+        }
+        
+        @media (max-width: 768px) {
+            .responsive-info::before {
+                content: "📱 Mobile view active - ";
+            }
+            
+            .token-display {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .responsive-info::before {
+                content: "🖥️ Desktop view active - ";
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .responsive-info::before {
+                content: "📱 Small mobile view active - ";
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Mobile Responsive Design Tokens Test</h1>
+    
+    <div class="responsive-info">
+        Responsive design tokens are now active. Resize your browser to see changes.
+    </div>
+    
+    <div class="test-section">
+        <h2>Typography Tokens</h2>
+        <div class="token-display">
+            <div class="token-item">
+                --font-size-base: <span id="font-size-base"></span>
+            </div>
+            <div class="token-item">
+                --font-size-lg: <span id="font-size-lg"></span>
+            </div>
+            <div class="token-item">
+                --font-size-sm: <span id="font-size-sm"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Spacing Tokens</h2>
+        <div class="token-display">
+            <div class="token-item">
+                --spacing-xs: <span id="spacing-xs"></span>
+            </div>
+            <div class="token-item">
+                --spacing-sm: <span id="spacing-sm"></span>
+            </div>
+            <div class="token-item">
+                --spacing-md: <span id="spacing-md"></span>
+            </div>
+            <div class="token-item">
+                --spacing-lg: <span id="spacing-lg"></span>
+            </div>
+            <div class="token-item">
+                --spacing-xl: <span id="spacing-xl"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Mobile-Specific Tokens</h2>
+        <div class="token-display">
+            <div class="token-item">
+                --touch-target-min: <span id="touch-target-min"></span>
+            </div>
+            <div class="token-item">
+                --mobile-padding: <span id="mobile-padding"></span>
+            </div>
+            <div class="token-item">
+                --mobile-margin: <span id="mobile-margin"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateTokenValues() {
+            const computedStyles = getComputedStyle(document.documentElement);
+            
+            // Typography
+            document.getElementById('font-size-base').textContent = computedStyles.getPropertyValue('--font-size-base').trim();
+            document.getElementById('font-size-lg').textContent = computedStyles.getPropertyValue('--font-size-lg').trim();
+            document.getElementById('font-size-sm').textContent = computedStyles.getPropertyValue('--font-size-sm').trim();
+            
+            // Spacing
+            document.getElementById('spacing-xs').textContent = computedStyles.getPropertyValue('--spacing-xs').trim();
+            document.getElementById('spacing-sm').textContent = computedStyles.getPropertyValue('--spacing-sm').trim();
+            document.getElementById('spacing-md').textContent = computedStyles.getPropertyValue('--spacing-md').trim();
+            document.getElementById('spacing-lg').textContent = computedStyles.getPropertyValue('--spacing-lg').trim();
+            document.getElementById('spacing-xl').textContent = computedStyles.getPropertyValue('--spacing-xl').trim();
+            
+            // Mobile-specific
+            document.getElementById('touch-target-min').textContent = computedStyles.getPropertyValue('--touch-target-min').trim() || 'not set';
+            document.getElementById('mobile-padding').textContent = computedStyles.getPropertyValue('--mobile-padding').trim() || 'not set';
+            document.getElementById('mobile-margin').textContent = computedStyles.getPropertyValue('--mobile-margin').trim() || 'not set';
+        }
+        
+        // Update on load and resize
+        updateTokenValues();
+        window.addEventListener('resize', updateTokenValues);
+    </script>
+</body>
+</html>

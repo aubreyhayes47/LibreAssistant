@@ -100,7 +100,26 @@ class LAPrimaryButton extends HTMLElement {
           width: 1rem;
           height: 1rem;
           fill: currentColor;
-
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          button {
+            min-height: var(--touch-target-min, 44px);
+            padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
+            font-size: var(--font-size-base, 1rem);
+          }
+          
+          :host([size="small"]) button {
+            min-height: calc(var(--touch-target-min, 44px) * 0.8);
+            padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
+          }
+          
+          :host([size="large"]) button {
+            min-height: calc(var(--touch-target-min, 44px) * 1.2);
+            padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
+            font-size: var(--font-size-lg, 1.125rem);
+          }
         }
       </style>
       <button type="button">
