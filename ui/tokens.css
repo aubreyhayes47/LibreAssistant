@@ -6,11 +6,15 @@
 :root {
   /* Typography */
   --font-family-sans: 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   --font-size-base: 16px;
   --font-size-lg: 18px;
   --font-size-sm: 14px;
   --font-weight-normal: 400;
   --font-weight-bold: 600;
+  --line-height-base: 1.5;
+  --line-height-tight: 1.25;
+  --line-height-loose: 1.75;
 
   /* Spacing scale */
   --spacing-xs: 4px;
@@ -23,6 +27,11 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 16px;
+
+  /* Interactive states */
+  --focus-ring: 2px solid var(--color-primary);
+  --focus-ring-offset: 2px;
+  --disabled-opacity: 0.5;
 
   /* Light theme (default) */
   --color-primary: #0d6efd;

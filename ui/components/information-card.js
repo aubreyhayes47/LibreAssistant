@@ -18,10 +18,12 @@ class LAInformationCard extends HTMLElement {
         .title {
           font-size: var(--font-size-lg);
           font-weight: var(--font-weight-bold);
+          line-height: var(--line-height-tight);
           margin-bottom: var(--spacing-sm);
         }
         .content {
           font-size: var(--font-size-base);
+          line-height: var(--line-height-base);
         }
       </style>
       <div class="card" role="group" aria-labelledby="title">

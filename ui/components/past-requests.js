@@ -7,10 +7,21 @@ class LAPastRequests extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
+        :host {
+          display: block;
+          font-family: var(--font-family-sans);
+        }
         ul {
           list-style: disc;
           padding-left: var(--spacing-md);
           font-family: var(--font-family-sans);
+          margin: 0;
+        }
+        li {
+          font-size: var(--font-size-base);
+          line-height: var(--line-height-base);
+          color: var(--color-text);
+          margin-bottom: var(--spacing-xs);
         }
       </style>
       <ul id="list"></ul>

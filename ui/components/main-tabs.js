@@ -19,10 +19,17 @@ class LAMainTabs extends HTMLElement {
           cursor: pointer;
           font-family: var(--font-family-sans);
           font-size: var(--font-size-base);
+          line-height: var(--line-height-base);
+          color: var(--color-text);
+        }
+        button[role="tab"]:focus {
+          outline: var(--focus-ring);
+          outline-offset: var(--focus-ring-offset);
         }
         button[aria-selected="true"] {
           border-bottom: 2px solid var(--color-primary);
           font-weight: var(--font-weight-bold);
+          color: var(--color-primary);
         }
         section[role="tabpanel"] {
           display: none;

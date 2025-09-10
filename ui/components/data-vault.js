@@ -7,18 +7,58 @@ class LADataVault extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
+        :host {
+          display: block;
+          font-family: var(--font-family-sans);
+        }
         textarea {
           width: 100%;
           min-height: 6rem;
           font-family: var(--font-family-mono);
+          font-size: var(--font-size-base);
+          line-height: var(--line-height-base);
+          padding: var(--spacing-sm);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          background-color: var(--color-surface);
+          color: var(--color-text);
           margin-bottom: var(--spacing-sm);
+          box-sizing: border-box;
+        }
+        textarea:focus {
+          outline: var(--focus-ring);
+          outline-offset: var(--focus-ring-offset);
+          border-color: var(--color-primary);
         }
         button {
+          background-color: var(--color-primary);
+          color: var(--color-background);
+          font-family: var(--font-family-sans);
+          font-size: var(--font-size-base);
+          font-weight: var(--font-weight-bold);
+          padding: var(--spacing-sm) var(--spacing-md);
+          border: none;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
           margin-right: var(--spacing-sm);
+        }
+        button:hover:not(:disabled) {
+          background-color: var(--color-primary-hover);
+        }
+        button:disabled {
+          opacity: var(--disabled-opacity);
+          cursor: not-allowed;
         }
         pre {
           background: var(--color-surface);
+          color: var(--color-text);
+          font-family: var(--font-family-mono);
+          font-size: var(--font-size-sm);
+          line-height: var(--line-height-base);
           padding: var(--spacing-sm);
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--color-border);
+          overflow-x: auto;
         }
       </style>
       <textarea id="data" placeholder="{}"></textarea>

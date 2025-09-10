@@ -7,7 +7,38 @@ class LABillOfMaterials extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
-        ul { list-style: disc; padding-left: var(--spacing-md); }
+        :host {
+          display: block;
+          font-family: var(--font-family-sans);
+        }
+        h2 {
+          font-size: var(--font-size-lg);
+          font-weight: var(--font-weight-bold);
+          line-height: var(--line-height-tight);
+          color: var(--color-text);
+          margin: 0 0 var(--spacing-lg) 0;
+        }
+        h3 {
+          font-size: var(--font-size-base);
+          font-weight: var(--font-weight-bold);
+          line-height: var(--line-height-tight);
+          color: var(--color-text);
+          margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+        }
+        section {
+          margin-bottom: var(--spacing-lg);
+        }
+        ul { 
+          list-style: disc; 
+          padding-left: var(--spacing-md);
+          margin: 0;
+        }
+        li {
+          font-size: var(--font-size-base);
+          line-height: var(--line-height-base);
+          color: var(--color-text);
+          margin-bottom: var(--spacing-xs);
+        }
       </style>
       <h2>Bill of Materials</h2>
       <section>
