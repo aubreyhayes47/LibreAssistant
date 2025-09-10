@@ -32,6 +32,11 @@
   --focus-ring: 2px solid var(--color-primary);
   --focus-ring-offset: 2px;
   --disabled-opacity: 0.5;
+  
+  /* Touch interaction */
+  --touch-target-min: 44px; /* WCAG minimum touch target size */
+  --touch-target-comfortable: 48px; /* More comfortable size */
+  --touch-spacing: 8px; /* Minimum spacing between touch targets */
 
   /* Light theme (default) */
   --color-primary: #0d6efd;

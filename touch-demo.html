@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreAssistant - Touch Interaction Demo</title>
+    <link rel="stylesheet" href="ui/tokens.css">
+    <style>
+        body {
+            font-family: var(--font-family-sans);
+            background: var(--color-background);
+            color: var(--color-text);
+            margin: 0;
+            padding: var(--spacing-md);
+            line-height: var(--line-height-base);
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .demo-section {
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+        }
+        .demo-section h2 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        .demo-grid {
+            display: grid;
+            gap: var(--spacing-md);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        .demo-item {
+            padding: var(--spacing-md);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-background);
+        }
+        .demo-item h3 {
+            margin-top: 0;
+            font-size: var(--font-size-base);
+            color: var(--color-text);
+        }
+        .touch-feedback {
+            margin-top: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--color-surface);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+        }
+        .touch-test-area {
+            width: 100%;
+            height: 100px;
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-surface);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+            margin: var(--spacing-sm) 0;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .touch-test-area.active {
+            background: var(--color-primary);
+            color: var(--color-background);
+            border-color: var(--color-primary);
+        }
+        .device-info {
+            background: var(--color-surface);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+        .device-info code {
+            background: var(--color-background);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: var(--font-family-mono);
+        }
+        .button-row {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+        .input-group {
+            margin-bottom: var(--spacing-md);
+        }
+        .validation-results {
+            margin-top: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: var(--color-surface);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
+        }
+        .validation-pass {
+            color: var(--color-success, green);
+        }
+        .validation-fail {
+            color: var(--color-danger, red);
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+            .button-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LibreAssistant - Touch Interaction Demo</h1>
+        
+        <div class="device-info">
+            <h3>Device & Touch Capability Detection</h3>
+            <p>Touch Support: <code id="touch-support">Detecting...</code></p>
+            <p>Max Touch Points: <code id="max-touch-points">Unknown</code></p>
+            <p>User Agent: <code id="user-agent"></code></p>
+        </div>
+
+        <div class="demo-section">
+            <h2>Button Touch Interactions</h2>
+            <p>These buttons include touch-optimized styling and interaction feedback:</p>
+            
+            <div class="button-row">
+                <la-primary-button id="demo-btn-1">Primary Button</la-primary-button>
+                <la-primary-button variant="secondary" id="demo-btn-2">Secondary</la-primary-button>
+                <la-primary-button variant="outline" id="demo-btn-3">Outline</la-primary-button>
+                <la-primary-button variant="ghost" id="demo-btn-4">Ghost</la-primary-button>
+            </div>
+            
+            <div class="button-row" style="margin-top: var(--spacing-md);">
+                <la-primary-button size="small" id="demo-btn-5">Small</la-primary-button>
+                <la-primary-button size="large" id="demo-btn-6">Large</la-primary-button>
+                <la-primary-button disabled id="demo-btn-7">Disabled</la-primary-button>
+            </div>
+            
+            <div class="touch-feedback" id="button-feedback">
+                Touch a button to see interaction feedback here...
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Input Field Touch Support</h2>
+            <p>Input fields with touch-optimized sizing and focus behavior:</p>
+            
+            <div class="input-group">
+                <la-input-field type="text" placeholder="Touch to focus">
+                    <span slot="label">Text Input</span>
+                    <span slot="help">Touch-optimized text input field</span>
+                </la-input-field>
+            </div>
+            
+            <div class="input-group">
+                <la-input-field type="textarea" placeholder="Touch to edit this text area">
+                    <span slot="label">Text Area</span>
+                    <span slot="help">Larger touch targets for mobile devices</span>
+                </la-input-field>
+            </div>
+            
+            <div class="input-group">
+                <la-input-field type="email" required placeholder="user@example.com">
+                    <span slot="label">Email (Required)</span>
+                    <span slot="help">Try entering an invalid email to see validation</span>
+                </la-input-field>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Touch Gesture Testing</h2>
+            <p>Interactive area for testing different touch gestures:</p>
+            
+            <div class="touch-test-area" id="gesture-area">
+                Tap, long press, or swipe this area
+            </div>
+            
+            <div class="touch-feedback" id="gesture-feedback">
+                No gestures detected yet...
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Accessibility Validation</h2>
+            <p>Touch target size validation for accessibility compliance:</p>
+            
+            <button id="validate-btn" style="padding: 8px 16px; margin-right: 10px;">Run Validation</button>
+            
+            <div class="validation-results" id="validation-results">
+                Click "Run Validation" to check touch target sizes...
+            </div>
+        </div>
+    </div>
+
+    <!-- Load components -->
+    <script src="ui/components/touch-utils.js"></script>
+    <script src="ui/components/primary-button.js"></script>
+    <script src="ui/components/input-field.js"></script>
+    
+    <script>
+        // Initialize demo functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // Display device info
+            const touchSupport = document.getElementById('touch-support');
+            const maxTouchPoints = document.getElementById('max-touch-points');
+            const userAgent = document.getElementById('user-agent');
+            
+            touchSupport.textContent = TouchUtils.isTouchDevice() ? 'Yes' : 'No';
+            maxTouchPoints.textContent = navigator.maxTouchPoints || 'Not supported';
+            userAgent.textContent = navigator.userAgent.substring(0, 60) + '...';
+            
+            // Button interaction feedback
+            const buttonFeedback = document.getElementById('button-feedback');
+            const buttons = document.querySelectorAll('la-primary-button');
+            
+            buttons.forEach((btn, index) => {
+                btn.addEventListener('click', (e) => {
+                    const now = new Date().toLocaleTimeString();
+                    buttonFeedback.innerHTML = `
+                        <strong>Button ${index + 1} clicked at ${now}</strong><br>
+                        Variant: ${btn.getAttribute('variant') || 'primary'}, 
+                        Size: ${btn.getAttribute('size') || 'medium'}, 
+                        Disabled: ${btn.hasAttribute('disabled')}
+                    `;
+                });
+            });
+            
+            // Gesture testing area
+            const gestureArea = document.getElementById('gesture-area');
+            const gestureFeedback = document.getElementById('gesture-feedback');
+            
+            let gestureLog = [];
+            
+            function logGesture(type, details = '') {
+                const timestamp = new Date().toLocaleTimeString();
+                gestureLog.push(`${timestamp}: ${type} ${details}`);
+                if (gestureLog.length > 5) gestureLog.shift();
+                gestureFeedback.innerHTML = gestureLog.join('<br>');
+            }
+            
+            TouchUtils.addTouchHandlers(gestureArea, {
+                onTouchStart: (e) => {
+                    gestureArea.classList.add('active');
+                    logGesture('Touch Start', `(${e.touches[0].clientX}, ${e.touches[0].clientY})`);
+                },
+                onTouchEnd: (e) => {
+                    gestureArea.classList.remove('active');
+                    logGesture('Touch End');
+                },
+                onTap: (e) => {
+                    logGesture('Tap Detected');
+                },
+                onLongPress: (e) => {
+                    logGesture('Long Press Detected');
+                    gestureArea.style.background = 'var(--color-secondary)';
+                    setTimeout(() => {
+                        gestureArea.style.background = '';
+                    }, 1000);
+                }
+            });
+            
+            // Add swipe detection
+            let startPos = null;
+            gestureArea.addEventListener('touchstart', (e) => {
+                startPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }, { passive: true });
+            
+            gestureArea.addEventListener('touchend', (e) => {
+                if (startPos && e.changedTouches[0]) {
+                    const endPos = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+                    const deltaX = endPos.x - startPos.x;
+                    const deltaY = endPos.y - startPos.y;
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                    
+                    if (distance > 30) {
+                        let direction = '';
+                        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                            direction = deltaX > 0 ? 'Right' : 'Left';
+                        } else {
+                            direction = deltaY > 0 ? 'Down' : 'Up';
+                        }
+                        logGesture('Swipe', `${direction} (${Math.round(distance)}px)`);
+                    }
+                }
+                startPos = null;
+            }, { passive: true });
+            
+            // Validation functionality
+            const validateBtn = document.getElementById('validate-btn');
+            const validationResults = document.getElementById('validation-results');
+            
+            validateBtn.addEventListener('click', () => {
+                const results = [];
+                
+                // Check all interactive elements
+                const elementsToCheck = [
+                    ...document.querySelectorAll('la-primary-button'),
+                    ...document.querySelectorAll('la-input-field'),
+                    gestureArea,
+                    validateBtn
+                ];
+                
+                elementsToCheck.forEach((element, index) => {
+                    const validation = TouchUtils.validateTouchTarget(element);
+                    const elementName = element.tagName.toLowerCase() + (index > 0 ? ` #${index + 1}` : '');
+                    const status = validation.meetsRequirements ? 'PASS' : 'FAIL';
+                    const statusClass = validation.meetsRequirements ? 'validation-pass' : 'validation-fail';
+                    
+                    results.push(`
+                        <div>
+                            <strong class="${statusClass}">${status}</strong> - ${elementName}: 
+                            ${Math.round(validation.width)}×${Math.round(validation.height)}px
+                            ${!validation.meetsRequirements ? 
+                                `(needs +${Math.round(validation.recommendations.width)}w, +${Math.round(validation.recommendations.height)}h)` : 
+                                '✓'
+                            }
+                        </div>
+                    `);
+                });
+                
+                validationResults.innerHTML = results.join('');
+            });
+        });
+    </script>
+</body>
+</html>
