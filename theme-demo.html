@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreAssistant Theme Demo</title>
+    <link rel="stylesheet" href="ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: var(--spacing-lg);
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: var(--font-family-sans);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-md);
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-card);
+        }
+        
+        .demo-content {
+            display: grid;
+            gap: var(--spacing-lg);
+            grid-template-columns: 1fr 1fr;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .demo-card {
+            padding: var(--spacing-lg);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-card);
+        }
+        
+        .demo-card h3 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        
+        .demo-button {
+            background: var(--color-primary);
+            color: var(--color-background);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: var(--font-weight-bold);
+            margin-right: var(--spacing-sm);
+            transition: background-color 0.2s;
+        }
+        
+        .demo-button:hover {
+            background: var(--color-primary-hover);
+        }
+        
+        .demo-button.secondary {
+            background: var(--color-secondary);
+        }
+        
+        .theme-info {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: var(--color-primary);
+            border-radius: 50%;
+            margin-right: var(--spacing-xs);
+        }
+        
+        @media (max-width: 768px) {
+            .demo-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .demo-header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1>LibreAssistant Theme Demo</h1>
+        <la-theme-selector id="theme-selector"></la-theme-selector>
+    </div>
+    
+    <div class="demo-content">
+        <div class="demo-card">
+            <h3>UI Components Preview</h3>
+            <p>This demonstrates how various UI elements look with different themes.</p>
+            <button class="demo-button">Primary Button</button>
+            <button class="demo-button secondary">Secondary Button</button>
+            <div style="margin-top: var(--spacing-md);">
+                <input type="text" placeholder="Sample input field" style="
+                    width: 100%; 
+                    padding: var(--spacing-xs); 
+                    border: 1px solid var(--color-border); 
+                    border-radius: var(--radius-sm);
+                    background: var(--color-background);
+                    color: var(--color-text);
+                    margin-top: var(--spacing-sm);
+                ">
+            </div>
+        </div>
+        
+        <div class="demo-card">
+            <h3>Theme Information</h3>
+            <p>Use the theme selector above to switch between available themes.</p>
+            <div>
+                <span class="status-indicator"></span>
+                <span>Current theme: <strong id="current-theme">light</strong></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="theme-info">
+        <h3>Available Themes</h3>
+        <div id="theme-list">Loading theme catalog...</div>
+    </div>
+
+    <!-- Load UI components -->
+    <script type="module">
+        // Import the theme selector component
+        import './ui/components/theme-selector.js';
+        
+        // Initialize theme information display
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeSelector = document.getElementById('theme-selector');
+            const currentThemeSpan = document.getElementById('current-theme');
+            const themeList = document.getElementById('theme-list');
+            
+            // Update current theme display
+            function updateCurrentTheme() {
+                const current = themeSelector.getCurrentTheme();
+                currentThemeSpan.textContent = current;
+            }
+            
+            // Display available themes
+            function displayThemes() {
+                const themes = themeSelector.getAvailableThemes();
+                if (themes.length > 0) {
+                    themeList.innerHTML = themes.map(theme => 
+                        `<div style="margin-bottom: var(--spacing-xs);">
+                            <strong>${theme.name}</strong> by ${theme.author || 'Unknown'}
+                            ${theme.preview ? `<span style="display: inline-block; width: 16px; height: 16px; background: ${theme.preview}; border: 1px solid var(--color-border); margin-left: var(--spacing-xs); vertical-align: middle;"></span>` : ''}
+                        </div>`
+                    ).join('');
+                } else {
+                    themeList.innerHTML = 'No themes available.';
+                }
+            }
+            
+            // Listen for theme changes
+            themeSelector.addEventListener('theme-change', (event) => {
+                updateCurrentTheme();
+                console.log('Theme changed to:', event.detail.themeId);
+            });
+            
+            // Wait for component to load themes, then update display
+            setTimeout(() => {
+                updateCurrentTheme();
+                displayThemes();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

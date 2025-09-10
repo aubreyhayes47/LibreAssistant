@@ -140,26 +140,31 @@ class LAThemeMarketplace extends HTMLElement {
   }
 
   async applyTheme(theme) {
+    // Remove any previously loaded community theme
+    const existing = document.getElementById('community-theme');
+    if (existing) existing.remove();
+    
     if (this.builtins.includes(theme.id)) {
-      const existing = document.getElementById('marketplace-theme');
-      if (existing) existing.remove();
+      // For built-in themes, just set the data-theme attribute
+      document.documentElement.setAttribute('data-theme', theme.id);
     } else {
       try {
         const res = await fetch(`/api/v1/themes/${theme.id}.css`);
         const css = await res.text();
-        let style = document.getElementById('marketplace-theme');
-        if (!style) {
-          style = document.createElement('style');
-          style.id = 'marketplace-theme';
-          document.head.appendChild(style);
-        }
+        const style = document.createElement('style');
+        style.id = 'community-theme';
         style.textContent = css;
+        document.head.appendChild(style);
+        document.documentElement.setAttribute('data-theme', theme.id);
       } catch (e) {
         console.error('Failed to load theme', e);
         return;
       }
     }
-    document.documentElement.setAttribute('data-theme', theme.id);
+    
+    // Save theme preference
+    localStorage.setItem('selected-theme', theme.id);
+    
     this.dispatchEvent(new CustomEvent('theme-install', { detail: { id: theme.id } }));
   }
 
