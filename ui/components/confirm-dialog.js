@@ -102,6 +102,8 @@ class LAConfirmDialog extends HTMLElement {
 
     this._resolvePromise = null;
     this._rejectPromise = null;
+    this._lastFocusedElement = null;
+    this._focusableElements = [];
 
     // Event listeners
     const backdrop = shadow.querySelector('.backdrop');
@@ -111,6 +113,12 @@ class LAConfirmDialog extends HTMLElement {
 
     const hide = (result = false) => {
       this.removeAttribute('open');
+      
+      // Restore focus
+      if (this._lastFocusedElement && this._lastFocusedElement.focus) {
+        this._lastFocusedElement.focus();
+      }
+      
       if (this._resolvePromise) {
         this._resolvePromise(result);
         this._resolvePromise = null;
@@ -123,12 +131,55 @@ class LAConfirmDialog extends HTMLElement {
     cancelBtn.addEventListener('click', () => hide(false));
     confirmBtn.addEventListener('click', () => hide(true));
 
-    // Handle escape key
+    // Handle escape key and focus trapping
     this.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         hide(false);
+      } else if (e.key === 'Tab') {
+        this._handleTabKey(e);
       }
+    });
+  }
+
+  _handleTabKey(e) {
+    this._updateFocusableElements();
+    
+    if (this._focusableElements.length === 0) return;
+
+    const firstElement = this._focusableElements[0];
+    const lastElement = this._focusableElements[this._focusableElements.length - 1];
+
+    if (e.shiftKey) {
+      // Shift + Tab
+      if (document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      }
+    } else {
+      // Tab
+      if (document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  }
+
+  _updateFocusableElements() {
+    const selectors = [
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      'a[href]',
+      '[tabindex]:not([tabindex="-1"])'
+    ];
+
+    const dialog = this.shadowRoot.querySelector('.dialog');
+    this._focusableElements = Array.from(
+      dialog.querySelectorAll(selectors.join(', '))
+    ).filter(el => {
+      return el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement;
     });
   }
 
@@ -154,6 +205,9 @@ class LAConfirmDialog extends HTMLElement {
       this._resolvePromise = resolve;
       this._rejectPromise = reject;
 
+      // Store current focus before opening dialog
+      this._lastFocusedElement = document.activeElement;
+
       // Set content if provided
       if (message) {
         this.textContent = message;
@@ -171,12 +225,27 @@ class LAConfirmDialog extends HTMLElement {
       }
 
       this.setAttribute('open', '');
-      this.shadowRoot.querySelector('#confirm-btn').focus();
+      
+      // Focus management
+      requestAnimationFrame(() => {
+        this._updateFocusableElements();
+        if (this._focusableElements.length > 0) {
+          this._focusableElements[0].focus();
+        } else {
+          this.shadowRoot.querySelector('#confirm-btn').focus();
+        }
+      });
     });
   }
 
   hide() {
     this.removeAttribute('open');
+    
+    // Restore focus
+    if (this._lastFocusedElement && this._lastFocusedElement.focus) {
+      this._lastFocusedElement.focus();
+    }
+    
     if (this._resolvePromise) {
       this._resolvePromise(false);
       this._resolvePromise = null;

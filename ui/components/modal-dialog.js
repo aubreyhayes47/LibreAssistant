@@ -185,9 +185,7 @@ class LAModalDialog extends HTMLElement {
   }
 
   connectedCallback() {
-    // Set initial ARIA attributes
-    this.setAttribute('role', 'dialog');
-    this.setAttribute('aria-modal', 'true');
+    // Component is now connected to DOM
   }
 
   // Public API

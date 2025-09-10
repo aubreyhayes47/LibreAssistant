@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Dialog Accessibility Tests</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-controls button {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #ddd;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .test-controls button:hover {
+            background: #0056b3;
+        }
+        
+        .test-controls button:focus {
+            outline: 2px solid #007bff;
+            outline-offset: 2px;
+        }
+        
+        .test-result {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .checklist {
+            margin: 1rem 0;
+        }
+        
+        .checklist label {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+            cursor: pointer;
+        }
+        
+        .checklist input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        
+        .instruction {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Modal Dialog Accessibility Tests</h1>
+    
+    <div class="instruction">
+        <strong>Instructions:</strong> This page tests accessibility features of both modal dialogs. 
+        Use keyboard navigation (Tab, Shift+Tab, Enter, Escape) and screen readers to verify functionality.
+        Check each item in the checklists as you verify them.
+    </div>
+
+    <div class="test-section">
+        <h2>Modal Dialog Component (la-modal-dialog)</h2>
+        
+        <div class="test-controls">
+            <button onclick="showModalDialog('basic')">Basic Modal</button>
+            <button onclick="showModalDialog('with-content')">Modal with Content</button>
+            <button onclick="showModalDialog('large')">Large Modal</button>
+            <button onclick="testModalProgrammatically()">Test Programmatically</button>
+        </div>
+        
+        <div class="checklist">
+            <h3>Accessibility Checklist for Modal Dialog:</h3>
+            <label><input type="checkbox"> Has proper role="dialog"</label>
+            <label><input type="checkbox"> Has aria-modal="true"</label>
+            <label><input type="checkbox"> Has aria-labelledby pointing to title</label>
+            <label><input type="checkbox"> Can be dismissed with Escape key</label>
+            <label><input type="checkbox"> Can be dismissed by clicking backdrop</label>
+            <label><input type="checkbox"> Can be dismissed with close button</label>
+            <label><input type="checkbox"> Focus is trapped within modal</label>
+            <label><input type="checkbox"> Tab cycles through focusable elements</label>
+            <label><input type="checkbox"> Shift+Tab cycles in reverse</label>
+            <label><input type="checkbox"> Focus returns to trigger element when closed</label>
+            <label><input type="checkbox"> Screen reader announces modal properly</label>
+        </div>
+        
+        <div id="modal-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Confirm Dialog Component (la-confirm-dialog)</h2>
+        
+        <div class="test-controls">
+            <button onclick="showConfirmDialog('basic')">Basic Confirm</button>
+            <button onclick="showConfirmDialog('custom')">Custom Messages</button>
+            <button onclick="showConfirmDialog('programmatic')">Test Return Values</button>
+            <button onclick="testConfirmProgrammatically()">Test Focus Management</button>
+        </div>
+        
+        <div class="checklist">
+            <h3>Accessibility Checklist for Confirm Dialog:</h3>
+            <label><input type="checkbox"> Has proper role="dialog"</label>
+            <label><input type="checkbox"> Has aria-modal="true"</label>
+            <label><input type="checkbox"> Has aria-labelledby pointing to title</label>
+            <label><input type="checkbox"> Has aria-describedby pointing to message</label>
+            <label><input type="checkbox"> Can be dismissed with Escape key</label>
+            <label><input type="checkbox"> Can be dismissed by clicking backdrop</label>
+            <label><input type="checkbox"> Can be dismissed with close button</label>
+            <label><input type="checkbox"> Can be dismissed with Cancel button</label>
+            <label><input type="checkbox"> Focus is trapped within modal</label>
+            <label><input type="checkbox"> Tab cycles through focusable elements</label>
+            <label><input type="checkbox"> Shift+Tab cycles in reverse</label>
+            <label><input type="checkbox"> Focus returns to trigger element when closed</label>
+            <label><input type="checkbox"> Screen reader announces modal properly</label>
+        </div>
+        
+        <div id="confirm-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Focus Management Test</h2>
+        <p>Click a button below, then open a modal. When you close the modal, focus should return to the button you clicked.</p>
+        <div class="test-controls">
+            <button id="focus-test-1" onclick="testFocusReturn(this, 'modal')">Test Focus Return (Modal)</button>
+            <button id="focus-test-2" onclick="testFocusReturn(this, 'confirm')">Test Focus Return (Confirm)</button>
+            <input type="text" placeholder="Test input field" />
+            <button id="focus-test-3" onclick="testFocusReturn(this, 'modal')">Another Test Button</button>
+        </div>
+    </div>
+
+    <!-- Modal dialogs -->
+    <la-modal-dialog id="test-modal">
+        <span slot="title">Test Modal Dialog</span>
+        <p>This is a test modal dialog to verify accessibility features.</p>
+        <p>You can add interactive content here:</p>
+        <button>Test Button 1</button>
+        <input type="text" placeholder="Test input" />
+        <button>Test Button 2</button>
+    </la-modal-dialog>
+
+    <la-confirm-dialog id="test-confirm"></la-confirm-dialog>
+
+    <!-- Load the modal dialog components -->
+    <script type="module" src="../ui/components/modal-dialog.js"></script>
+    <script type="module" src="../ui/components/confirm-dialog.js"></script>
+    
+    <script>
+        const modalResults = document.getElementById('modal-results');
+        const confirmResults = document.getElementById('confirm-results');
+        
+        function addResult(container, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+            
+            // Auto-scroll to show new results
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // Modal Dialog Tests
+        function showModalDialog(type) {
+            const modal = document.getElementById('test-modal');
+            
+            if (type === 'basic') {
+                modal.querySelector('[slot="title"]').textContent = 'Basic Modal';
+                modal.querySelector('p').textContent = 'This is a basic modal dialog.';
+            } else if (type === 'with-content') {
+                modal.querySelector('[slot="title"]').textContent = 'Modal with Interactive Content';
+                modal.querySelector('p').textContent = 'Test Tab navigation between these elements:';
+            } else if (type === 'large') {
+                modal.setAttribute('size', 'large');
+                modal.querySelector('[slot="title"]').textContent = 'Large Modal';
+                modal.querySelector('p').textContent = 'This is a large modal dialog for testing different sizes.';
+            }
+            
+            modal.show();
+            addResult(modalResults, `Opened ${type} modal dialog`, 'info');
+        }
+        
+        function testModalProgrammatically() {
+            const modal = document.getElementById('test-modal');
+            
+            addResult(modalResults, 'Testing programmatic control...', 'info');
+            
+            // Test show/hide
+            modal.show();
+            setTimeout(() => {
+                addResult(modalResults, 'Modal opened programmatically', 'success');
+                setTimeout(() => {
+                    modal.hide();
+                    addResult(modalResults, 'Modal closed programmatically', 'success');
+                }, 1000);
+            }, 500);
+        }
+        
+        // Confirm Dialog Tests
+        function showConfirmDialog(type) {
+            const confirm = document.getElementById('test-confirm');
+            
+            if (type === 'basic') {
+                confirm.show('Are you sure you want to proceed?', 'Confirmation')
+                    .then(result => {
+                        addResult(confirmResults, `Confirm dialog result: ${result}`, result ? 'success' : 'info');
+                    });
+            } else if (type === 'custom') {
+                confirm.setCancelText('No, Cancel');
+                confirm.setConfirmText('Yes, Continue');
+                confirm.show('This action cannot be undone. Continue?', 'Warning')
+                    .then(result => {
+                        addResult(confirmResults, `Custom confirm result: ${result}`, result ? 'success' : 'info');
+                    });
+            } else if (type === 'programmatic') {
+                addResult(confirmResults, 'Testing return values...', 'info');
+                confirm.show('Click OK to return true, Cancel to return false', 'Test Return Values')
+                    .then(result => {
+                        addResult(confirmResults, `Return value: ${result} (${typeof result})`, 'success');
+                    });
+            }
+        }
+        
+        function testConfirmProgrammatically() {
+            const confirm = document.getElementById('test-confirm');
+            
+            addResult(confirmResults, 'Testing focus management...', 'info');
+            
+            // Store current focus
+            const currentFocus = document.activeElement;
+            addResult(confirmResults, `Current focus: ${currentFocus.tagName} ${currentFocus.id || currentFocus.textContent?.slice(0, 20)}`, 'info');
+            
+            confirm.show('Focus should return to the previous element when this dialog closes.')
+                .then(result => {
+                    setTimeout(() => {
+                        const newFocus = document.activeElement;
+                        addResult(confirmResults, `Focus returned to: ${newFocus.tagName} ${newFocus.id || newFocus.textContent?.slice(0, 20)}`, 
+                                newFocus === currentFocus ? 'success' : 'error');
+                    }, 100);
+                });
+        }
+        
+        // Focus Return Tests
+        function testFocusReturn(button, dialogType) {
+            addResult(modalResults, `Testing focus return from ${button.textContent}`, 'info');
+            
+            if (dialogType === 'modal') {
+                const modal = document.getElementById('test-modal');
+                modal.querySelector('[slot="title"]').textContent = 'Focus Return Test';
+                modal.querySelector('p').textContent = `Focus should return to: ${button.textContent}`;
+                modal.show();
+            } else {
+                const confirm = document.getElementById('test-confirm');
+                confirm.show(`Focus should return to: ${button.textContent}`, 'Focus Return Test')
+                    .then(() => {
+                        // Check focus after a brief delay
+                        setTimeout(() => {
+                            const focusedElement = document.activeElement;
+                            const success = focusedElement === button;
+                            addResult(confirmResults, 
+                                `Focus return test: ${success ? 'PASSED' : 'FAILED'} - Expected ${button.textContent}, got ${focusedElement.textContent || focusedElement.tagName}`, 
+                                success ? 'success' : 'error');
+                        }, 100);
+                    });
+            }
+        }
+        
+        // Event listeners for testing
+        document.addEventListener('dialog-open', (e) => {
+            addResult(modalResults, 'dialog-open event fired', 'success');
+        });
+        
+        document.addEventListener('dialog-close', (e) => {
+            addResult(modalResults, 'dialog-close event fired', 'success');
+        });
+        
+        // Keyboard accessibility test
+        document.addEventListener('keydown', (e) => {
+            if (e.altKey && e.key === 'm') {
+                e.preventDefault();
+                showModalDialog('basic');
+                addResult(modalResults, 'Modal opened with Alt+M keyboard shortcut', 'info');
+            } else if (e.altKey && e.key === 'c') {
+                e.preventDefault();
+                showConfirmDialog('basic');
+                addResult(confirmResults, 'Confirm opened with Alt+C keyboard shortcut', 'info');
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            addResult(modalResults, 'Modal dialog tests ready. Press Alt+M for quick modal test.', 'info');
+            addResult(confirmResults, 'Confirm dialog tests ready. Press Alt+C for quick confirm test.', 'info');
+        });
+    </script>
+</body>
+</html>
