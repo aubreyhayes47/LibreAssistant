@@ -11,12 +11,14 @@ class LASystemHealth extends HTMLElement {
           display: block;
           font-family: var(--font-family-sans);
           color: var(--color-text);
+
         }
         h2 {
           font-size: var(--font-size-lg);
           font-weight: var(--font-weight-bold);
           margin-bottom: var(--spacing-md);
           color: var(--color-text);
+          line-height: var(--line-height-tight);
         }
         h3 {
           font-size: var(--font-size-base);

@@ -11,6 +11,7 @@ class LADataVault extends HTMLElement {
           display: block;
           font-family: var(--font-family-sans);
           color: var(--color-text);
+
         }
         textarea {
           width: 100%;
@@ -33,6 +34,7 @@ class LADataVault extends HTMLElement {
           display: flex;
           gap: var(--spacing-sm);
           margin-bottom: var(--spacing-md);
+
         }
         button {
           background-color: var(--color-primary);
@@ -54,6 +56,13 @@ class LADataVault extends HTMLElement {
         button#delete {
           background-color: var(--color-secondary);
         }
+        button:hover:not(:disabled) {
+          background-color: var(--color-primary-hover);
+        }
+        button:disabled {
+          opacity: var(--disabled-opacity);
+          cursor: not-allowed;
+        }
         pre {
           background: var(--color-surface);
           color: var(--color-text);
@@ -64,6 +73,7 @@ class LADataVault extends HTMLElement {
           overflow-x: auto;
           white-space: pre-wrap;
           word-wrap: break-word;
+
         }
       </style>
       <textarea id="data" placeholder="{}"></textarea>

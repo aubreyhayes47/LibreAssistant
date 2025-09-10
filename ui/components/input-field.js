@@ -12,17 +12,22 @@ class LAInputField extends HTMLElement {
           flex-direction: column;
           font-family: var(--font-family-sans);
           font-size: var(--font-size-sm);
+          line-height: var(--line-height-base);
           color: var(--color-text);
         }
         input {
           padding: var(--spacing-sm);
           font-family: var(--font-family-sans);
           font-size: var(--font-size-base);
+          line-height: var(--line-height-base);
           border: 1px solid var(--color-secondary);
           border-radius: var(--radius-sm);
+          background-color: var(--color-background);
+          color: var(--color-text);
         }
         input:focus {
-          outline: 2px solid var(--color-primary);
+          outline: var(--focus-ring);
+          outline-offset: var(--focus-ring-offset);
           border-color: var(--color-primary);
         }
       </style>
