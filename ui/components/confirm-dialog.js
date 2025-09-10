@@ -35,10 +35,14 @@ class LAConfirmDialog extends HTMLElement {
           color: var(--color-text, black);
           padding: var(--spacing-lg, 1.5rem);
           border-radius: var(--radius-md, 8px);
-          min-width: 300px;
+          min-width: var(--size-modal-min-width, 20rem);
           max-width: 90%;
           font-family: var(--font-family-sans, sans-serif);
           box-shadow: var(--shadow-modal, 0 4px 12px rgba(0, 0, 0, 0.15));
+          /* Use CSS Grid for better layout */
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+          gap: var(--spacing-sm, 0.5rem);
         }
         .close {
           position: absolute;

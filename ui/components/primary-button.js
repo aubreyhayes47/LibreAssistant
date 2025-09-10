@@ -29,7 +29,7 @@ class LAPrimaryButton extends HTMLElement {
           align-items: center;
           justify-content: center;
           gap: var(--spacing-xs, 0.25rem);
-          min-height: 2.5rem;
+          min-height: var(--size-button-height, 2.5rem);
           width: 100%;
         }
         button:hover:not(:disabled) {
@@ -78,16 +78,16 @@ class LAPrimaryButton extends HTMLElement {
         :host([size="small"]) button {
           padding: var(--spacing-xs, 0.25rem) var(--spacing-sm, 0.5rem);
           font-size: var(--font-size-sm, 0.875rem);
-          min-height: 2rem;
+          min-height: calc(var(--size-button-height, 2.5rem) * 0.8);
         }
         :host([size="large"]) button {
           padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
           font-size: var(--font-size-lg, 1.125rem);
-          min-height: 3rem;
+          min-height: calc(var(--size-button-height, 2.5rem) * 1.2);
         }
         .spinner {
-          width: 1rem;
-          height: 1rem;
+          width: var(--size-icon-sm, 1rem);
+          height: var(--size-icon-sm, 1rem);
           border: 2px solid transparent;
           border-top: 2px solid currentColor;
           border-radius: 50%;
@@ -97,10 +97,9 @@ class LAPrimaryButton extends HTMLElement {
           to { transform: rotate(360deg); }
         }
         .icon {
-          width: 1rem;
-          height: 1rem;
+          width: var(--size-icon-sm, 1rem);
+          height: var(--size-icon-sm, 1rem);
           fill: currentColor;
-
         }
       </style>
       <button type="button">

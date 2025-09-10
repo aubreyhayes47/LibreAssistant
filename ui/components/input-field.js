@@ -56,7 +56,7 @@ class LAInputField extends HTMLElement {
         }
         textarea {
           resize: vertical;
-          min-height: 3rem;
+          min-height: var(--size-card-min-height, 3rem);
         }
       </style>
       <label>

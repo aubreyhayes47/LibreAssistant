@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreAssistant Component Audit Demo</title>
+    <link rel="stylesheet" href="ui/tokens.css">
+    <style>
+        body {
+            font-family: var(--font-family-sans);
+            background: var(--color-background);
+            color: var(--color-text);
+            margin: 0;
+            padding: var(--spacing-md);
+            line-height: var(--line-height-base);
+        }
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: var(--spacing-lg);
+        }
+        .demo-section {
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+        }
+        .demo-section h2 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-md);
+        }
+        .responsive-test {
+            background: var(--color-surface);
+            padding: var(--spacing-sm);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            margin: var(--spacing-sm) 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>LibreAssistant Component Audit Demo</h1>
+        <p>This demo showcases the updated components with improved flexbox/grid layouts and responsive units.</p>
+        
+        <div class="demo-section">
+            <h2>Navigation Tabs</h2>
+            <la-main-tabs></la-main-tabs>
+        </div>
+
+        <div class="demo-section">
+            <h2>Buttons</h2>
+            <div class="component-grid">
+                <div>
+                    <h3>Regular Button</h3>
+                    <la-primary-button>Click Me</la-primary-button>
+                </div>
+                <div>
+                    <h3>Small Button</h3>
+                    <la-primary-button size="small">Small</la-primary-button>
+                </div>
+                <div>
+                    <h3>Large Button</h3>
+                    <la-primary-button size="large">Large</la-primary-button>
+                </div>
+                <div>
+                    <h3>Secondary Button</h3>
+                    <la-primary-button variant="secondary">Secondary</la-primary-button>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Input Fields</h2>
+            <div class="component-grid">
+                <div>
+                    <la-input-field type="text" placeholder="Enter text">
+                        <span slot="label">Text Input</span>
+                    </la-input-field>
+                </div>
+                <div>
+                    <la-input-field type="textarea" placeholder="Enter longer text">
+                        <span slot="label">Textarea</span>
+                    </la-input-field>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Information Cards</h2>
+            <div class="component-grid">
+                <la-information-card>
+                    <span slot="title">Success Card</span>
+                    This is a success information card with responsive layout.
+                </la-information-card>
+                <la-information-card variant="warning" size="small">
+                    <span slot="title">Warning Card</span>
+                    Small warning card.
+                </la-information-card>
+                <la-information-card variant="error" clickable>
+                    <span slot="title">Clickable Error Card</span>
+                    This card is clickable and shows hover effects.
+                </la-information-card>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Theme Selector</h2>
+            <la-theme-selector></la-theme-selector>
+        </div>
+
+        <div class="demo-section">
+            <h2>Switchboard (Partial Demo)</h2>
+            <la-switchboard></la-switchboard>
+        </div>
+
+        <div class="demo-section">
+            <h2>Responsive Test</h2>
+            <div class="responsive-test">
+                <p>Resize the browser window to test responsive behavior of components above.</p>
+                <p>Components now use:</p>
+                <ul>
+                    <li>CSS custom properties for consistent sizing</li>
+                    <li>Responsive units (rem, %, vw/vh)</li>
+                    <li>Flexbox and CSS Grid for layout</li>
+                    <li>Standardized spacing and sizing tokens</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load components -->
+    <script src="ui/components/main-tabs.js"></script>
+    <script src="ui/components/primary-button.js"></script>
+    <script src="ui/components/input-field.js"></script>
+    <script src="ui/components/information-card.js"></script>
+    <script src="ui/components/theme-selector.js"></script>
+    <script src="ui/components/switchboard.js"></script>
+    <script src="ui/components/provider-selector.js"></script>
+    <script src="ui/components/notification-system.js"></script>
+    <script src="ui/components/modal-dialog.js"></script>
+    <script src="ui/components/confirm-dialog.js"></script>
+
+    <script>
+        // Simple demo functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            // Test modal functionality
+            const buttons = document.querySelectorAll('la-primary-button');
+            buttons.forEach((button, index) => {
+                if (index === 0) {
+                    button.addEventListener('click', () => {
+                        const modal = document.createElement('la-modal-dialog');
+                        modal.innerHTML = `
+                            <span slot="title">Demo Modal</span>
+                            <p>This is a responsive modal dialog using CSS Grid layout and responsive units.</p>
+                            <p>The modal adapts to different screen sizes and uses design tokens for consistent styling.</p>
+                        `;
+                        document.body.appendChild(modal);
+                        modal.show();
+                        
+                        modal.addEventListener('dialog-close', () => {
+                            modal.remove();
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
