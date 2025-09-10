@@ -1,0 +1,16 @@
+/* Copyright (c) 2024 LibreAssistant contributors.
+   Licensed under the MIT License. */
+
+/* High Contrast theme - Accessibility-focused high contrast colors */
+:root {
+  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  --color-primary: #ffff00;
+  --color-primary-hover: #e6e600;
+  --color-secondary: #ffffff;
+  --color-background: #000000;
+  --color-surface: #000000;
+  --color-text: #ffffff;
+  --color-border: #ffffff;
+  --color-backdrop: rgba(0, 0, 0, 1);
+  --shadow-card: none;
+}
