@@ -1,6 +1,8 @@
 // Copyright (c) 2024 LibreAssistant contributors.
 // Licensed under the MIT License.
 
+import './notification-system.js';
+import './provider-selector.js';
 import './primary-button.js';
 import './input-field.js';
 import './information-card.js';

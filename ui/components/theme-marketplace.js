@@ -47,6 +47,33 @@ class LAThemeMarketplace extends HTMLElement {
           padding: var(--spacing-xs) var(--spacing-sm);
           cursor: pointer;
           align-self: start;
+          transition: background-color 0.2s ease;
+        }
+        button:disabled {
+          background-color: var(--color-border);
+          cursor: not-allowed;
+        }
+        button.installing {
+          position: relative;
+        }
+        button.installing::after {
+          content: '';
+          position: absolute;
+          width: 12px;
+          height: 12px;
+          margin: auto;
+          border: 2px solid transparent;
+          border-top-color: var(--color-background);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
         .rating {
           display: flex;
@@ -84,10 +111,25 @@ class LAThemeMarketplace extends HTMLElement {
 
   async load() {
     try {
+      const loadingId = window.notifications?.loading('Loading theme catalogue...');
+      
       const res = await fetch(this.catalogUrl);
+      
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
       this.themes = await res.json();
+      
+      if (this.themes.length > 0) {
+        window.notifications?.success(`Loaded ${this.themes.length} themes`);
+      } else {
+        window.notifications?.info('No themes found in catalogue');
+      }
     } catch (e) {
-      console.error('Failed to load theme catalog', e);
+      window.notifications?.error(`Failed to load theme catalog: ${e.message}`);
       this.themes = [];
     }
   }
@@ -123,7 +165,7 @@ class LAThemeMarketplace extends HTMLElement {
     title.textContent = `${theme.name} by ${theme.author}`;
     const install = document.createElement('button');
     install.textContent = 'Install';
-    install.addEventListener('click', () => this.applyTheme(theme));
+    install.addEventListener('click', () => this.applyTheme(theme, install));
     const rating = document.createElement('div');
     rating.className = 'rating';
     for (let i = 1; i <= 5; i++) {
@@ -139,33 +181,60 @@ class LAThemeMarketplace extends HTMLElement {
     container.appendChild(li);
   }
 
-  async applyTheme(theme) {
-    // Remove any previously loaded community theme
-    const existing = document.getElementById('community-theme');
-    if (existing) existing.remove();
+  async applyTheme(theme, button) {
+    if (button) {
+      button.disabled = true;
+      button.classList.add('installing');
+      button.textContent = 'Installing...';
+    }
     
-    if (this.builtins.includes(theme.id)) {
-      // For built-in themes, just set the data-theme attribute
-      document.documentElement.setAttribute('data-theme', theme.id);
-    } else {
-      try {
+    const loadingId = window.notifications?.loading(`Installing theme ${theme.name}...`);
+    
+    try {
+      // Remove any previously loaded community theme
+      const existing = document.getElementById('community-theme');
+      if (existing) existing.remove();
+      
+      if (this.builtins.includes(theme.id)) {
+        // For built-in themes, just set the data-theme attribute
+        document.documentElement.setAttribute('data-theme', theme.id);
+      } else {
         const res = await fetch(`/api/v1/themes/${theme.id}.css`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
         const css = await res.text();
         const style = document.createElement('style');
         style.id = 'community-theme';
         style.textContent = css;
         document.head.appendChild(style);
         document.documentElement.setAttribute('data-theme', theme.id);
-      } catch (e) {
-        console.error('Failed to load theme', e);
-        return;
+      }
+      
+      // Save theme preference
+      localStorage.setItem('selected-theme', theme.id);
+      
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      window.notifications?.success(`Theme ${theme.name} installed successfully`);
+      
+      this.dispatchEvent(new CustomEvent('theme-install', { 
+        detail: { id: theme.id, success: true } 
+      }));
+    } catch (e) {
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      window.notifications?.error(`Failed to install theme ${theme.name}: ${e.message}`);
+      
+      this.dispatchEvent(new CustomEvent('theme-install', { 
+        detail: { id: theme.id, success: false, error: e.message } 
+      }));
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.classList.remove('installing');
+        button.textContent = 'Install';
       }
     }
-    
-    // Save theme preference
-    localStorage.setItem('selected-theme', theme.id);
-    
-    this.dispatchEvent(new CustomEvent('theme-install', { detail: { id: theme.id } }));
   }
 
   rateTheme(theme, value) {

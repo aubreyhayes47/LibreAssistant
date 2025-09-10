@@ -36,6 +36,29 @@ class LAPluginCatalogue extends HTMLElement {
           gap: var(--spacing-sm);
           font-size: var(--font-size-base);
           color: var(--color-text);
+          cursor: pointer;
+        }
+        .plugin-item {
+          position: relative;
+        }
+        .plugin-status {
+          font-size: var(--font-size-xs);
+          color: var(--color-text-secondary);
+          margin-left: auto;
+          padding: var(--spacing-xs);
+          border-radius: var(--radius-xs);
+        }
+        .plugin-status.enabling {
+          color: var(--color-warning, #f59e0b);
+          background: rgba(245, 158, 11, 0.1);
+        }
+        .plugin-status.enabled {
+          color: var(--color-success, #22c55e);
+          background: rgba(34, 197, 94, 0.1);
+        }
+        .plugin-status.error {
+          color: var(--color-error, #ef4444);
+          background: rgba(239, 68, 68, 0.1);
         }
       </style>
       <header>
@@ -59,10 +82,26 @@ class LAPluginCatalogue extends HTMLElement {
 
   async loadPlugins() {
     try {
+      const loadingId = window.notifications?.loading('Loading plugin catalogue...');
+      
       const res = await fetch('/api/v1/mcp/servers');
+      
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
       const data = await res.json();
       this.plugins = data.servers || [];
-    } catch {
+      
+      if (this.plugins.length > 0) {
+        window.notifications?.success(`Loaded ${this.plugins.length} plugins`);
+      } else {
+        window.notifications?.info('No plugins found in catalogue');
+      }
+    } catch (error) {
+      window.notifications?.error(`Failed to load plugins: ${error.message}`);
       this.plugins = [];
     }
   }
@@ -83,28 +122,85 @@ class LAPluginCatalogue extends HTMLElement {
 
   addItem(plugin) {
     const li = document.createElement('li');
+    li.className = 'plugin-item';
+    
     const label = document.createElement('label');
     label.textContent = plugin.name;
+    
     const toggle = document.createElement('input');
     toggle.type = 'checkbox';
     toggle.checked = plugin.consent;
+    
+    const statusSpan = document.createElement('span');
+    statusSpan.className = `plugin-status ${plugin.consent ? 'enabled' : ''}`;
+    statusSpan.textContent = plugin.consent ? 'Enabled' : 'Disabled';
+    
     toggle.addEventListener('change', async () => {
-      plugin.consent = toggle.checked;
+      const wasEnabled = plugin.consent;
+      const newState = toggle.checked;
+      
+      // Update UI optimistically
+      plugin.consent = newState;
+      statusSpan.className = 'plugin-status enabling';
+      statusSpan.textContent = newState ? 'Enabling...' : 'Disabling...';
+      toggle.disabled = true;
+      
+      const loadingId = window.notifications?.loading(
+        `${newState ? 'Enabling' : 'Disabling'} plugin ${plugin.name}...`
+      );
+      
       try {
-        await fetch(`/api/v1/mcp/consent/${plugin.name}`, {
+        const res = await fetch(`/api/v1/mcp/consent/${plugin.name}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ consent: plugin.consent })
+          body: JSON.stringify({ consent: newState })
         });
-      } catch {}
-      this.dispatchEvent(
-        new CustomEvent('plugin-toggle', {
-          detail: { name: plugin.name, consent: plugin.consent }
-        })
-      );
+        
+        if (loadingId) window.notifications?.dismiss(loadingId);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
+        // Success
+        statusSpan.className = `plugin-status ${newState ? 'enabled' : ''}`;
+        statusSpan.textContent = newState ? 'Enabled' : 'Disabled';
+        
+        window.notifications?.success(
+          `Plugin ${plugin.name} ${newState ? 'enabled' : 'disabled'} successfully`
+        );
+        
+        this.dispatchEvent(
+          new CustomEvent('plugin-toggle', {
+            detail: { name: plugin.name, consent: newState, success: true }
+          })
+        );
+      } catch (error) {
+        if (loadingId) window.notifications?.dismiss(loadingId);
+        
+        // Revert changes on error
+        plugin.consent = wasEnabled;
+        toggle.checked = wasEnabled;
+        statusSpan.className = `plugin-status ${wasEnabled ? 'enabled' : 'error'}`;
+        statusSpan.textContent = 'Error';
+        
+        window.notifications?.error(
+          `Failed to ${newState ? 'enable' : 'disable'} plugin ${plugin.name}: ${error.message}`
+        );
+        
+        this.dispatchEvent(
+          new CustomEvent('plugin-toggle', {
+            detail: { name: plugin.name, consent: wasEnabled, success: false, error: error.message }
+          })
+        );
+      } finally {
+        toggle.disabled = false;
+      }
     });
+    
     label.prepend(toggle);
     li.appendChild(label);
+    li.appendChild(statusSpan);
     this.shadowRoot.getElementById('list').appendChild(li);
   }
 }

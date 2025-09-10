@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreAssistant - Feedback Testing</title>
+    <link rel="stylesheet" href="ui/tokens.css">
+    <style>
+        body {
+            font-family: var(--font-family-sans);
+            background: var(--color-background);
+            color: var(--color-text);
+            margin: 0;
+            padding: var(--spacing-md);
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+        }
+        h1, h2 {
+            margin-top: 0;
+        }
+        .theme-controls {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LibreAssistant - User Feedback Testing</h1>
+        
+        <div class="theme-controls">
+            <la-theme-selector></la-theme-selector>
+        </div>
+        
+        <div class="section">
+            <h2>Request Generation</h2>
+            <p>Test sending requests with clear feedback for success, error, and progress states.</p>
+            <la-switchboard></la-switchboard>
+        </div>
+        
+        <div class="section">
+            <h2>Plugin Management</h2>
+            <p>Test installing/enabling plugins with feedback for each action.</p>
+            <la-plugin-catalogue></la-plugin-catalogue>
+        </div>
+        
+        <div class="section">
+            <h2>Theme Marketplace</h2>
+            <p>Test theme installation with progress and feedback.</p>
+            <la-theme-marketplace catalog="/api/v1/themes"></la-theme-marketplace>
+        </div>
+    </div>
+
+    <!-- Load notification system first -->
+    <script src="ui/components/notification-system.js"></script>
+    
+    <!-- Load all components -->
+    <script src="ui/components/input-field.js"></script>
+    <script src="ui/components/provider-selector.js"></script>
+    <script src="ui/components/switchboard.js"></script>
+    <script src="ui/components/plugin-catalogue.js"></script>
+    <script src="ui/components/theme-selector.js"></script>
+    <script src="ui/components/theme-marketplace.js"></script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Components Test</title>
+    <link rel="stylesheet" href="../tokens.css">
+    <style>
+        body {
+            font-family: var(--font-family-sans);
+            background: var(--color-background);
+            color: var(--color-text);
+            margin: 0;
+            padding: var(--spacing-md);
+        }
+        .test-section {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+        }
+        .test-results {
+            margin-top: var(--spacing-md);
+            padding: var(--spacing-sm);
+            background: var(--color-surface);
+            border-radius: var(--radius-sm);
+            font-family: monospace;
+            font-size: var(--font-size-sm);
+        }
+        .pass { color: var(--color-success, #22c55e); }
+        .fail { color: var(--color-error, #ef4444); }
+        button {
+            background: var(--color-primary);
+            color: var(--color-background);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            cursor: pointer;
+            margin: var(--spacing-xs);
+        }
+    </style>
+</head>
+<body>
+    <h1>Frontend Feedback Components Test</h1>
+    
+    <div class="test-section">
+        <h2>Notification System Tests</h2>
+        <button onclick="testNotifications()">Test All Notification Types</button>
+        <button onclick="testNotificationDismiss()">Test Dismiss</button>
+        <button onclick="testNotificationUpdate()">Test Update</button>
+        <div class="test-results" id="notification-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Provider Selector Tests</h2>
+        <la-provider-selector id="test-provider"></la-provider-selector>
+        <button onclick="testProviderSelector()">Test Provider Methods</button>
+        <div class="test-results" id="provider-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Theme Selector Tests</h2>
+        <la-theme-selector id="test-theme"></la-theme-selector>
+        <button onclick="testThemeSelector()">Test Theme Methods</button>
+        <div class="test-results" id="theme-results"></div>
+    </div>
+
+    <!-- Load components -->
+    <script src="../notification-system.js"></script>
+    <script src="../provider-selector.js"></script>
+    <script src="../theme-selector.js"></script>
+
+    <script>
+        // Test utilities
+        function log(section, message, status = 'info') {
+            const results = document.getElementById(`${section}-results`);
+            const className = status === 'pass' ? 'pass' : status === 'fail' ? 'fail' : '';
+            results.innerHTML += `<div class="${className}">[${new Date().toLocaleTimeString()}] ${message}</div>`;
+        }
+
+        function assert(condition, message, section) {
+            if (condition) {
+                log(section, `✓ ${message}`, 'pass');
+                return true;
+            } else {
+                log(section, `✗ ${message}`, 'fail');
+                return false;
+            }
+        }
+
+        // Notification system tests
+        function testNotifications() {
+            log('notification', 'Testing notification system...');
+            
+            try {
+                // Test if notifications global exists
+                assert(window.notifications, 'Global notifications object exists', 'notification');
+                
+                // Test different notification types
+                const infoId = window.notifications.info('Info notification test');
+                assert(typeof infoId === 'number', 'Info notification returns ID', 'notification');
+                
+                const successId = window.notifications.success('Success notification test');
+                assert(typeof successId === 'number', 'Success notification returns ID', 'notification');
+                
+                const errorId = window.notifications.error('Error notification test');
+                assert(typeof errorId === 'number', 'Error notification returns ID', 'notification');
+                
+                const loadingId = window.notifications.loading('Loading notification test');
+                assert(typeof loadingId === 'number', 'Loading notification returns ID', 'notification');
+                
+                // Clean up
+                setTimeout(() => {
+                    window.notifications.dismiss(loadingId);
+                }, 2000);
+                
+                log('notification', 'Notification tests completed');
+            } catch (error) {
+                log('notification', `Error in notification tests: ${error.message}`, 'fail');
+            }
+        }
+
+        function testNotificationDismiss() {
+            log('notification', 'Testing notification dismiss...');
+            
+            try {
+                const id = window.notifications.info('This will be dismissed');
+                setTimeout(() => {
+                    window.notifications.dismiss(id);
+                    log('notification', 'Notification dismissed successfully', 'pass');
+                }, 1000);
+            } catch (error) {
+                log('notification', `Error dismissing notification: ${error.message}`, 'fail');
+            }
+        }
+
+        function testNotificationUpdate() {
+            log('notification', 'Testing notification update...');
+            
+            try {
+                const id = window.notifications.loading('Initial loading message');
+                setTimeout(() => {
+                    window.notifications.update(id, 'Updated to success message', 'success');
+                    log('notification', 'Notification updated successfully', 'pass');
+                }, 2000);
+            } catch (error) {
+                log('notification', `Error updating notification: ${error.message}`, 'fail');
+            }
+        }
+
+        // Provider selector tests
+        function testProviderSelector() {
+            log('provider', 'Testing provider selector...');
+            
+            try {
+                const selector = document.getElementById('test-provider');
+                
+                // Test if component loaded
+                assert(selector.shadowRoot, 'Provider selector has shadow DOM', 'provider');
+                
+                // Test API methods
+                const currentProvider = selector.getCurrentProvider();
+                assert(typeof currentProvider === 'string', 'getCurrentProvider returns string', 'provider');
+                
+                const providers = selector.getAvailableProviders();
+                assert(Array.isArray(providers), 'getAvailableProviders returns array', 'provider');
+                
+                log('provider', `Current provider: ${currentProvider}`, 'info');
+                log('provider', `Available providers: ${providers.length}`, 'info');
+                
+                // Test event listener
+                selector.addEventListener('provider-change', (event) => {
+                    log('provider', `Provider changed to: ${event.detail.providerId}`, 'pass');
+                });
+                
+                log('provider', 'Provider selector tests completed');
+            } catch (error) {
+                log('provider', `Error in provider tests: ${error.message}`, 'fail');
+            }
+        }
+
+        // Theme selector tests
+        function testThemeSelector() {
+            log('theme', 'Testing theme selector...');
+            
+            try {
+                const selector = document.getElementById('test-theme');
+                
+                // Test if component loaded
+                assert(selector.shadowRoot, 'Theme selector has shadow DOM', 'theme');
+                
+                // Test API methods
+                const currentTheme = selector.getCurrentTheme();
+                assert(typeof currentTheme === 'string', 'getCurrentTheme returns string', 'theme');
+                
+                const themes = selector.getAvailableThemes();
+                assert(Array.isArray(themes), 'getAvailableThemes returns array', 'theme');
+                
+                log('theme', `Current theme: ${currentTheme}`, 'info');
+                log('theme', `Available themes: ${themes.length}`, 'info');
+                
+                // Test event listener
+                selector.addEventListener('theme-change', (event) => {
+                    const status = event.detail.success ? 'success' : 'error';
+                    log('theme', `Theme change: ${event.detail.themeId} - ${status}`, status === 'success' ? 'pass' : 'fail');
+                });
+                
+                log('theme', 'Theme selector tests completed');
+            } catch (error) {
+                log('theme', `Error in theme tests: ${error.message}`, 'fail');
+            }
+        }
+
+        // Run initial tests
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('notification', 'Frontend feedback components test suite loaded');
+                testNotifications();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
