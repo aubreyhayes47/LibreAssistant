@@ -10,40 +10,38 @@ class LASystemHealth extends HTMLElement {
         :host {
           display: block;
           font-family: var(--font-family-sans);
+          color: var(--color-text);
+
         }
         h2 {
           font-size: var(--font-size-lg);
           font-weight: var(--font-weight-bold);
-          line-height: var(--line-height-tight);
+          margin-bottom: var(--spacing-md);
           color: var(--color-text);
-          margin: 0 0 var(--spacing-lg) 0;
+          line-height: var(--line-height-tight);
         }
         h3 {
           font-size: var(--font-size-base);
           font-weight: var(--font-weight-bold);
-          line-height: var(--line-height-tight);
+          margin-bottom: var(--spacing-sm);
+          margin-top: var(--spacing-md);
           color: var(--color-text);
-          margin: var(--spacing-md) 0 var(--spacing-sm) 0;
         }
         p {
+          margin: var(--spacing-sm) 0;
           font-size: var(--font-size-base);
-          line-height: var(--line-height-base);
           color: var(--color-text);
-          margin: 0 0 var(--spacing-sm) 0;
         }
-        ul { 
-          list-style: disc; 
+        ul {
+          list-style: disc;
           padding-left: var(--spacing-md);
           margin: 0;
+          font-family: var(--font-family-sans);
+          font-size: var(--font-size-base);
         }
         li {
-          font-size: var(--font-size-base);
-          line-height: var(--line-height-base);
-          color: var(--color-text);
           margin-bottom: var(--spacing-xs);
-        }
-        #content {
-          margin-top: var(--spacing-md);
+          color: var(--color-text);
         }
       </style>
       <h2>System Health</h2>

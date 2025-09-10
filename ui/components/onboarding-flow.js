@@ -8,8 +8,41 @@ class LAOnboardingFlow extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
+        :host {
+          display: block;
+          font-family: var(--font-family-sans);
+          color: var(--color-text);
+        }
         [hidden] { display: none; }
-        .step { padding: var(--spacing-md); }
+        .step {
+          padding: var(--spacing-md);
+        }
+        h2 {
+          font-size: var(--font-size-lg);
+          font-weight: var(--font-weight-bold);
+          margin-bottom: var(--spacing-md);
+          color: var(--color-text);
+        }
+        select, input {
+          font-family: var(--font-family-sans);
+          font-size: var(--font-size-base);
+          padding: var(--spacing-sm);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          background: var(--color-background);
+          color: var(--color-text);
+          width: 100%;
+          max-width: 300px;
+        }
+        select:focus, input:focus {
+          outline: 2px solid var(--color-primary);
+          border-color: var(--color-primary);
+        }
+        p {
+          font-size: var(--font-size-base);
+          margin: var(--spacing-sm) 0;
+          color: var(--color-text);
+        }
         .controls {
           display: flex;
           justify-content: space-between;
@@ -24,6 +57,9 @@ class LAOnboardingFlow extends HTMLElement {
           border: none;
           border-radius: var(--radius-md);
           cursor: pointer;
+        }
+        button:hover:not(:disabled) {
+          background-color: var(--color-primary-hover);
         }
         button[disabled] {
           opacity: 0.5;
@@ -41,6 +77,17 @@ class LAOnboardingFlow extends HTMLElement {
           display: flex;
           align-items: center;
           gap: var(--spacing-sm);
+        }
+        label {
+          font-size: var(--font-size-base);
+          color: var(--color-text);
+          cursor: pointer;
+        }
+        #summary {
+          background: var(--color-surface);
+          padding: var(--spacing-md);
+          border-radius: var(--radius-sm);
+          margin: var(--spacing-md) 0;
         }
       </style>
       <div class="step" data-step="0">

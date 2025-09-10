@@ -10,37 +10,51 @@ class LADataVault extends HTMLElement {
         :host {
           display: block;
           font-family: var(--font-family-sans);
+          color: var(--color-text);
+
         }
         textarea {
           width: 100%;
           min-height: 6rem;
           font-family: var(--font-family-mono);
-          font-size: var(--font-size-base);
-          line-height: var(--line-height-base);
+          font-size: var(--font-size-sm);
           padding: var(--spacing-sm);
+          margin-bottom: var(--spacing-sm);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-sm);
-          background-color: var(--color-surface);
+          background: var(--color-background);
           color: var(--color-text);
-          margin-bottom: var(--spacing-sm);
-          box-sizing: border-box;
+          resize: vertical;
         }
         textarea:focus {
-          outline: var(--focus-ring);
-          outline-offset: var(--focus-ring-offset);
+          outline: 2px solid var(--color-primary);
           border-color: var(--color-primary);
+        }
+        .controls {
+          display: flex;
+          gap: var(--spacing-sm);
+          margin-bottom: var(--spacing-md);
+
         }
         button {
           background-color: var(--color-primary);
           color: var(--color-background);
           font-family: var(--font-family-sans);
           font-size: var(--font-size-base);
-          font-weight: var(--font-weight-bold);
-          padding: var(--spacing-sm) var(--spacing-md);
+          padding: var(--spacing-xs) var(--spacing-sm);
           border: none;
           border-radius: var(--radius-sm);
           cursor: pointer;
-          margin-right: var(--spacing-sm);
+        }
+        button:hover:not(:disabled) {
+          background-color: var(--color-primary-hover);
+        }
+        button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        button#delete {
+          background-color: var(--color-secondary);
         }
         button:hover:not(:disabled) {
           background-color: var(--color-primary-hover);
@@ -52,17 +66,18 @@ class LADataVault extends HTMLElement {
         pre {
           background: var(--color-surface);
           color: var(--color-text);
-          font-family: var(--font-family-mono);
-          font-size: var(--font-size-sm);
-          line-height: var(--line-height-base);
           padding: var(--spacing-sm);
           border-radius: var(--radius-sm);
-          border: 1px solid var(--color-border);
+          font-family: var(--font-family-mono);
+          font-size: var(--font-size-sm);
           overflow-x: auto;
+          white-space: pre-wrap;
+          word-wrap: break-word;
+
         }
       </style>
       <textarea id="data" placeholder="{}"></textarea>
-      <div>
+      <div class="controls">
         <button id="save">Save</button>
         <button id="export">Export</button>
         <button id="delete">Delete</button>

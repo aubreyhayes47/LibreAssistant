@@ -8,30 +8,37 @@ window.showConsentModal = function (message) {
   return new Promise(resolve => {
     const dialog = document.createElement('la-modal-dialog');
     dialog.innerHTML = `
-      <span slot="title">Confirm</span>
-      <p style="margin: 0 0 var(--spacing-md) 0; font-family: var(--font-family-sans); line-height: var(--line-height-base);">${message}</p>
-      <div style="margin-top: var(--spacing-md); display:flex; justify-content:flex-end; gap: var(--spacing-sm);">
-        <button id="cancel" style="
-          background-color: var(--color-surface);
-          color: var(--color-text);
+      <style>
+        .consent-actions {
+          margin-top: var(--spacing-md);
+          display: flex;
+          justify-content: flex-end;
+          gap: var(--spacing-sm);
+        }
+        .consent-actions button {
           font-family: var(--font-family-sans);
           font-size: var(--font-size-base);
-          padding: var(--spacing-sm) var(--spacing-md);
+          padding: var(--spacing-xs) var(--spacing-sm);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-sm);
           cursor: pointer;
-        ">Cancel</button>
-        <button id="ok" style="
+          background: var(--color-background);
+          color: var(--color-text);
+        }
+        .consent-actions button#ok {
           background-color: var(--color-primary);
           color: var(--color-background);
-          font-family: var(--font-family-sans);
-          font-size: var(--font-size-base);
-          font-weight: var(--font-weight-bold);
-          padding: var(--spacing-sm) var(--spacing-md);
-          border: none;
-          border-radius: var(--radius-sm);
-          cursor: pointer;
-        ">OK</button>
+          border-color: var(--color-primary);
+        }
+        .consent-actions button:hover {
+          opacity: 0.9;
+        }
+      </style>
+      <span slot="title">Confirm</span>
+      <p>${message}</p>
+      <div class="consent-actions">
+        <button id="cancel">Cancel</button>
+        <button id="ok">OK</button>
       </div>
     `;
     const cleanup = (result) => {
