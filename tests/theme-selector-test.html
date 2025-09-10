@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Selector Test</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: var(--font-family-sans);
+            transition: all 0.3s ease;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+        }
+        
+        .test-result {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-controls {
+            margin: 1rem 0;
+        }
+        
+        .test-controls button {
+            margin: 0.25rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--color-border);
+            background: var(--color-primary);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Theme Selector Component Test</h1>
+    
+    <div class="test-section">
+        <h2>Theme Selector Component</h2>
+        <la-theme-selector id="test-selector"></la-theme-selector>
+        
+        <div class="test-controls">
+            <button onclick="testThemeSwitch('dark')">Switch to Dark</button>
+            <button onclick="testThemeSwitch('light')">Switch to Light</button>
+            <button onclick="testThemeSwitch('solarized')">Switch to Solarized</button>
+            <button onclick="testGetCurrentTheme()">Get Current Theme</button>
+            <button onclick="testGetAvailableThemes()">Get Available Themes</button>
+        </div>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Visual Theme Test</h2>
+        <p>This section should change appearance when themes are switched.</p>
+        <div style="padding: 1rem; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-sm);">
+            <h3 style="color: var(--color-primary);">Sample Content</h3>
+            <p>Primary color text and surface background should change with theme.</p>
+            <button style="background: var(--color-primary); color: var(--color-background); border: none; padding: 0.5rem 1rem; border-radius: 4px;">
+                Sample Button
+            </button>
+        </div>
+    </div>
+
+    <!-- Load the theme selector component -->
+    <script type="module" src="../ui/components/theme-selector.js"></script>
+    
+    <script>
+        const results = document.getElementById('test-results');
+        
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function testThemeSwitch(themeId) {
+            const selector = document.getElementById('test-selector');
+            try {
+                selector.setTheme(themeId);
+                addResult(`✓ Successfully switched to theme: ${themeId}`);
+            } catch (error) {
+                addResult(`✗ Failed to switch to theme ${themeId}: ${error.message}`, false);
+            }
+        }
+        
+        function testGetCurrentTheme() {
+            const selector = document.getElementById('test-selector');
+            try {
+                const current = selector.getCurrentTheme();
+                addResult(`✓ Current theme: ${current}`);
+            } catch (error) {
+                addResult(`✗ Failed to get current theme: ${error.message}`, false);
+            }
+        }
+        
+        function testGetAvailableThemes() {
+            const selector = document.getElementById('test-selector');
+            try {
+                const themes = selector.getAvailableThemes();
+                addResult(`✓ Available themes: ${themes.map(t => t.name).join(', ')}`);
+            } catch (error) {
+                addResult(`✗ Failed to get available themes: ${error.message}`, false);
+            }
+        }
+        
+        // Listen for theme change events
+        document.addEventListener('theme-change', (event) => {
+            addResult(`✓ Theme change event fired: ${event.detail.themeId}`);
+        });
+        
+        // Test component loading
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const selector = document.getElementById('test-selector');
+                if (selector && selector.shadowRoot) {
+                    addResult('✓ Theme selector component loaded successfully');
+                    testGetAvailableThemes();
+                    testGetCurrentTheme();
+                } else {
+                    addResult('✗ Theme selector component failed to load', false);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>

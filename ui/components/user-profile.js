@@ -7,8 +7,27 @@ class LAUserProfile extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
-        :host { display: block; }
-        label { display: flex; align-items: center; gap: var(--spacing-sm); }
+        :host {
+          display: block;
+          font-family: var(--font-family-sans);
+          color: var(--color-text);
+        }
+        label {
+          display: flex;
+          align-items: center;
+          gap: var(--spacing-sm);
+          font-size: var(--font-size-base);
+          margin-bottom: var(--spacing-md);
+          cursor: pointer;
+        }
+        input[type="checkbox"] {
+          margin: 0;
+          cursor: pointer;
+        }
+        la-data-vault {
+          display: block;
+          margin-top: var(--spacing-md);
+        }
       </style>
       <label><input type="checkbox" id="consent"> Allow data storage</label>
       <la-data-vault></la-data-vault>

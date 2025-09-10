@@ -13,6 +13,7 @@ class LAPrimaryButton extends HTMLElement {
           font-family: var(--font-family-sans);
           font-size: var(--font-size-base);
           font-weight: var(--font-weight-bold);
+          line-height: var(--line-height-base);
           padding: var(--spacing-sm) var(--spacing-md);
           border: none;
           border-radius: var(--radius-md);
@@ -21,7 +22,8 @@ class LAPrimaryButton extends HTMLElement {
         button:hover,
         button:focus {
           background-color: var(--color-primary-hover);
-          outline: none;
+          outline: var(--focus-ring);
+          outline-offset: var(--focus-ring-offset);
         }
       </style>
       <button type="button"><slot></slot></button>

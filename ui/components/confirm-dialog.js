@@ -8,9 +8,35 @@ window.showConsentModal = function (message) {
   return new Promise(resolve => {
     const dialog = document.createElement('la-modal-dialog');
     dialog.innerHTML = `
+      <style>
+        .consent-actions {
+          margin-top: var(--spacing-md);
+          display: flex;
+          justify-content: flex-end;
+          gap: var(--spacing-sm);
+        }
+        .consent-actions button {
+          font-family: var(--font-family-sans);
+          font-size: var(--font-size-base);
+          padding: var(--spacing-xs) var(--spacing-sm);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          background: var(--color-background);
+          color: var(--color-text);
+        }
+        .consent-actions button#ok {
+          background-color: var(--color-primary);
+          color: var(--color-background);
+          border-color: var(--color-primary);
+        }
+        .consent-actions button:hover {
+          opacity: 0.9;
+        }
+      </style>
       <span slot="title">Confirm</span>
       <p>${message}</p>
-      <div style="margin-top: var(--spacing-md); display:flex; justify-content:flex-end; gap: var(--spacing-sm);">
+      <div class="consent-actions">
         <button id="cancel">Cancel</button>
         <button id="ok">OK</button>
       </div>
