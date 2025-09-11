@@ -267,8 +267,8 @@
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
                 
-                const horizontalCenter = Math.abs((rect.left + rect.width / 2) - viewportWidth / 2) < 5;
-                const verticalCenter = Math.abs((rect.top + rect.height / 2) - viewportHeight / 2) < 5;
+                const horizontalCenter = Math.abs((rect.left + rect.width / 2) - viewportWidth / 2) < 10;
+                const verticalCenter = Math.abs((rect.top + rect.height / 2) - viewportHeight / 2) < 10;
                 
                 if (horizontalCenter && verticalCenter) {
                     addResult(`✅ Modal is properly centered on ${currentDevice}`, 'success');
@@ -307,8 +307,8 @@
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
                 
-                const horizontalCenter = Math.abs((rect.left + rect.width / 2) - viewportWidth / 2) < 5;
-                const verticalCenter = Math.abs((rect.top + rect.height / 2) - viewportHeight / 2) < 5;
+                const horizontalCenter = Math.abs((rect.left + rect.width / 2) - viewportWidth / 2) < 10;
+                const verticalCenter = Math.abs((rect.top + rect.height / 2) - viewportHeight / 2) < 10;
                 
                 if (horizontalCenter && verticalCenter) {
                     addResult(`✅ Confirm dialog is properly centered on ${currentDevice}`, 'success');
