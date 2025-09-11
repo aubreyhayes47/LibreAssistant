@@ -51,11 +51,17 @@ class LAUserProfile extends HTMLElement {
     const checkbox = this.shadowRoot.getElementById('consent-checkbox');
     const vault = this.shadowRoot.querySelector('la-data-vault');
     fetch(`/api/v1/consent/${user}`).then(r => r.json()).then(j => {
-      checkbox.checked = j.consent;
-      checkbox.setAttribute('aria-checked', j.consent.toString());
+      const consent = j && typeof j.consent === 'boolean' ? j.consent : false;
+      checkbox.checked = consent;
+      checkbox.setAttribute('aria-checked', consent.toString());
       if (vault && typeof vault.updateConsent === 'function') {
-        vault.updateConsent(j.consent);
+        vault.updateConsent(consent);
       }
+    }).catch(err => {
+      // Handle fetch errors gracefully in test environment
+      console.warn('Failed to load user consent:', err);
+      checkbox.checked = false;
+      checkbox.setAttribute('aria-checked', 'false');
     });
     checkbox.addEventListener('change', async () => {
       checkbox.setAttribute('aria-checked', checkbox.checked.toString());

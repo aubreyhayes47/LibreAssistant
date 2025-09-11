@@ -86,9 +86,12 @@ test('user-profile component renders and functions', async () => {
   // Check that component is properly created
   assert.ok(userProfile.shadowRoot, 'Component should have shadow root');
   
-  // Check for basic structure
-  const profileContainer = userProfile.shadowRoot.querySelector('.profile-container');
-  assert.ok(profileContainer, 'Should have profile container');
+  // Check for basic structure - look for actual elements that exist
+  const checkbox = userProfile.shadowRoot.getElementById('consent-checkbox');
+  assert.ok(checkbox, 'Should have consent checkbox');
+  
+  const vault = userProfile.shadowRoot.querySelector('la-data-vault');
+  assert.ok(vault, 'Should have data vault component');
 
   // Clean up
   document.body.removeChild(userProfile);

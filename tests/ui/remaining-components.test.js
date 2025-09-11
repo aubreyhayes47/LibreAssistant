@@ -93,6 +93,9 @@ test('past-requests component accessibility features', async () => {
   // Wait for component to initialize
   await new Promise(resolve => setTimeout(resolve, 100));
 
+  // Basic accessibility check - component should have shadow root
+  assert.ok(pastRequests.shadowRoot, 'Component should have shadow root');
+
   // Check for proper ARIA attributes
   const searchInput = pastRequests.shadowRoot.querySelector('input[type="search"]');
   if (searchInput) {
@@ -146,6 +149,9 @@ test('bill-of-materials component license information', async () => {
 
   // Wait for component to initialize
   await new Promise(resolve => setTimeout(resolve, 100));
+
+  // Basic check - component should have shadow root
+  assert.ok(billOfMaterials.shadowRoot, 'Component should have shadow root');
 
   // Check for license display
   const licenseElements = billOfMaterials.shadowRoot.querySelectorAll('.license');

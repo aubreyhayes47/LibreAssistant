@@ -50,7 +50,7 @@ class Microkernel:
         if isinstance(model, type) and issubclass(model, BaseModel):
             model_cls = cast(type[BaseModel], model)
             try:
-                payload = model_cls.model_validate(payload).model_dump()
+                payload = model_cls.parse_obj(payload).dict()
             except ValidationError as exc:
                 return {"error": exc.errors()}
         return plugin.run(state, payload)

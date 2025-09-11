@@ -1,1 +1,1 @@
-{"echo": true, "files": true, "law_by_keystone": true, "think_tank": true}
+{"echo": true, "files": true, "law_by_keystone": true, "think_tank": true, "workflow_test_server": false, "test_server": true, "test": true, "integration_test_server": true, "workflow_test": true, "test_plugin": true}

@@ -203,7 +203,7 @@ class LAPastRequests extends HTMLElement {
   }
 
   renderPage(history, pagination) {
-    this.totalEntries = pagination.total;
+    this.totalEntries = pagination && pagination.total ? pagination.total : 0;
     
     const list = this.shadowRoot.getElementById('list');
     
