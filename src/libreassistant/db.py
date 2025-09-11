@@ -181,11 +181,10 @@ def add_history(user_id: str, plugin: str, payload: Dict[str, Any], granted: boo
         None.
 
     Side Effects:
-        Prunes outdated history entries and commits the new record to the
-        database.
+        Commits the new record to the database. Note: Pruning is now done
+        separately for better performance.
     """
     conn = get_conn()
-    prune_history()
     cur = conn.cursor()
     cur.execute(
         "INSERT INTO history (user_id, plugin, payload, granted) VALUES (?, ?, ?, ?)",
@@ -199,11 +198,13 @@ def add_history(user_id: str, plugin: str, payload: Dict[str, Any], granted: boo
     conn.commit()
 
 
-def get_history(user_id: str) -> List[Dict[str, Any]]:
-    """Retrieve all history entries for a user.
+def get_history(user_id: str, limit: int | None = None, offset: int = 0) -> List[Dict[str, Any]]:
+    """Retrieve history entries for a user with pagination support.
 
     Parameters:
         user_id: Identifier of the user whose history is requested.
+        limit: Maximum number of entries to return (None for all).
+        offset: Number of entries to skip from the beginning.
 
     Returns:
         A list of dictionaries containing the plugin name, payload, and
@@ -214,10 +215,15 @@ def get_history(user_id: str) -> List[Dict[str, Any]]:
     """
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute(
-        "SELECT plugin, payload, granted FROM history WHERE user_id=? ORDER BY timestamp",
-        (user_id,),
-    )
+    
+    query = "SELECT plugin, payload, granted FROM history WHERE user_id=? ORDER BY timestamp ASC"
+    params = [user_id]
+    
+    if limit is not None:
+        query += " LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+    
+    cur.execute(query, params)
     rows = cur.fetchall()
     result: List[Dict[str, Any]] = []
     for plugin, payload, granted in rows:
@@ -229,6 +235,21 @@ def get_history(user_id: str) -> List[Dict[str, Any]]:
             entry["granted"] = bool(granted)
         result.append(entry)
     return result
+
+
+def get_history_count(user_id: str) -> int:
+    """Get the total count of history entries for a user.
+    
+    Parameters:
+        user_id: Identifier of the user whose history count is requested.
+        
+    Returns:
+        Total number of history entries for the user.
+    """
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM history WHERE user_id=?", (user_id,))
+    return cur.fetchone()[0]
 
 
 def add_file_audit(user_id: str | None, action: str | None, path: str | None) -> None:

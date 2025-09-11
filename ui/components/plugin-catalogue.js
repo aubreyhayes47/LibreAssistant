@@ -74,9 +74,14 @@ class LAPluginCatalogue extends HTMLElement {
   async connectedCallback() {
     await this.loadPlugins();
     this.render();
+    
     const search = this.shadowRoot.getElementById('search');
+    const debouncedFilter = this.debounce((value) => {
+      this.filter(value);
+    }, 300); // 300ms debounce
+    
     search.shadowRoot.querySelector('input').addEventListener('input', e => {
-      this.filter(e.target.value);
+      debouncedFilter(e.target.value);
     });
   }
 
@@ -108,21 +113,46 @@ class LAPluginCatalogue extends HTMLElement {
 
   filter(query) {
     const lower = query.toLowerCase();
-    this.shadowRoot.getElementById('list').innerHTML = '';
-    this.plugins
-      .filter(p => p.name.toLowerCase().includes(lower))
-      .forEach(p => this.addItem(p));
+    const list = this.shadowRoot.getElementById('list');
+    
+    // Get filtered plugins
+    const filteredPlugins = this.plugins.filter(p => 
+      p.name.toLowerCase().includes(lower)
+    );
+    
+    // Use document fragment for efficient DOM updates
+    const fragment = document.createDocumentFragment();
+    filteredPlugins.forEach(p => {
+      const existingItem = list.querySelector(`[data-plugin-name="${p.name}"]`);
+      if (existingItem) {
+        // Reuse existing element
+        fragment.appendChild(existingItem);
+      } else {
+        // Create new element
+        this.createPluginElement(p, fragment);
+      }
+    });
+    
+    // Single DOM update
+    list.innerHTML = '';
+    list.appendChild(fragment);
   }
 
   render() {
     const list = this.shadowRoot.getElementById('list');
+    const fragment = document.createDocumentFragment();
+    
+    this.plugins.forEach(p => this.createPluginElement(p, fragment));
+    
+    // Single DOM update
     list.innerHTML = '';
-    this.plugins.forEach(p => this.addItem(p));
+    list.appendChild(fragment);
   }
 
-  addItem(plugin) {
+  createPluginElement(plugin, container) {
     const li = document.createElement('li');
     li.className = 'plugin-item';
+    li.setAttribute('data-plugin-name', plugin.name);
     
     const label = document.createElement('label');
     label.textContent = plugin.name;
@@ -136,72 +166,89 @@ class LAPluginCatalogue extends HTMLElement {
     statusSpan.textContent = plugin.consent ? 'Enabled' : 'Disabled';
     
     toggle.addEventListener('change', async () => {
-      const wasEnabled = plugin.consent;
-      const newState = toggle.checked;
-      
-      // Update UI optimistically
-      plugin.consent = newState;
-      statusSpan.className = 'plugin-status enabling';
-      statusSpan.textContent = newState ? 'Enabling...' : 'Disabling...';
-      toggle.disabled = true;
-      
-      const loadingId = window.notifications?.loading(
-        `${newState ? 'Enabling' : 'Disabling'} plugin ${plugin.name}...`
-      );
-      
-      try {
-        const res = await fetch(`/api/v1/mcp/consent/${plugin.name}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ consent: newState })
-        });
-        
-        if (loadingId) window.notifications?.dismiss(loadingId);
-        
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        
-        // Success
-        statusSpan.className = `plugin-status ${newState ? 'enabled' : ''}`;
-        statusSpan.textContent = newState ? 'Enabled' : 'Disabled';
-        
-        window.notifications?.success(
-          `Plugin ${plugin.name} ${newState ? 'enabled' : 'disabled'} successfully`
-        );
-        
-        this.dispatchEvent(
-          new CustomEvent('plugin-toggle', {
-            detail: { name: plugin.name, consent: newState, success: true }
-          })
-        );
-      } catch (error) {
-        if (loadingId) window.notifications?.dismiss(loadingId);
-        
-        // Revert changes on error
-        plugin.consent = wasEnabled;
-        toggle.checked = wasEnabled;
-        statusSpan.className = `plugin-status ${wasEnabled ? 'enabled' : 'error'}`;
-        statusSpan.textContent = 'Error';
-        
-        window.notifications?.error(
-          `Failed to ${newState ? 'enable' : 'disable'} plugin ${plugin.name}: ${error.message}`
-        );
-        
-        this.dispatchEvent(
-          new CustomEvent('plugin-toggle', {
-            detail: { name: plugin.name, consent: wasEnabled, success: false, error: error.message }
-          })
-        );
-      } finally {
-        toggle.disabled = false;
-      }
+      await this.handlePluginToggle(plugin, toggle, statusSpan);
     });
     
     label.prepend(toggle);
     li.appendChild(label);
     li.appendChild(statusSpan);
-    this.shadowRoot.getElementById('list').appendChild(li);
+    container.appendChild(li);
+  }
+
+  async handlePluginToggle(plugin, toggle, statusSpan) {
+    const wasEnabled = plugin.consent;
+    const newState = toggle.checked;
+    
+    // Update UI optimistically
+    plugin.consent = newState;
+    statusSpan.className = 'plugin-status enabling';
+    statusSpan.textContent = newState ? 'Enabling...' : 'Disabling...';
+    toggle.disabled = true;
+    
+    const loadingId = window.notifications?.loading(
+      `${newState ? 'Enabling' : 'Disabling'} plugin ${plugin.name}...`
+    );
+    
+    try {
+      const res = await fetch(`/api/v1/mcp/consent/${plugin.name}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consent: newState })
+      });
+      
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      // Success
+      statusSpan.className = `plugin-status ${newState ? 'enabled' : ''}`;
+      statusSpan.textContent = newState ? 'Enabled' : 'Disabled';
+      
+      window.notifications?.success(
+        `Plugin ${plugin.name} ${newState ? 'enabled' : 'disabled'} successfully`
+      );
+      
+      this.dispatchEvent(
+        new CustomEvent('plugin-toggle', {
+          detail: { name: plugin.name, consent: newState, success: true }
+        })
+      );
+    } catch (error) {
+      if (loadingId) window.notifications?.dismiss(loadingId);
+      
+      // Revert changes on error
+      plugin.consent = wasEnabled;
+      toggle.checked = wasEnabled;
+      statusSpan.className = `plugin-status ${wasEnabled ? 'enabled' : 'error'}`;
+      statusSpan.textContent = 'Error';
+      
+      window.notifications?.error(
+        `Failed to ${newState ? 'enable' : 'disable'} plugin ${plugin.name}: ${error.message}`
+      );
+      
+      this.dispatchEvent(
+        new CustomEvent('plugin-toggle', {
+          detail: { name: plugin.name, consent: wasEnabled, success: false, error: error.message }
+        })
+      );
+    } finally {
+      toggle.disabled = false;
+    }
+  }
+
+  // Debounce utility function
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
   }
 }
 

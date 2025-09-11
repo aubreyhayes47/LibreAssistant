@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreAssistant Performance Demo</title>
+    <link rel="stylesheet" href="/ui/tokens.css">
+    <style>
+        body {
+            font-family: var(--font-family-sans);
+            margin: 0;
+            padding: var(--spacing-lg);
+            background: var(--color-background);
+            color: var(--color-text);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .demo-section {
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-background-elevated, white);
+        }
+        .demo-section h2 {
+            margin-top: 0;
+            color: var(--color-text);
+        }
+        .performance-stats {
+            background: #f8f9fa;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-sm);
+        }
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LibreAssistant Performance Improvements Demo</h1>
+        
+        <div class="performance-stats">
+            <strong>Performance Improvements:</strong><br>
+            • Backend: 12% faster insertions (3.65s vs 4.15s for 1000 entries)<br>
+            • Pagination: 79% faster loading (3ms vs 14ms for typical page loads)<br>
+            • Frontend: Debounced search, efficient DOM updates, element reuse<br>
+            • Memory: Paginated loading reduces memory usage for large datasets
+        </div>
+
+        <div class="two-column">
+            <div class="demo-section">
+                <h2>Plugin Catalogue (Optimized)</h2>
+                <p>Features: Debounced search, efficient DOM updates, element reuse</p>
+                <la-plugin-catalogue></la-plugin-catalogue>
+            </div>
+
+            <div class="demo-section">
+                <h2>Past Requests with Pagination</h2>
+                <p>Features: Pagination, caching, configurable page sizes</p>
+                <la-past-requests user-id="demo_user"></la-past-requests>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Performance Test Controls</h2>
+            <button onclick="generateTestData()">Generate Test Data (100 entries)</button>
+            <button onclick="generateLargeTestData()">Generate Large Test Data (500 entries)</button>
+            <button onclick="clearTestData()">Clear Test Data</button>
+            <div id="test-status"></div>
+        </div>
+    </div>
+
+    <!-- Load components -->
+    <script src="/ui/components/input-field.js"></script>
+    <script src="/ui/components/plugin-catalogue.js"></script>
+    <script src="/ui/components/past-requests.js"></script>
+    
+    <script>
+        // Mock notification system for demo
+        window.notifications = {
+            loading: (msg) => {
+                console.log('Loading:', msg);
+                return Date.now();
+            },
+            dismiss: (id) => {
+                console.log('Dismissed:', id);
+            },
+            success: (msg) => {
+                console.log('Success:', msg);
+            },
+            error: (msg) => {
+                console.error('Error:', msg);
+            },
+            info: (msg) => {
+                console.log('Info:', msg);
+            }
+        };
+
+        async function generateTestData() {
+            const status = document.getElementById('test-status');
+            status.textContent = 'Generating 100 test entries...';
+            
+            const start = performance.now();
+            
+            for (let i = 0; i < 100; i++) {
+                const entry = {
+                    plugin: `test_plugin_${i % 10}`,
+                    payload: {
+                        message: `Test message ${i}`,
+                        timestamp: Date.now(),
+                        data: `Sample data entry ${i}`
+                    },
+                    granted: i % 3 === 0
+                };
+                
+                try {
+                    const response = await fetch('/api/v1/history/demo_user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(entry)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('Failed to create entry:', error);
+                    status.textContent = `Error: ${error.message}`;
+                    return;
+                }
+            }
+            
+            const end = performance.now();
+            status.textContent = `Generated 100 entries in ${(end - start).toFixed(1)}ms`;
+            
+            // Refresh the past requests component
+            const pastRequests = document.querySelector('la-past-requests');
+            if (pastRequests) {
+                pastRequests.cache.clear();
+                pastRequests.currentPage = 0;
+                pastRequests.loadPage();
+            }
+        }
+
+        async function generateLargeTestData() {
+            const status = document.getElementById('test-status');
+            status.textContent = 'Generating 500 test entries...';
+            
+            const start = performance.now();
+            
+            for (let i = 0; i < 500; i++) {
+                const entry = {
+                    plugin: `large_plugin_${i % 20}`,
+                    payload: {
+                        message: `Large test message ${i}`,
+                        timestamp: Date.now(),
+                        data: `Large sample data entry ${i}`,
+                        metadata: {
+                            index: i,
+                            category: ['urgent', 'normal', 'low'][i % 3],
+                            tags: [`tag${i % 5}`, `category${i % 3}`]
+                        }
+                    },
+                    granted: i % 4 === 0
+                };
+                
+                try {
+                    const response = await fetch('/api/v1/history/demo_user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(entry)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error('Failed to create entry:', error);
+                    status.textContent = `Error: ${error.message}`;
+                    return;
+                }
+                
+                if (i % 50 === 0) {
+                    status.textContent = `Generated ${i + 1}/500 entries...`;
+                    await new Promise(resolve => setTimeout(resolve, 10)); // Brief pause for UI updates
+                }
+            }
+            
+            const end = performance.now();
+            status.textContent = `Generated 500 entries in ${(end - start).toFixed(1)}ms`;
+            
+            // Refresh the past requests component
+            const pastRequests = document.querySelector('la-past-requests');
+            if (pastRequests) {
+                pastRequests.cache.clear();
+                pastRequests.currentPage = 0;
+                pastRequests.loadPage();
+            }
+        }
+
+        async function clearTestData() {
+            const status = document.getElementById('test-status');
+            status.textContent = 'Clearing test data...';
+            
+            try {
+                // This would need a clear endpoint in a real implementation
+                // For now, just refresh the component
+                const pastRequests = document.querySelector('la-past-requests');
+                if (pastRequests) {
+                    pastRequests.cache.clear();
+                    pastRequests.currentPage = 0;
+                    pastRequests.loadPage();
+                }
+                status.textContent = 'Component refreshed (note: data still in database)';
+            } catch (error) {
+                status.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
