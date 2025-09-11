@@ -139,6 +139,106 @@ class TestFeedbackMechanisms(unittest.TestCase):
         data = response.json()
         self.assertIsInstance(data, dict)
 
+    def test_mcp_servers_error_resilience(self):
+        """Test MCP servers endpoint error resilience."""
+        # Multiple rapid requests should all succeed
+        for _ in range(10):
+            response = self.client.get('/api/v1/mcp/servers')
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('servers', response.json())
+
+    def test_mcp_consent_comprehensive_error_cases(self):
+        """Test comprehensive error cases for MCP consent endpoints."""
+        
+        # Test GET with various server names
+        response = self.client.get('/api/v1/mcp/consent/nonexistent_server')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['consent'], False)
+        
+        # Test POST with missing consent field
+        response = self.client.post('/api/v1/mcp/consent/test_server', json={})
+        self.assertEqual(response.status_code, 422)
+        
+        # Test POST with invalid consent type
+        response = self.client.post('/api/v1/mcp/consent/test_server', json={'consent': 'invalid'})
+        self.assertEqual(response.status_code, 422)
+        
+        # Test POST with malformed JSON
+        response = self.client.post('/api/v1/mcp/consent/test_server', 
+                                  data='invalid json',
+                                  headers={'Content-Type': 'application/json'})
+        self.assertEqual(response.status_code, 422)
+
+    def test_history_endpoint_comprehensive_error_cases(self):
+        """Test comprehensive error cases for history endpoints."""
+        
+        # Test GET for various user IDs
+        test_user_ids = ['test_user', 'user_with_underscores', 'user-with-dashes', 'user123']
+        for user_id in test_user_ids:
+            response = self.client.get(f'/api/v1/history/{user_id}')
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('history', response.json())
+        
+        # Test POST with missing fields
+        response = self.client.post('/api/v1/history/test_user', json={})
+        self.assertEqual(response.status_code, 422)
+        
+        # Test POST with invalid field types
+        response = self.client.post('/api/v1/history/test_user', json={
+            'plugin': 'test',
+            'payload': 'invalid',  # Should be dict
+            'granted': True
+        })
+        self.assertEqual(response.status_code, 422)
+
+    def test_endpoint_integration_workflow(self):
+        """Test integration workflow across multiple endpoints."""
+        
+        # 1. Check health
+        health_response = self.client.get('/api/v1/health')
+        self.assertEqual(health_response.status_code, 200)
+        initial_requests = health_response.json()['requests']
+        
+        # 2. List MCP servers
+        servers_response = self.client.get('/api/v1/mcp/servers')
+        self.assertEqual(servers_response.status_code, 200)
+        
+        # 3. Set MCP consent
+        consent_response = self.client.post('/api/v1/mcp/consent/workflow_test', 
+                                          json={'consent': True})
+        self.assertEqual(consent_response.status_code, 200)
+        
+        # 4. Check history
+        history_response = self.client.get('/api/v1/history/workflow_user')
+        self.assertEqual(history_response.status_code, 200)
+        
+        # 5. Record history entry
+        record_response = self.client.post('/api/v1/history/workflow_user', json={
+            'plugin': 'workflow_test',
+            'payload': {'test': 'data'},
+            'granted': True
+        })
+        self.assertEqual(record_response.status_code, 200)
+        
+        # 6. Verify health shows increased activity
+        final_health = self.client.get('/api/v1/health')
+        self.assertEqual(final_health.status_code, 200)
+        final_requests = final_health.json()['requests']
+        self.assertGreater(final_requests, initial_requests)
+
+    def test_error_isolation_between_endpoints(self):
+        """Test that errors in one endpoint don't affect others."""
+        
+        # Cause errors in various endpoints
+        self.client.post('/api/v1/mcp/consent/test', json={})  # 422 error
+        self.client.post('/api/v1/history/test', json={})     # 422 error
+        
+        # All endpoints should still work correctly
+        self.assertEqual(self.client.get('/api/v1/health').status_code, 200)
+        self.assertEqual(self.client.get('/api/v1/mcp/servers').status_code, 200)
+        self.assertEqual(self.client.get('/api/v1/history/test_user').status_code, 200)
+        self.assertEqual(self.client.get('/api/v1/mcp/consent/test_server').status_code, 200)
+
 
 if __name__ == '__main__':
     unittest.main()
