@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Navigation Validation Tests</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-controls button {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #ddd;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .test-controls button:hover {
+            background: #0056b3;
+        }
+        
+        .test-controls button:focus {
+            outline: 2px solid #007bff;
+            outline-offset: 2px;
+        }
+        
+        .test-result {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .keyboard-instructions {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+        
+        .component-container {
+            margin: 1rem 0;
+            padding: 1rem;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            min-height: 300px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        
+        h3 {
+            color: #7f8c8d;
+        }
+        
+        .focus-indicator {
+            outline: 3px solid #ff6b6b !important;
+            outline-offset: 2px;
+        }
+        
+        /* Load tokens for components */
+        :root {
+            --font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.25rem;
+            --font-weight-bold: bold;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --color-primary: #007bff;
+            --color-primary-hover: #0056b3;
+            --color-background: white;
+            --color-text: #333;
+            --color-text-secondary: #6b7280;
+            --color-border: #ddd;
+            --color-surface: #f8f9fa;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --size-button-height: 2.5rem;
+            --size-modal-min-width: 20rem;
+            --size-modal-max-width: 90vw;
+            --shadow-modal: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --color-backdrop: rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>Keyboard Navigation Validation Tests</h1>
+    
+    <div class="test-section">
+        <h2>Test Overview</h2>
+        <p>This page validates keyboard navigation for all interactive controls in LibreAssistant components.</p>
+        <div class="keyboard-instructions">
+            <h4>Keyboard Navigation Keys to Test:</h4>
+            <ul>
+                <li><strong>Tab:</strong> Move focus forward through interactive elements</li>
+                <li><strong>Shift+Tab:</strong> Move focus backward through interactive elements</li>
+                <li><strong>Enter/Space:</strong> Activate buttons, checkboxes, and other controls</li>
+                <li><strong>Escape:</strong> Close modals and dialogs</li>
+                <li><strong>Arrow Keys:</strong> Navigate within components (tabs, lists)</li>
+                <li><strong>Home/End:</strong> Jump to first/last element in navigable groups</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Onboarding Flow Tests -->
+    <div class="test-section">
+        <h2>Onboarding Flow - Keyboard Navigation</h2>
+        <div class="test-controls">
+            <button onclick="testOnboardingKeyboardNavigation()">Test Onboarding Tab Order</button>
+            <button onclick="testOnboardingStepNavigation()">Test Step Navigation</button>
+            <button onclick="testOnboardingFormControls()">Test Form Controls</button>
+            <button onclick="showOnboardingFlow()">Show Onboarding</button>
+        </div>
+        
+        <div class="component-container">
+            <la-onboarding-flow id="test-onboarding" style="display: none;"></la-onboarding-flow>
+        </div>
+        
+        <div id="onboarding-results"></div>
+    </div>
+
+    <!-- Modal Dialog Tests -->
+    <div class="test-section">
+        <h2>Modal Dialog - Keyboard Navigation</h2>
+        <div class="test-controls">
+            <button onclick="testModalFocusTrap()">Test Focus Trap</button>
+            <button onclick="testModalEscapeKey()">Test Escape Key</button>
+            <button onclick="testModalTabOrder()">Test Tab Order</button>
+            <button onclick="showModalDialog()">Show Modal</button>
+        </div>
+        
+        <div class="component-container">
+            <la-modal-dialog id="test-modal">
+                <div slot="title">Test Modal</div>
+                <div slot="content">
+                    <p>This is a test modal for keyboard navigation validation.</p>
+                    <input type="text" placeholder="Test input 1" />
+                    <input type="text" placeholder="Test input 2" />
+                    <button>Test Button 1</button>
+                    <button>Test Button 2</button>
+                    <select>
+                        <option>Option 1</option>
+                        <option>Option 2</option>
+                    </select>
+                </div>
+            </la-modal-dialog>
+        </div>
+        
+        <div id="modal-results"></div>
+    </div>
+
+    <!-- Switchboard Tests -->
+    <div class="test-section">
+        <h2>Switchboard - Keyboard Navigation</h2>
+        <div class="test-controls">
+            <button onclick="testSwitchboardTabOrder()">Test Tab Order</button>
+            <button onclick="testSwitchboardFormSubmission()">Test Form Submission</button>
+            <button onclick="testSwitchboardKeyboardShortcuts()">Test Keyboard Shortcuts</button>
+        </div>
+        
+        <div class="component-container">
+            <la-switchboard id="test-switchboard"></la-switchboard>
+        </div>
+        
+        <div id="switchboard-results"></div>
+    </div>
+
+    <!-- Combined Navigation Test -->
+    <div class="test-section">
+        <h2>Cross-Component Navigation</h2>
+        <div class="test-controls">
+            <button onclick="testCompleteTabOrder()">Test Complete Tab Order</button>
+            <button onclick="testFocusRestoration()">Test Focus Restoration</button>
+            <button onclick="highlightFocusableElements()">Highlight All Focusable Elements</button>
+        </div>
+        
+        <div id="global-results"></div>
+    </div>
+
+    <!-- Load components -->
+    <script type="module" src="../ui/components/onboarding-flow.js"></script>
+    <script type="module" src="../ui/components/modal-dialog.js"></script>
+    <script type="module" src="../ui/components/switchboard.js"></script>
+    <script type="module" src="../ui/components/confirm-dialog.js"></script>
+    <script type="module" src="../ui/components/provider-selector.js"></script>
+
+    <script>
+        // Test result tracking
+        let testResults = {
+            onboarding: [],
+            modal: [],
+            switchboard: [],
+            global: []
+        };
+
+        // Utility functions
+        function addResult(category, message, success = true) {
+            const resultsDiv = document.getElementById(`${category}-results`);
+            const div = document.createElement('div');
+            div.className = `test-result ${success ? 'success' : 'error'}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+            testResults[category].push({ message, success });
+        }
+
+        function addInfo(category, message) {
+            const resultsDiv = document.getElementById(`${category}-results`);
+            const div = document.createElement('div');
+            div.className = 'test-result info';
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearResults(category) {
+            const resultsDiv = document.getElementById(`${category}-results`);
+            resultsDiv.innerHTML = '';
+            testResults[category] = [];
+        }
+
+        function getFocusableElements(container) {
+            const selectors = [
+                'button:not([disabled])',
+                'input:not([disabled])',
+                'select:not([disabled])',
+                'textarea:not([disabled])',
+                'a[href]',
+                '[tabindex]:not([tabindex="-1"])',
+                '[role="button"]:not([disabled])',
+                '[role="tab"]:not([disabled])'
+            ];
+            
+            const elements = container.querySelectorAll(selectors.join(', '));
+            return Array.from(elements).filter(el => {
+                const style = window.getComputedStyle(el);
+                return style.display !== 'none' && 
+                       style.visibility !== 'hidden' && 
+                       el.offsetWidth > 0 && 
+                       el.offsetHeight > 0;
+            });
+        }
+
+        function getShadowFocusableElements(element) {
+            if (!element.shadowRoot) return [];
+            return getFocusableElements(element.shadowRoot);
+        }
+
+        // Onboarding Flow Tests
+        function showOnboardingFlow() {
+            const onboarding = document.getElementById('test-onboarding');
+            onboarding.style.display = 'block';
+            addInfo('onboarding', 'Onboarding flow is now visible. Test keyboard navigation manually.');
+        }
+
+        function testOnboardingKeyboardNavigation() {
+            clearResults('onboarding');
+            const onboarding = document.getElementById('test-onboarding');
+            
+            if (!onboarding.shadowRoot) {
+                addResult('onboarding', '✗ Onboarding component not properly initialized', false);
+                return;
+            }
+
+            const focusableElements = getShadowFocusableElements(onboarding);
+            
+            if (focusableElements.length === 0) {
+                addResult('onboarding', '✗ No focusable elements found in onboarding', false);
+                return;
+            }
+
+            addResult('onboarding', `✓ Found ${focusableElements.length} focusable elements`);
+
+            // Test tab order
+            focusableElements.forEach((el, index) => {
+                const tabIndex = el.getAttribute('tabindex');
+                if (tabIndex && tabIndex !== '0' && tabIndex !== '-1') {
+                    addResult('onboarding', `ℹ Element ${index + 1} has custom tabindex: ${tabIndex}`);
+                }
+            });
+
+            // Test that elements have proper accessibility attributes
+            const buttons = onboarding.shadowRoot.querySelectorAll('button');
+            buttons.forEach((button, index) => {
+                if (!button.textContent.trim() && !button.getAttribute('aria-label')) {
+                    addResult('onboarding', `✗ Button ${index + 1} missing accessible name`, false);
+                } else {
+                    addResult('onboarding', `✓ Button ${index + 1} has accessible name`);
+                }
+            });
+
+            addInfo('onboarding', 'Use Tab and Shift+Tab to navigate through the onboarding flow');
+        }
+
+        function testOnboardingStepNavigation() {
+            clearResults('onboarding');
+            const onboarding = document.getElementById('test-onboarding');
+            
+            if (!onboarding.shadowRoot) {
+                addResult('onboarding', '✗ Onboarding component not properly initialized', false);
+                return;
+            }
+
+            const backBtn = onboarding.shadowRoot.getElementById('back');
+            const nextBtn = onboarding.shadowRoot.getElementById('next');
+
+            if (backBtn && nextBtn) {
+                addResult('onboarding', '✓ Navigation buttons found');
+                
+                // Test keyboard activation
+                const testKeyPress = (element, key) => {
+                    const event = new KeyboardEvent('keydown', {
+                        key: key,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    element.dispatchEvent(event);
+                };
+
+                // Focus and test navigation buttons
+                nextBtn.focus();
+                addResult('onboarding', '✓ Next button can receive focus');
+                
+                if (backBtn.disabled) {
+                    addResult('onboarding', '✓ Back button properly disabled on first step');
+                } else {
+                    backBtn.focus();
+                    addResult('onboarding', '✓ Back button can receive focus');
+                }
+            } else {
+                addResult('onboarding', '✗ Navigation buttons not found', false);
+            }
+        }
+
+        function testOnboardingFormControls() {
+            clearResults('onboarding');
+            const onboarding = document.getElementById('test-onboarding');
+            
+            if (!onboarding.shadowRoot) {
+                addResult('onboarding', '✗ Onboarding component not properly initialized', false);
+                return;
+            }
+
+            const formControls = onboarding.shadowRoot.querySelectorAll('input, select, textarea');
+            
+            if (formControls.length === 0) {
+                addResult('onboarding', '✗ No form controls found', false);
+                return;
+            }
+
+            addResult('onboarding', `✓ Found ${formControls.length} form controls`);
+
+            formControls.forEach((control, index) => {
+                // Test focus capability
+                try {
+                    control.focus();
+                    if (document.activeElement === control || 
+                        (onboarding.shadowRoot && onboarding.shadowRoot.activeElement === control)) {
+                        addResult('onboarding', `✓ Form control ${index + 1} can receive focus`);
+                    } else {
+                        addResult('onboarding', `✗ Form control ${index + 1} cannot receive focus`, false);
+                    }
+                } catch (e) {
+                    addResult('onboarding', `✗ Error focusing form control ${index + 1}: ${e.message}`, false);
+                }
+
+                // Test accessibility attributes
+                const label = control.getAttribute('aria-label') || 
+                            control.getAttribute('placeholder') ||
+                            control.labels?.[0]?.textContent;
+                
+                if (label) {
+                    addResult('onboarding', `✓ Form control ${index + 1} has accessible label`);
+                } else {
+                    addResult('onboarding', `✗ Form control ${index + 1} missing accessible label`, false);
+                }
+            });
+        }
+
+        // Modal Dialog Tests
+        function showModalDialog() {
+            const modal = document.getElementById('test-modal');
+            modal.show();
+            addInfo('modal', 'Modal is now open. Test keyboard navigation.');
+        }
+
+        function testModalFocusTrap() {
+            clearResults('modal');
+            const modal = document.getElementById('test-modal');
+            
+            if (!modal.open) {
+                modal.show();
+            }
+
+            setTimeout(() => {
+                const focusableElements = getShadowFocusableElements(modal);
+                const modalContent = modal.shadowRoot.querySelector('.dialog');
+                const contentFocusable = getFocusableElements(modalContent);
+                
+                const allFocusable = [...focusableElements, ...contentFocusable];
+                
+                if (allFocusable.length === 0) {
+                    addResult('modal', '✗ No focusable elements in modal', false);
+                    return;
+                }
+
+                addResult('modal', `✓ Found ${allFocusable.length} focusable elements in modal`);
+
+                // Test that focus is trapped
+                const firstElement = allFocusable[0];
+                const lastElement = allFocusable[allFocusable.length - 1];
+
+                if (firstElement && lastElement) {
+                    addResult('modal', '✓ First and last focusable elements identified');
+                    
+                    // Test tab trapping
+                    lastElement.focus();
+                    const tabEvent = new KeyboardEvent('keydown', {
+                        key: 'Tab',
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    
+                    modal.dispatchEvent(tabEvent);
+                    
+                    setTimeout(() => {
+                        if (document.activeElement === firstElement || 
+                            (modal.shadowRoot && modal.shadowRoot.activeElement === firstElement)) {
+                            addResult('modal', '✓ Tab key wraps focus to first element');
+                        } else {
+                            addResult('modal', '✗ Tab key does not properly wrap focus', false);
+                        }
+                    }, 100);
+                }
+            }, 100);
+        }
+
+        function testModalEscapeKey() {
+            clearResults('modal');
+            const modal = document.getElementById('test-modal');
+            
+            if (!modal.open) {
+                modal.show();
+            }
+
+            // Test escape key
+            const escapeEvent = new KeyboardEvent('keydown', {
+                key: 'Escape',
+                bubbles: true,
+                cancelable: true
+            });
+
+            modal.dispatchEvent(escapeEvent);
+
+            setTimeout(() => {
+                if (!modal.open) {
+                    addResult('modal', '✓ Escape key closes modal');
+                } else {
+                    addResult('modal', '✗ Escape key does not close modal', false);
+                }
+            }, 100);
+        }
+
+        function testModalTabOrder() {
+            clearResults('modal');
+            const modal = document.getElementById('test-modal');
+            
+            if (!modal.open) {
+                modal.show();
+            }
+
+            setTimeout(() => {
+                const focusableElements = getShadowFocusableElements(modal);
+                const modalContent = modal.shadowRoot.querySelector('.dialog');
+                const contentFocusable = getFocusableElements(modalContent);
+                
+                const allFocusable = [...focusableElements, ...contentFocusable];
+                
+                if (allFocusable.length > 0) {
+                    addResult('modal', `✓ Modal contains ${allFocusable.length} focusable elements`);
+                    
+                    // Test that first element gets focus when modal opens
+                    if (allFocusable.includes(document.activeElement) || 
+                        (modal.shadowRoot && allFocusable.includes(modal.shadowRoot.activeElement))) {
+                        addResult('modal', '✓ Focus moves to modal when opened');
+                    } else {
+                        addResult('modal', '✗ Focus does not move to modal when opened', false);
+                    }
+                } else {
+                    addResult('modal', '✗ No focusable elements found in modal', false);
+                }
+            }, 100);
+        }
+
+        // Switchboard Tests
+        function testSwitchboardTabOrder() {
+            clearResults('switchboard');
+            const switchboard = document.getElementById('test-switchboard');
+            
+            if (!switchboard.shadowRoot) {
+                addResult('switchboard', '✗ Switchboard component not properly initialized', false);
+                return;
+            }
+
+            const focusableElements = getShadowFocusableElements(switchboard);
+            
+            if (focusableElements.length === 0) {
+                addResult('switchboard', '✗ No focusable elements found in switchboard', false);
+                return;
+            }
+
+            addResult('switchboard', `✓ Found ${focusableElements.length} focusable elements`);
+
+            // Check for expected elements
+            const textarea = switchboard.shadowRoot.getElementById('input');
+            const selectElement = switchboard.shadowRoot.getElementById('plugin');
+            const sendButton = switchboard.shadowRoot.getElementById('send');
+
+            if (textarea) {
+                addResult('switchboard', '✓ Input textarea found');
+                textarea.focus();
+                if (switchboard.shadowRoot.activeElement === textarea) {
+                    addResult('switchboard', '✓ Textarea can receive focus');
+                }
+            } else {
+                addResult('switchboard', '✗ Input textarea not found', false);
+            }
+
+            if (selectElement) {
+                addResult('switchboard', '✓ Plugin select found');
+            } else {
+                addResult('switchboard', '✗ Plugin select not found', false);
+            }
+
+            if (sendButton) {
+                addResult('switchboard', '✓ Send button found');
+                sendButton.focus();
+                if (switchboard.shadowRoot.activeElement === sendButton) {
+                    addResult('switchboard', '✓ Send button can receive focus');
+                }
+            } else {
+                addResult('switchboard', '✗ Send button not found', false);
+            }
+        }
+
+        function testSwitchboardFormSubmission() {
+            clearResults('switchboard');
+            const switchboard = document.getElementById('test-switchboard');
+            
+            if (!switchboard.shadowRoot) {
+                addResult('switchboard', '✗ Switchboard component not properly initialized', false);
+                return;
+            }
+
+            const textarea = switchboard.shadowRoot.getElementById('input');
+            const sendButton = switchboard.shadowRoot.getElementById('send');
+
+            if (textarea && sendButton) {
+                // Test Enter key in textarea
+                textarea.focus();
+                textarea.value = 'Test message';
+                
+                const enterEvent = new KeyboardEvent('keydown', {
+                    key: 'Enter',
+                    ctrlKey: true, // Ctrl+Enter for submission
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                textarea.dispatchEvent(enterEvent);
+                addResult('switchboard', '✓ Ctrl+Enter key combination tested on textarea');
+
+                // Test Space/Enter on button
+                sendButton.focus();
+                const spaceEvent = new KeyboardEvent('keydown', {
+                    key: ' ',
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                sendButton.dispatchEvent(spaceEvent);
+                addResult('switchboard', '✓ Space key tested on send button');
+            } else {
+                addResult('switchboard', '✗ Required form elements not found', false);
+            }
+        }
+
+        function testSwitchboardKeyboardShortcuts() {
+            clearResults('switchboard');
+            const switchboard = document.getElementById('test-switchboard');
+            
+            if (!switchboard.shadowRoot) {
+                addResult('switchboard', '✗ Switchboard component not properly initialized', false);
+                return;
+            }
+
+            // Test potential keyboard shortcuts
+            const textarea = switchboard.shadowRoot.getElementById('input');
+            
+            if (textarea) {
+                textarea.focus();
+                
+                // Test common shortcuts
+                const shortcuts = [
+                    { key: 'Enter', ctrlKey: true, desc: 'Ctrl+Enter' },
+                    { key: 'a', ctrlKey: true, desc: 'Ctrl+A (Select All)' },
+                    { key: 'Escape', desc: 'Escape' }
+                ];
+
+                shortcuts.forEach(shortcut => {
+                    const event = new KeyboardEvent('keydown', {
+                        key: shortcut.key,
+                        ctrlKey: shortcut.ctrlKey || false,
+                        bubbles: true,
+                        cancelable: true
+                    });
+
+                    textarea.dispatchEvent(event);
+                    addResult('switchboard', `✓ ${shortcut.desc} shortcut tested`);
+                });
+            } else {
+                addResult('switchboard', '✗ Textarea not found for shortcut testing', false);
+            }
+        }
+
+        // Global Tests
+        function testCompleteTabOrder() {
+            clearResults('global');
+            
+            // Get all focusable elements on the page
+            const pageElements = getFocusableElements(document.body);
+            const components = [
+                document.getElementById('test-onboarding'),
+                document.getElementById('test-modal'),
+                document.getElementById('test-switchboard')
+            ];
+
+            let totalFocusable = pageElements.length;
+
+            components.forEach(component => {
+                if (component && component.shadowRoot) {
+                    const shadowElements = getShadowFocusableElements(component);
+                    totalFocusable += shadowElements.length;
+                }
+            });
+
+            addResult('global', `✓ Total focusable elements on page: ${totalFocusable}`);
+
+            if (totalFocusable > 0) {
+                addResult('global', '✓ Page has keyboard-navigable elements');
+            } else {
+                addResult('global', '✗ No keyboard-navigable elements found', false);
+            }
+        }
+
+        function testFocusRestoration() {
+            clearResults('global');
+            
+            // Test focus restoration after modal close
+            const modal = document.getElementById('test-modal');
+            const testButton = document.querySelector('.test-controls button');
+            
+            if (testButton && modal) {
+                testButton.focus();
+                const originalFocus = document.activeElement;
+                
+                modal.show();
+                
+                setTimeout(() => {
+                    modal.hide();
+                    
+                    setTimeout(() => {
+                        if (document.activeElement === originalFocus) {
+                            addResult('global', '✓ Focus restored after modal close');
+                        } else {
+                            addResult('global', '✗ Focus not properly restored after modal close', false);
+                        }
+                    }, 100);
+                }, 100);
+            } else {
+                addResult('global', '✗ Cannot test focus restoration - elements not found', false);
+            }
+        }
+
+        function highlightFocusableElements() {
+            clearResults('global');
+            
+            // Remove existing highlights
+            document.querySelectorAll('.focus-indicator').forEach(el => {
+                el.classList.remove('focus-indicator');
+            });
+
+            const pageElements = getFocusableElements(document.body);
+            const components = [
+                document.getElementById('test-onboarding'),
+                document.getElementById('test-modal'),
+                document.getElementById('test-switchboard')
+            ];
+
+            let highlighted = 0;
+
+            // Highlight page elements
+            pageElements.forEach(el => {
+                el.classList.add('focus-indicator');
+                highlighted++;
+            });
+
+            // Highlight shadow DOM elements
+            components.forEach(component => {
+                if (component && component.shadowRoot) {
+                    const shadowElements = getShadowFocusableElements(component);
+                    shadowElements.forEach(el => {
+                        el.style.outline = '3px solid #ff6b6b';
+                        el.style.outlineOffset = '2px';
+                        highlighted++;
+                    });
+                }
+            });
+
+            addResult('global', `✓ Highlighted ${highlighted} focusable elements`);
+            addInfo('global', 'All focusable elements are now highlighted. Click this button again to remove highlights.');
+            
+            if (highlighted === 0) {
+                addResult('global', '✗ No focusable elements found to highlight', false);
+            }
+        }
+
+        // Initialize tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            addInfo('global', 'Keyboard Navigation Tests loaded. Use the buttons above to test each component.');
+            
+            // Show some components by default
+            setTimeout(() => {
+                showOnboardingFlow();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

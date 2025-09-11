@@ -219,6 +219,39 @@ class LASwitchboard extends HTMLElement {
         send.classList.remove('loading');
       }
     });
+
+    // Add keyboard navigation support
+    this._setupKeyboardNavigation(input, send);
+  }
+
+  _setupKeyboardNavigation(input, send) {
+    // Handle keyboard shortcuts in the input area
+    input.addEventListener('keydown', (e) => {
+      // Ctrl+Enter or Shift+Enter to send
+      if ((e.ctrlKey || e.shiftKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!send.disabled && input.value.trim()) {
+          send.click();
+        }
+      }
+      
+      // Escape to clear input
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        input.value = '';
+        input.focus();
+      }
+    });
+
+    // Ensure proper focus behavior for send button
+    send.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!send.disabled) {
+          send.click();
+        }
+      }
+    });
   }
 
   async loadPlugins() {
