@@ -204,6 +204,8 @@ dashboards track each request so you can inspect how outputs were produced.
 - [docs/data-vault.md](docs/data-vault.md) – consent workflow and storage details
 - [docs/network-policy.md](docs/network-policy.md) – configuring server network policies
 - [docs/transparency.md](docs/transparency.md) – audit and transparency features
+- [docs/bug-bash-guide.md](docs/bug-bash-guide.md) – organizing bug bash sessions with new users
+- [docs/usability-walkthrough-guide.md](docs/usability-walkthrough-guide.md) – conducting user experience testing
 - [CONTRIBUTING.md](CONTRIBUTING.md) – contribution guidelines
 - [SECURITY.md](SECURITY.md) – security policies
 - [CONSTITUTION.md](CONSTITUTION.md) – project principles
