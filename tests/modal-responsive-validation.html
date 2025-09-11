@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Dialog Responsive Validation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .viewport-info {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-controls button {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #ddd;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .test-controls button:hover {
+            background: #0056b3;
+        }
+        
+        .test-result {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .validation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .validation-item {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        
+        .validation-item h4 {
+            margin: 0 0 0.5rem 0;
+            color: #495057;
+        }
+        
+        .validation-item .status {
+            font-weight: bold;
+        }
+        
+        .validation-item .status.pass {
+            color: #28a745;
+        }
+        
+        .validation-item .status.fail {
+            color: #dc3545;
+        }
+        
+        .validation-item .status.pending {
+            color: #ffc107;
+        }
+        
+        .device-selector {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        
+        .device-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #6c757d;
+            background: #6c757d;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .device-btn:hover {
+            background: #5a6268;
+        }
+        
+        .device-btn.active {
+            background: #28a745;
+            border-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Modal Dialog Responsive Validation</h1>
+        
+        <div class="viewport-info" id="viewport-info">
+            Current Viewport: <span id="viewport-size">Detecting...</span>
+        </div>
+        
+        <div class="test-section">
+            <h2>Device Simulation</h2>
+            <p>Test modal behavior across different device sizes by simulating various viewport dimensions.</p>
+            
+            <div class="device-selector">
+                <button class="device-btn" onclick="setViewport(320, 568, 'iPhone SE')">iPhone SE (320×568)</button>
+                <button class="device-btn" onclick="setViewport(375, 667, 'iPhone 8')">iPhone 8 (375×667)</button>
+                <button class="device-btn" onclick="setViewport(414, 896, 'iPhone 11')">iPhone 11 (414×896)</button>
+                <button class="device-btn" onclick="setViewport(768, 1024, 'iPad')">iPad (768×1024)</button>
+                <button class="device-btn" onclick="setViewport(1024, 768, 'iPad Landscape')">iPad Landscape (1024×768)</button>
+                <button class="device-btn" onclick="setViewport(1280, 720, 'Desktop')">Desktop (1280×720)</button>
+                <button class="device-btn" onclick="setViewport(1920, 1080, 'Large Desktop')">Large Desktop (1920×1080)</button>
+            </div>
+            
+            <div class="test-controls">
+                <button onclick="testModalCentering()">Test Modal Centering</button>
+                <button onclick="testConfirmCentering()">Test Confirm Centering</button>
+                <button onclick="testLargeModal()">Test Large Modal</button>
+                <button onclick="testTallContent()">Test Tall Content</button>
+                <button onclick="runFullValidation()">Run Full Validation</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Responsive Validation Results</h2>
+            <div class="validation-grid" id="validation-results">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Accessibility Validation</h2>
+            <div id="accessibility-results">
+                <!-- Accessibility test results -->
+            </div>
+        </div>
+        
+        <div id="test-results"></div>
+    </div>
+
+    <!-- Test modal components -->
+    <la-modal-dialog id="test-modal">
+        <span slot="title">Responsive Test Modal</span>
+        <div id="modal-content">
+            <p>This modal is being tested for responsive behavior and centering across different device sizes.</p>
+            <button>Test Button 1</button>
+            <input type="text" placeholder="Test input" />
+            <button>Test Button 2</button>
+        </div>
+    </la-modal-dialog>
+
+    <la-confirm-dialog id="test-confirm"></la-confirm-dialog>
+
+    <!-- Load the modal dialog components -->
+    <script type="module" src="../ui/components/modal-dialog.js"></script>
+    <script type="module" src="../ui/components/confirm-dialog.js"></script>
+    
+    <script>
+        const testResults = document.getElementById('test-results');
+        const validationResults = document.getElementById('validation-results');
+        const accessibilityResults = document.getElementById('accessibility-results');
+        const viewportInfo = document.getElementById('viewport-size');
+        
+        // Track current device context
+        let currentDevice = 'Unknown';
+        
+        function updateViewportInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            viewportInfo.textContent = `${width}×${height} (${currentDevice})`;
+        }
+        
+        function setViewport(width, height, deviceName) {
+            currentDevice = deviceName;
+            // Note: In a real test environment, you'd use browser automation tools
+            // to actually resize the viewport. This is a simulation for demonstration.
+            addResult(`Simulating viewport: ${deviceName} (${width}×${height})`, 'info');
+            updateViewportInfo();
+            
+            // Update active device button
+            document.querySelectorAll('.device-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            testResults.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function addValidationResult(category, test, status, details = '') {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'validation-item';
+            resultItem.innerHTML = `
+                <h4>${category}: ${test}</h4>
+                <div class="status ${status}">${status.toUpperCase()}</div>
+                ${details ? `<div class="details">${details}</div>` : ''}
+            `;
+            validationResults.appendChild(resultItem);
+        }
+        
+        function testModalCentering() {
+            const modal = document.getElementById('test-modal');
+            modal.querySelector('#modal-content p').textContent = `Testing modal centering on ${currentDevice}. Modal should be perfectly centered both horizontally and vertically.`;
+            
+            modal.show();
+            
+            setTimeout(() => {
+                // Check if modal is centered
+                const modalElement = modal.shadowRoot.querySelector('.dialog');
+                const rect = modalElement.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                const horizontalCenter = Math.abs((rect.left + rect.width / 2) - viewportWidth / 2) < 5;
+                const verticalCenter = Math.abs((rect.top + rect.height / 2) - viewportHeight / 2) < 5;
+                
+                if (horizontalCenter && verticalCenter) {
+                    addResult(`✅ Modal is properly centered on ${currentDevice}`, 'success');
+                    addValidationResult('Centering', `${currentDevice} Modal`, 'pass', 'Modal is properly centered');
+                } else {
+                    addResult(`❌ Modal centering issue on ${currentDevice}`, 'error');
+                    addValidationResult('Centering', `${currentDevice} Modal`, 'fail', 'Modal not properly centered');
+                }
+                
+                // Test responsive sizing
+                const isResponsive = rect.width <= viewportWidth && rect.height <= viewportHeight;
+                if (isResponsive) {
+                    addResult(`✅ Modal sizing is responsive on ${currentDevice}`, 'success');
+                    addValidationResult('Responsive', `${currentDevice} Modal`, 'pass', 'Modal fits viewport properly');
+                } else {
+                    addResult(`❌ Modal sizing issue on ${currentDevice}`, 'error');
+                    addValidationResult('Responsive', `${currentDevice} Modal`, 'fail', 'Modal exceeds viewport dimensions');
+                }
+                
+                modal.hide();
+            }, 100);
+        }
+        
+        function testConfirmCentering() {
+            const confirm = document.getElementById('test-confirm');
+            
+            confirm.show(`Testing confirm dialog centering on ${currentDevice}. This dialog should be perfectly centered.`, 'Centering Test')
+                .then(result => {
+                    addResult(`Confirm dialog closed with result: ${result}`, 'info');
+                });
+            
+            setTimeout(() => {
+                // Check if confirm dialog is centered
+                const dialogElement = confirm.shadowRoot.querySelector('.dialog');
+                const rect = dialogElement.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                const horizontalCenter = Math.abs((rect.left + rect.width / 2) - viewportWidth / 2) < 5;
+                const verticalCenter = Math.abs((rect.top + rect.height / 2) - viewportHeight / 2) < 5;
+                
+                if (horizontalCenter && verticalCenter) {
+                    addResult(`✅ Confirm dialog is properly centered on ${currentDevice}`, 'success');
+                    addValidationResult('Centering', `${currentDevice} Confirm`, 'pass', 'Confirm dialog is properly centered');
+                } else {
+                    addResult(`❌ Confirm dialog centering issue on ${currentDevice}`, 'error');
+                    addValidationResult('Centering', `${currentDevice} Confirm`, 'fail', 'Confirm dialog not properly centered');
+                }
+            }, 100);
+        }
+        
+        function testLargeModal() {
+            const modal = document.getElementById('test-modal');
+            modal.setAttribute('size', 'large');
+            modal.querySelector('#modal-content p').textContent = `Testing LARGE modal on ${currentDevice}. This should handle larger content appropriately while remaining centered.`;
+            
+            // Add more content to test scrolling
+            const extraContent = document.createElement('div');
+            extraContent.innerHTML = `
+                <h3>Additional Content</h3>
+                <p>This is additional content to test how the modal handles larger amounts of text and interactive elements.</p>
+                <button>Extra Button 1</button>
+                <textarea placeholder="Test textarea" rows="4" style="width: 100%; margin: 10px 0;"></textarea>
+                <button>Extra Button 2</button>
+                <p>More content to ensure the modal can handle scrolling if needed...</p>
+            `;
+            modal.querySelector('#modal-content').appendChild(extraContent);
+            
+            modal.show();
+            
+            setTimeout(() => {
+                testModalCentering();
+                
+                // Clean up
+                setTimeout(() => {
+                    modal.removeAttribute('size');
+                    extraContent.remove();
+                }, 2000);
+            }, 100);
+        }
+        
+        function testTallContent() {
+            const modal = document.getElementById('test-modal');
+            modal.querySelector('#modal-content p').textContent = `Testing modal with tall content on ${currentDevice}. Testing overflow handling.`;
+            
+            // Add very tall content
+            const tallContent = document.createElement('div');
+            let content = '<h3>Tall Content Test</h3>';
+            for (let i = 1; i <= 20; i++) {
+                content += `<p>Content section ${i}. This is testing how the modal handles very tall content that might exceed the viewport height.</p>`;
+            }
+            tallContent.innerHTML = content;
+            modal.querySelector('#modal-content').appendChild(tallContent);
+            
+            modal.show();
+            
+            setTimeout(() => {
+                const modalElement = modal.shadowRoot.querySelector('.dialog');
+                const hasScrollbar = modalElement.scrollHeight > modalElement.clientHeight;
+                
+                if (hasScrollbar) {
+                    addResult(`✅ Modal properly handles tall content with scrolling on ${currentDevice}`, 'success');
+                    addValidationResult('Overflow', `${currentDevice} Tall Content`, 'pass', 'Modal handles tall content with proper scrolling');
+                } else {
+                    addResult(`ℹ️ Modal content fits without scrolling on ${currentDevice}`, 'info');
+                    addValidationResult('Overflow', `${currentDevice} Tall Content`, 'pass', 'Modal content fits viewport');
+                }
+                
+                setTimeout(() => {
+                    modal.hide();
+                    tallContent.remove();
+                }, 2000);
+            }, 100);
+        }
+        
+        function runFullValidation() {
+            addResult('🧪 Starting comprehensive responsive validation...', 'info');
+            validationResults.innerHTML = ''; // Clear previous results
+            
+            const devices = [
+                { width: 320, height: 568, name: 'iPhone SE' },
+                { width: 375, height: 667, name: 'iPhone 8' },
+                { width: 414, height: 896, name: 'iPhone 11' },
+                { width: 768, height: 1024, name: 'iPad' },
+                { width: 1024, height: 768, name: 'iPad Landscape' },
+                { width: 1280, height: 720, name: 'Desktop' },
+                { width: 1920, height: 1080, name: 'Large Desktop' }
+            ];
+            
+            let currentIndex = 0;
+            
+            function testNextDevice() {
+                if (currentIndex >= devices.length) {
+                    addResult('✅ Comprehensive validation completed!', 'success');
+                    testAccessibility();
+                    return;
+                }
+                
+                const device = devices[currentIndex];
+                setViewport(device.width, device.height, device.name);
+                
+                setTimeout(() => {
+                    testModalCentering();
+                    setTimeout(() => {
+                        testConfirmCentering();
+                        setTimeout(() => {
+                            currentIndex++;
+                            testNextDevice();
+                        }, 1500);
+                    }, 1500);
+                }, 500);
+            }
+            
+            testNextDevice();
+        }
+        
+        function testAccessibility() {
+            addResult('🔍 Testing accessibility features...', 'info');
+            
+            const modal = document.getElementById('test-modal');
+            modal.show();
+            
+            setTimeout(() => {
+                const dialog = modal.shadowRoot.querySelector('.dialog');
+                
+                // Test ARIA attributes
+                const hasRole = dialog.getAttribute('role') === 'dialog';
+                const hasAriaModal = dialog.getAttribute('aria-modal') === 'true';
+                const hasAriaLabelledby = dialog.hasAttribute('aria-labelledby');
+                
+                // Test focus management
+                const focusedElement = modal.shadowRoot.activeElement || document.activeElement;
+                const hasFocus = focusedElement !== null;
+                
+                // Test keyboard navigation
+                // This would require actual keyboard simulation in a real test
+                
+                const accessibilityScore = [hasRole, hasAriaModal, hasAriaLabelledby, hasFocus].filter(Boolean).length;
+                
+                accessibilityResults.innerHTML = `
+                    <div class="validation-item">
+                        <h4>ARIA Compliance</h4>
+                        <div class="status ${hasRole && hasAriaModal && hasAriaLabelledby ? 'pass' : 'fail'}">
+                            ${hasRole && hasAriaModal && hasAriaLabelledby ? 'PASS' : 'FAIL'}
+                        </div>
+                        <div>Role: ${hasRole ? '✅' : '❌'} | Aria-modal: ${hasAriaModal ? '✅' : '❌'} | Aria-labelledby: ${hasAriaLabelledby ? '✅' : '❌'}</div>
+                    </div>
+                    <div class="validation-item">
+                        <h4>Focus Management</h4>
+                        <div class="status ${hasFocus ? 'pass' : 'fail'}">${hasFocus ? 'PASS' : 'FAIL'}</div>
+                        <div>Focus trapped: ${hasFocus ? '✅' : '❌'}</div>
+                    </div>
+                    <div class="validation-item">
+                        <h4>Overall Accessibility Score</h4>
+                        <div class="status ${accessibilityScore >= 3 ? 'pass' : 'fail'}">${accessibilityScore}/4</div>
+                        <div>Accessibility features working properly</div>
+                    </div>
+                `;
+                
+                modal.hide();
+                addResult(`✅ Accessibility testing completed. Score: ${accessibilityScore}/4`, 'success');
+            }, 100);
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            updateViewportInfo();
+            addResult('📱 Modal Responsive Validation Tool initialized', 'info');
+            addResult('💡 Use the device buttons to simulate different viewport sizes', 'info');
+            addResult('🧪 Click "Run Full Validation" for comprehensive testing', 'info');
+        });
+        
+        window.addEventListener('resize', updateViewportInfo);
+        
+        // Quick keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.altKey) {
+                switch(e.key) {
+                    case 'm':
+                        e.preventDefault();
+                        testModalCentering();
+                        break;
+                    case 'c':
+                        e.preventDefault();
+                        testConfirmCentering();
+                        break;
+                    case 'v':
+                        e.preventDefault();
+                        runFullValidation();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

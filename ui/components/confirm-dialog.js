@@ -28,6 +28,7 @@ class LAConfirmDialog extends HTMLElement {
           width: 100%;
           height: 100%;
           background-color: var(--color-backdrop, rgba(0, 0, 0, 0.5));
+          animation: fadeIn 0.2s ease-out;
         }
         .dialog {
           position: relative;
@@ -36,9 +37,12 @@ class LAConfirmDialog extends HTMLElement {
           padding: var(--spacing-lg, 1.5rem);
           border-radius: var(--radius-md, 8px);
           min-width: var(--size-modal-min-width, 20rem);
-          max-width: 90%;
+          max-width: var(--size-modal-max-width, 90vw);
+          max-height: 90vh;
           font-family: var(--font-family-sans, sans-serif);
           box-shadow: var(--shadow-modal, 0 4px 12px rgba(0, 0, 0, 0.15));
+          animation: slideIn 0.2s ease-out;
+          overflow: auto;
           /* Use CSS Grid for better layout */
           display: grid;
           grid-template-rows: auto 1fr auto;
@@ -90,6 +94,48 @@ class LAConfirmDialog extends HTMLElement {
         }
         .confirm:hover {
           background-color: var(--color-primary-hover, #2563eb);
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideIn {
+          from { 
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          .dialog {
+            min-width: 280px;
+            margin: var(--mobile-margin, var(--spacing-sm));
+            padding: var(--mobile-padding, var(--spacing-md));
+            max-width: calc(100vw - 2 * var(--mobile-margin, var(--spacing-sm)));
+          }
+          .close {
+            width: var(--touch-target-min, 44px);
+            height: var(--touch-target-min, 44px);
+            font-size: var(--font-size-lg);
+          }
+          .title {
+            font-size: var(--font-size-lg);
+            padding-right: calc(var(--touch-target-min, 44px) + var(--spacing-sm));
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .dialog {
+            max-width: calc(100vw - var(--spacing-xs));
+            max-height: calc(100vh - var(--spacing-xs));
+            margin: calc(var(--spacing-xs) / 2);
+          }
         }
         
         /* Touch-specific styles */
