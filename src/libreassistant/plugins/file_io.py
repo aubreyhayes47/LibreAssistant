@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Literal, Tuple
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, root_validator
 
 from ..kernel import kernel
 from ..mcp_adapter import MCPPluginAdapter
@@ -45,13 +45,17 @@ class FileIOInput(BaseModel):
     content: str | None = None
     confirm: bool | None = None
 
-    @model_validator(mode="after")
-    def _check_requirements(self) -> "FileIOInput":
-        if self.operation in {"create", "update"} and self.content is None:
+    @root_validator
+    def _check_requirements(cls, values) -> Dict[str, Any]:
+        operation = values.get("operation")
+        content = values.get("content")
+        confirm = values.get("confirm")
+        
+        if operation in {"create", "update"} and content is None:
             raise ValueError("content required")
-        if self.operation in {"update", "delete"} and not self.confirm:
+        if operation in {"update", "delete"} and not confirm:
             raise ValueError("confirm required")
-        return self
+        return values
 
 
 class FileIOPlugin(MCPPluginAdapter):
