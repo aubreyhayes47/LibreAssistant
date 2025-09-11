@@ -25,7 +25,7 @@ class LANotificationSystem extends HTMLElement {
           display: flex;
           align-items: center;
           gap: var(--spacing-sm);
-          max-width: 400px;
+          max-width: min(25rem, 90vw);
           opacity: 0;
           transform: translateX(100%);
           transition: all 0.3s ease;
@@ -52,8 +52,8 @@ class LANotificationSystem extends HTMLElement {
           background: #fffbeb;
         }
         .icon {
-          width: 16px;
-          height: 16px;
+          width: var(--size-icon-sm, 1rem);
+          height: var(--size-icon-sm, 1rem);
           flex-shrink: 0;
         }
         .content {
@@ -67,15 +67,15 @@ class LANotificationSystem extends HTMLElement {
           cursor: pointer;
           color: var(--color-text-secondary);
           padding: 0;
-          width: 16px;
-          height: 16px;
+          width: var(--size-icon-sm, 1rem);
+          height: var(--size-icon-sm, 1rem);
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .loading-spinner {
-          width: 16px;
-          height: 16px;
+          width: var(--size-icon-sm, 1rem);
+          height: var(--size-icon-sm, 1rem);
           border: 2px solid #f3f3f3;
           border-top: 2px solid #f59e0b;
           border-radius: 50%;

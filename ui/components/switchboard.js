@@ -7,15 +7,20 @@ class LASwitchboard extends HTMLElement {
     const shadow = this.attachShadow({ mode: 'open' });
     shadow.innerHTML = `
       <style>
+        :host {
+          display: grid;
+          grid-template-rows: auto auto 1fr;
+          gap: var(--spacing-md);
+          height: 100%;
+        }
         .request { 
           display: flex; 
           gap: var(--spacing-sm); 
-          margin-bottom: var(--spacing-sm);
+          align-items: flex-start;
         }
         .provider-row {
           display: flex;
           gap: var(--spacing-sm);
-          margin-bottom: var(--spacing-sm);
           align-items: center;
         }
         textarea {
@@ -25,6 +30,8 @@ class LASwitchboard extends HTMLElement {
           padding: var(--spacing-sm);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-sm);
+          min-height: var(--size-card-min-height);
+          resize: vertical;
         }
         select {
           font-family: var(--font-family-sans);
@@ -33,6 +40,7 @@ class LASwitchboard extends HTMLElement {
           border: 1px solid var(--color-border);
           border-radius: var(--radius-sm);
           background: var(--color-background);
+          min-width: 8rem;
         }
         button {
           background-color: var(--color-primary);
@@ -42,6 +50,8 @@ class LASwitchboard extends HTMLElement {
           padding: var(--spacing-sm) var(--spacing-md);
           cursor: pointer;
           transition: background-color 0.2s ease;
+          min-height: var(--size-button-height);
+          flex-shrink: 0;
         }
         button:disabled {
           background-color: var(--color-border);
@@ -53,8 +63,8 @@ class LASwitchboard extends HTMLElement {
         button.loading::after {
           content: '';
           position: absolute;
-          width: 16px;
-          height: 16px;
+          width: var(--size-icon-sm);
+          height: var(--size-icon-sm);
           margin: auto;
           border: 2px solid transparent;
           border-top-color: var(--color-background);
@@ -70,8 +80,17 @@ class LASwitchboard extends HTMLElement {
           100% { transform: rotate(360deg); }
         }
         .activity {
-          margin-top: var(--spacing-md);
           font-family: var(--font-family-sans);
+          overflow-y: auto;
+        }
+        .activity ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+        .activity li {
+          padding: var(--spacing-xs) 0;
+          border-bottom: 1px solid var(--color-border);
         }
       </style>
       <div class="provider-row">
