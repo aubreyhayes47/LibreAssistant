@@ -28,4 +28,6 @@ jobs:
       - run: pytest --cov=src/libreassistant
       - run: python scripts/check_license_headers.py
       - run: npm test
+      - run: npm run test:ui
+      - run: npm run test:accessibility
       - run: npx --yes markdownlint-cli '**/*.md'
