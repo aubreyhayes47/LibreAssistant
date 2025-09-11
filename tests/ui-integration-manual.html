@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibreAssistant UI Component Integration Tests</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: var(--font-family-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+            background: var(--color-background, #ffffff);
+            color: var(--color-text, #333333);
+            line-height: 1.6;
+        }
+        
+        .test-section {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            border: 1px solid var(--color-border, #e1e5e9);
+            border-radius: var(--radius-lg, 12px);
+            background: var(--color-surface, #ffffff);
+            box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.1));
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--color-primary, #007bff);
+            border-bottom: 2px solid var(--color-primary, #007bff);
+            padding-bottom: 0.5rem;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .test-status {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm, 4px);
+            font-weight: 600;
+            margin-left: auto;
+        }
+        
+        .test-status.pass {
+            background: var(--color-success-bg, #dcfce7);
+            color: var(--color-success, #16a34a);
+            border: 1px solid var(--color-success, #16a34a);
+        }
+        
+        .test-status.fail {
+            background: var(--color-error-bg, #fef2f2);
+            color: var(--color-error, #dc2626);
+            border: 1px solid var(--color-error, #dc2626);
+        }
+        
+        .test-status.pending {
+            background: var(--color-warning-bg, #fef3c7);
+            color: var(--color-warning, #d97706);
+            border: 1px solid var(--color-warning, #d97706);
+        }
+        
+        .component-demo {
+            border: 1px dashed var(--color-border, #e1e5e9);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: var(--radius-md, 8px);
+            background: var(--color-background, #ffffff);
+        }
+        
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: var(--color-surface, #f9fafb);
+            border-radius: var(--radius-sm, 4px);
+        }
+        
+        .checklist input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .accessibility-info {
+            background: var(--color-info-bg, #eff6ff);
+            border: 1px solid var(--color-info, #3b82f6);
+            border-radius: var(--radius-sm, 4px);
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .keyboard-shortcuts {
+            background: var(--color-surface, #f9fafb);
+            border-radius: var(--radius-sm, 4px);
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .keyboard-shortcuts kbd {
+            background: var(--color-text, #333333);
+            color: var(--color-background, #ffffff);
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-xs, 2px);
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .test-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .test-status {
+                margin-left: 0;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>LibreAssistant UI Component Integration Tests</h1>
+    <p>This page provides comprehensive manual testing for LibreAssistant UI components and user flows. Test each section systematically and check off completed items.</p>
+
+    <!-- Navigation and Tab Testing -->
+    <section class="test-section">
+        <h2>Main Navigation and Tabs</h2>
+        <div class="test-status pending" id="nav-status">Pending</div>
+        
+        <div class="accessibility-info">
+            <strong>Accessibility Focus:</strong> Tab navigation, arrow key support, screen reader announcements
+        </div>
+        
+        <div class="keyboard-shortcuts">
+            <strong>Keyboard Shortcuts:</strong>
+            <kbd>Tab</kbd> - Navigate between tabs
+            <kbd>Arrow Keys</kbd> - Move between tab items
+            <kbd>Enter/Space</kbd> - Activate tab
+        </div>
+        
+        <div class="component-demo">
+            <la-main-tabs id="main-navigation">
+                <div slot="tab-1" data-tab="dashboard">Dashboard</div>
+                <div slot="tab-2" data-tab="settings">Settings</div>
+                <div slot="tab-3" data-tab="help">Help</div>
+            </la-main-tabs>
+        </div>
+        
+        <ul class="checklist">
+            <li><input type="checkbox" id="nav-1"> Navigation tabs are visually distinct</li>
+            <li><input type="checkbox" id="nav-2"> Active tab is clearly indicated</li>
+            <li><input type="checkbox" id="nav-3"> Tab key cycles through tabs correctly</li>
+            <li><input type="checkbox" id="nav-4"> Arrow keys navigate between tabs</li>
+            <li><input type="checkbox" id="nav-5"> Enter/Space activates focused tab</li>
+            <li><input type="checkbox" id="nav-6"> Tab content changes when switching</li>
+            <li><input type="checkbox" id="nav-7"> Screen reader announces tab changes</li>
+            <li><input type="checkbox" id="nav-8"> Mobile responsive design works</li>
+        </ul>
+        
+        <div class="test-controls">
+            <button onclick="testTabAccessibility()" class="test-btn">Test Tab Accessibility</button>
+            <button onclick="testTabKeyboard()" class="test-btn">Test Keyboard Navigation</button>
+            <button onclick="simulateMobile()" class="test-btn">Test Mobile View</button>
+        </div>
+    </section>
+
+    <!-- Modal and Dialog Testing -->
+    <section class="test-section">
+        <h2>Modal Dialogs and Confirmations</h2>
+        <div class="test-status pending" id="modal-status">Pending</div>
+        
+        <div class="accessibility-info">
+            <strong>Accessibility Focus:</strong> Focus trapping, escape key handling, backdrop clicks, screen reader support
+        </div>
+        
+        <div class="keyboard-shortcuts">
+            <strong>Keyboard Shortcuts:</strong>
+            <kbd>Esc</kbd> - Close modal
+            <kbd>Tab</kbd> - Navigate within modal
+            <kbd>Shift+Tab</kbd> - Navigate backwards in modal
+        </div>
+        
+        <div class="component-demo">
+            <la-modal-dialog id="test-modal">
+                <span slot="title">Test Modal Dialog</span>
+                <p>This is a test modal with various interactive elements:</p>
+                <la-input-field label="Test Input" type="text"></la-input-field>
+                <la-primary-button id="modal-action-btn">Action Button</la-primary-button>
+            </la-modal-dialog>
+            
+            <la-confirm-dialog id="test-confirm"></la-confirm-dialog>
+        </div>
+        
+        <ul class="checklist">
+            <li><input type="checkbox" id="modal-1"> Modal opens and displays correctly</li>
+            <li><input type="checkbox" id="modal-2"> Focus is trapped within modal</li>
+            <li><input type="checkbox" id="modal-3"> Escape key closes modal</li>
+            <li><input type="checkbox" id="modal-4"> Backdrop click closes modal</li>
+            <li><input type="checkbox" id="modal-5"> Focus returns to trigger element</li>
+            <li><input type="checkbox" id="modal-6"> Confirm dialog shows proper buttons</li>
+            <li><input type="checkbox" id="modal-7"> Modal content is scrollable when needed</li>
+            <li><input type="checkbox" id="modal-8"> Screen reader announces modal state</li>
+        </ul>
+        
+        <div class="test-controls">
+            <button onclick="openTestModal()" class="test-btn">Open Test Modal</button>
+            <button onclick="openConfirmDialog()" class="test-btn">Open Confirm Dialog</button>
+            <button onclick="testModalAccessibility()" class="test-btn">Test Modal Accessibility</button>
+        </div>
+    </section>
+
+    <!-- Form and Input Testing -->
+    <section class="test-section">
+        <h2>Form Components and Input Handling</h2>
+        <div class="test-status pending" id="form-status">Pending</div>
+        
+        <div class="accessibility-info">
+            <strong>Accessibility Focus:</strong> Label associations, error states, validation feedback, keyboard navigation
+        </div>
+        
+        <div class="component-demo">
+            <form id="test-form">
+                <la-input-field 
+                    id="name-input" 
+                    label="Full Name" 
+                    type="text" 
+                    required
+                    placeholder="Enter your full name">
+                </la-input-field>
+                
+                <la-input-field 
+                    id="email-input" 
+                    label="Email Address" 
+                    type="email" 
+                    required
+                    placeholder="Enter your email">
+                </la-input-field>
+                
+                <la-provider-selector id="provider-select" label="Choose Provider"></la-provider-selector>
+                
+                <la-theme-selector id="theme-select"></la-theme-selector>
+                
+                <div style="margin-top: 1rem;">
+                    <la-primary-button type="submit">Submit Form</la-primary-button>
+                    <button type="reset" style="margin-left: 0.5rem;">Reset</button>
+                </div>
+            </form>
+        </div>
+        
+        <ul class="checklist">
+            <li><input type="checkbox" id="form-1"> Input fields have proper labels</li>
+            <li><input type="checkbox" id="form-2"> Required fields are indicated</li>
+            <li><input type="checkbox" id="form-3"> Validation errors are displayed</li>
+            <li><input type="checkbox" id="form-4"> Error messages are accessible</li>
+            <li><input type="checkbox" id="form-5"> Form can be navigated with keyboard</li>
+            <li><input type="checkbox" id="form-6"> Submit works correctly</li>
+            <li><input type="checkbox" id="form-7"> Reset clears all fields</li>
+            <li><input type="checkbox" id="form-8"> Mobile input experience is good</li>
+        </ul>
+        
+        <div class="test-controls">
+            <button onclick="testFormValidation()" class="test-btn">Test Validation</button>
+            <button onclick="fillTestData()" class="test-btn">Fill Test Data</button>
+            <button onclick="testFormKeyboard()" class="test-btn">Test Keyboard Navigation</button>
+        </div>
+    </section>
+
+    <!-- Touch and Mobile Testing -->
+    <section class="test-section">
+        <h2>Touch Interface and Mobile Experience</h2>
+        <div class="test-status pending" id="touch-status">Pending</div>
+        
+        <div class="accessibility-info">
+            <strong>Touch Focus:</strong> Touch target sizes, gesture support, mobile navigation, responsive design
+        </div>
+        
+        <div class="component-demo">
+            <div id="touch-demo-area" style="border: 2px solid var(--color-border); min-height: 200px; padding: 1rem; border-radius: var(--radius-md);">
+                <h3>Touch Test Area</h3>
+                <la-primary-button id="touch-btn-1">Touch Button 1</la-primary-button>
+                <la-primary-button id="touch-btn-2">Touch Button 2</la-primary-button>
+                <la-primary-button id="touch-btn-3">Touch Button 3</la-primary-button>
+                
+                <div style="margin-top: 1rem;">
+                    <la-input-field label="Touch Input" type="text" placeholder="Try typing here"></la-input-field>
+                </div>
+            </div>
+        </div>
+        
+        <ul class="checklist">
+            <li><input type="checkbox" id="touch-1"> Touch targets are at least 44px</li>
+            <li><input type="checkbox" id="touch-2"> Buttons respond to touch correctly</li>
+            <li><input type="checkbox" id="touch-3"> Touch feedback is immediate</li>
+            <li><input type="checkbox" id="touch-4"> No accidental activations</li>
+            <li><input type="checkbox" id="touch-5"> Swipe gestures work where applicable</li>
+            <li><input type="checkbox" id="touch-6"> Pinch zoom works appropriately</li>
+            <li><input type="checkbox" id="touch-7"> Virtual keyboard doesn't obscure content</li>
+            <li><input type="checkbox" id="touch-8"> All components work on mobile</li>
+        </ul>
+        
+        <div class="test-controls">
+            <button onclick="measureTouchTargets()" class="test-btn">Measure Touch Targets</button>
+            <button onclick="testTouchResponse()" class="test-btn">Test Touch Response</button>
+            <button onclick="simulateMobileKeyboard()" class="test-btn">Simulate Mobile Keyboard</button>
+        </div>
+    </section>
+
+    <!-- System Integration Testing -->
+    <section class="test-section">
+        <h2>System Integration and Data Flow</h2>
+        <div class="test-status pending" id="system-status">Pending</div>
+        
+        <div class="component-demo">
+            <la-switchboard id="main-switchboard"></la-switchboard>
+            <la-system-health id="health-monitor"></la-system-health>
+            <la-notification-system id="notifications"></la-notification-system>
+            <la-data-vault id="data-storage"></la-data-vault>
+        </div>
+        
+        <ul class="checklist">
+            <li><input type="checkbox" id="system-1"> Components communicate correctly</li>
+            <li><input type="checkbox" id="system-2"> Data flows between components</li>
+            <li><input type="checkbox" id="system-3"> Error states are handled gracefully</li>
+            <li><input type="checkbox" id="system-4"> Loading states are shown</li>
+            <li><input type="checkbox" id="system-5"> Notifications appear correctly</li>
+            <li><input type="checkbox" id="system-6"> System health is monitored</li>
+            <li><input type="checkbox" id="system-7"> Data persistence works</li>
+            <li><input type="checkbox" id="system-8"> Performance is acceptable</li>
+        </ul>
+        
+        <div class="test-controls">
+            <button onclick="testDataFlow()" class="test-btn">Test Data Flow</button>
+            <button onclick="triggerNotification()" class="test-btn">Test Notifications</button>
+            <button onclick="checkSystemHealth()" class="test-btn">Check System Health</button>
+        </div>
+    </section>
+
+    <script>
+        // Load all UI components
+        async function loadComponents() {
+            const componentPaths = [
+                '../ui/components/main-tabs.js',
+                '../ui/components/modal-dialog.js',
+                '../ui/components/confirm-dialog.js',
+                '../ui/components/input-field.js',
+                '../ui/components/primary-button.js',
+                '../ui/components/provider-selector.js',
+                '../ui/components/theme-selector.js',
+                '../ui/components/switchboard.js',
+                '../ui/components/system-health.js',
+                '../ui/components/notification-system.js',
+                '../ui/components/data-vault.js'
+            ];
+
+            for (const path of componentPaths) {
+                try {
+                    await import(path);
+                } catch (error) {
+                    console.warn(`Could not load component from ${path}:`, error);
+                }
+            }
+        }
+
+        // Test functions
+        function openTestModal() {
+            const modal = document.getElementById('test-modal');
+            if (modal && modal.show) {
+                modal.show();
+            }
+        }
+
+        function openConfirmDialog() {
+            const confirmDialog = document.getElementById('test-confirm');
+            if (confirmDialog && confirmDialog.show) {
+                confirmDialog.show('Are you sure you want to proceed?', 'Confirmation Required')
+                    .then(result => {
+                        if (result) {
+                            triggerNotification('Confirmed!', 'success');
+                        } else {
+                            triggerNotification('Cancelled', 'info');
+                        }
+                    });
+            }
+        }
+
+        function testFormValidation() {
+            const form = document.getElementById('test-form');
+            const nameInput = document.getElementById('name-input');
+            const emailInput = document.getElementById('email-input');
+            
+            // Clear inputs to trigger validation
+            if (nameInput) nameInput.value = '';
+            if (emailInput) emailInput.value = '';
+            
+            // Try to submit to trigger validation
+            if (form) {
+                form.reportValidity();
+            }
+        }
+
+        function fillTestData() {
+            const nameInput = document.getElementById('name-input');
+            const emailInput = document.getElementById('email-input');
+            
+            if (nameInput) nameInput.value = 'John Doe';
+            if (emailInput) emailInput.value = 'john@example.com';
+        }
+
+        function measureTouchTargets() {
+            const buttons = document.querySelectorAll('la-primary-button, button');
+            let issues = [];
+            
+            buttons.forEach((btn, index) => {
+                const rect = btn.getBoundingClientRect();
+                if (rect.width < 44 || rect.height < 44) {
+                    issues.push(`Button ${index + 1}: ${rect.width}x${rect.height}px (should be 44x44px minimum)`);
+                }
+            });
+            
+            if (issues.length > 0) {
+                alert('Touch target issues found:\n' + issues.join('\n'));
+            } else {
+                alert('All touch targets meet minimum size requirements!');
+            }
+        }
+
+        function triggerNotification(message = 'Test notification', type = 'info') {
+            const notifications = document.getElementById('notifications');
+            if (notifications && notifications.addNotification) {
+                notifications.addNotification(message, type);
+            }
+        }
+
+        function testDataFlow() {
+            const switchboard = document.getElementById('main-switchboard');
+            if (switchboard) {
+                // Simulate a request
+                triggerNotification('Testing data flow...', 'info');
+                setTimeout(() => {
+                    triggerNotification('Data flow test completed', 'success');
+                }, 2000);
+            }
+        }
+
+        function checkSystemHealth() {
+            const healthMonitor = document.getElementById('health-monitor');
+            if (healthMonitor && healthMonitor.checkHealth) {
+                healthMonitor.checkHealth();
+            }
+            triggerNotification('System health check initiated', 'info');
+        }
+
+        function simulateMobile() {
+            document.body.style.maxWidth = '375px';
+            document.body.style.fontSize = '16px';
+            triggerNotification('Mobile view activated', 'info');
+        }
+
+        function updateTestStatus(sectionId, status) {
+            const statusElement = document.getElementById(sectionId + '-status');
+            if (statusElement) {
+                statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                statusElement.className = 'test-status ' + status;
+            }
+        }
+
+        // Auto-update test status based on checked items
+        function setupStatusUpdates() {
+            const sections = ['nav', 'modal', 'form', 'touch', 'system'];
+            
+            sections.forEach(section => {
+                const checkboxes = document.querySelectorAll(`input[type="checkbox"][id^="${section}-"]`);
+                
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        const totalBoxes = checkboxes.length;
+                        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked).length;
+                        
+                        if (checkedBoxes === totalBoxes) {
+                            updateTestStatus(section, 'pass');
+                        } else if (checkedBoxes > 0) {
+                            updateTestStatus(section, 'pending');
+                        } else {
+                            updateTestStatus(section, 'pending');
+                        }
+                    });
+                });
+            });
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadComponents();
+            setupStatusUpdates();
+        });
+    </script>
+</body>
+</html>

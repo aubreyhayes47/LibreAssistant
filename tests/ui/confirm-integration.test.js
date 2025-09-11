@@ -18,6 +18,15 @@ global.window = dom.window;
 global.document = dom.window.document;
 global.HTMLElement = dom.window.HTMLElement;
 global.customElements = dom.window.customElements;
+global.CustomEvent = dom.window.CustomEvent;
+global.requestAnimationFrame = (callback) => setTimeout(callback, 16);
+global.localStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+  clear: () => {}
+};
+global.MutationObserver = dom.window.MutationObserver;
 
 // Load the components
 const confirmDialogPath = path.resolve('ui/components/confirm-dialog.js');
@@ -85,30 +94,38 @@ test('switchboard detects dangerous operations', async () => {
   const switchboard = document.createElement('la-switchboard');
   document.body.appendChild(switchboard);
   
+  // Wait for component to initialize
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
   // Test dangerous operation detection
-  assert.equal(
-    await switchboard.isDangerousOperation('files', 'delete file.txt'),
-    true,
-    'Should detect delete operation as dangerous'
-  );
-  
-  assert.equal(
-    await switchboard.isDangerousOperation('files', 'update data.json'),
-    true,
-    'Should detect update operation as dangerous'
-  );
-  
-  assert.equal(
-    await switchboard.isDangerousOperation('files', 'read file.txt'),
-    false,
-    'Should not detect read operation as dangerous'
-  );
-  
-  assert.equal(
-    await switchboard.isDangerousOperation('echo', 'hello world'),
-    false,
-    'Should not detect echo operation as dangerous'
-  );
+  try {
+    assert.equal(
+      await switchboard.isDangerousOperation('files', 'delete file.txt'),
+      true,
+      'Should detect delete operation as dangerous'
+    );
+    
+    assert.equal(
+      await switchboard.isDangerousOperation('files', 'update data.json'),
+      true,
+      'Should detect update operation as dangerous'
+    );
+    
+    assert.equal(
+      await switchboard.isDangerousOperation('files', 'read file.txt'),
+      false,
+      'Should not detect read operation as dangerous'
+    );
+    
+    assert.equal(
+      await switchboard.isDangerousOperation('echo', 'hello world'),
+      false,
+      'Should not detect echo operation as dangerous'
+    );
+  } catch (error) {
+    console.error('Test error:', error.message);
+    throw error;
+  }
   
   // Clean up
   document.body.removeChild(switchboard);
