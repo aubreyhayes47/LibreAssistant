@@ -32,6 +32,31 @@ class LAThemeSelector extends HTMLElement {
           cursor: pointer;
           min-width: 7.5rem;
         }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          .selector-container {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-xs);
+          }
+          select {
+            min-height: var(--touch-target-min, 44px);
+            min-width: 150px;
+            font-size: var(--font-size-base);
+            padding: var(--spacing-sm);
+          }
+          label {
+            font-size: var(--font-size-base);
+          }
+        }
+        
+        @media (max-width: 480px) {
+          select {
+            width: 100%;
+            min-width: auto;
+          }
+        }
         select:focus {
           outline: 2px solid var(--color-primary);
           outline-offset: 2px;

@@ -69,6 +69,27 @@ class LAInputField extends HTMLElement {
             min-height: 88px; /* Double the minimum for text areas */
           }
         }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          input, textarea {
+            min-height: var(--touch-target-min, 44px);
+            padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
+            font-size: var(--font-size-base, 1rem);
+          }
+          
+          label {
+            font-size: var(--font-size-base, 1rem);
+          }
+          
+          .error, .help {
+            font-size: var(--font-size-sm, 0.875rem);
+          }
+          
+          textarea {
+            min-height: calc(var(--touch-target-min, 44px) * 2);
+          }
+        }
       </style>
       <label>
         <span class="label-text"><slot name="label"></slot></span>
