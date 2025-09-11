@@ -123,6 +123,17 @@ past activity, and editing your profile. Start a chat by typing a prompt and
 selecting which model provider to use. Add API keys for new providers, apply
 themes, or write your own plugins to extend the assistant.
 
+### 📚 User Guides
+
+For detailed step-by-step instructions with screenshots, see our comprehensive user guides:
+
+- **[🔄 Switching AI Providers](docs/user-guides/switching-providers.md)** - Learn how to switch between cloud and local AI providers
+- **[🔌 Installing and Managing Plugins](docs/user-guides/installing-plugins.md)** - Complete guide to LibreAssistant's plugin system
+- **[🎨 Changing Themes](docs/user-guides/changing-themes.md)** - Customize your interface with built-in and community themes
+- **[💊 Reviewing System Health](docs/user-guides/system-health.md)** - Monitor performance and diagnose issues
+
+Each guide includes screenshots, troubleshooting tips, and best practices to help you get the most out of LibreAssistant.
+
 ## Example Requests
 
 ### Brainstorm with the Think Tank Plugin
