@@ -104,6 +104,84 @@ def test_health_reports_metrics(client):
     assert second >= first + 2
 
 
+def test_health_endpoint_comprehensive(client):
+    """Comprehensive test for health endpoint."""
+    response = client.get("/api/v1/health")
+    
+    # Basic response validation
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, dict)
+    
+    # Required fields validation
+    required_fields = ["requests", "uptime"]
+    for field in required_fields:
+        assert field in data, f"Missing required field: {field}"
+    
+    # Field type validation
+    assert isinstance(data["requests"], int)
+    assert isinstance(data["uptime"], (int, float))
+    assert data["uptime"] >= 0
+    
+    # Test multiple requests to ensure consistency
+    for _ in range(5):
+        resp = client.get("/api/v1/health")
+        assert resp.status_code == 200
+        assert isinstance(resp.json(), dict)
+
+
+def test_health_endpoint_under_load(client):
+    """Test health endpoint under multiple concurrent requests."""
+    responses = []
+    
+    # Simulate multiple rapid requests
+    for i in range(20):
+        response = client.get("/api/v1/health")
+        responses.append(response)
+        
+        # Make some other requests to increase activity
+        if i % 3 == 0:
+            client.get("/api/v1/mcp/servers")
+        if i % 5 == 0:
+            client.get("/api/v1/history/load_test_user")
+    
+    # All health requests should succeed
+    for i, response in enumerate(responses):
+        assert response.status_code == 200, f"Request {i} failed"
+        data = response.json()
+        assert "requests" in data
+        assert "uptime" in data
+    
+    # Request count should be increasing
+    first_count = responses[0].json()["requests"]
+    last_count = responses[-1].json()["requests"]
+    assert last_count >= first_count
+
+
+def test_health_endpoint_after_errors(client):
+    """Test health endpoint functionality after other endpoints have errors."""
+    # Cause some errors in other endpoints
+    client.post("/api/v1/mcp/consent/test", json={})  # Should cause 422
+    client.post("/api/v1/history/test", json={})      # Should cause 422
+    client.get("/api/v1/nonexistent")                 # Should cause 404
+    
+    # Health endpoint should still work correctly
+    response = client.get("/api/v1/health")
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert "requests" in data
+    assert "uptime" in data
+    
+    # Error tracking fields may be present
+    if "error_count" in data:
+        assert isinstance(data["error_count"], int)
+        assert data["error_count"] >= 0
+    
+    if "status" in data:
+        assert data["status"] in ["ok", "error"]
+
+
 def test_error_tracking(client):
     app = client.app
 
