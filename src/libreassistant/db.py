@@ -9,6 +9,8 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict, List
+import threading
+import time
 
 # Try to use SQLCipher for transparent database encryption. If either the
 # optional dependency or the encryption key is missing we fall back to the
@@ -31,8 +33,11 @@ else:
     SQLCIPHER_AVAILABLE = False
 HISTORY_RETENTION_DAYS = int(os.getenv("HISTORY_RETENTION_DAYS", "30"))
 AUDIT_RETENTION_DAYS = int(os.getenv("AUDIT_RETENTION_DAYS", "30"))
+PRUNE_INTERVAL_HOURS = int(os.getenv("PRUNE_INTERVAL_HOURS", "24"))
 
 _conn: sqlite3.Connection | None = None
+_prune_thread: threading.Thread | None = None
+_prune_stop_event = threading.Event()
 
 
 def get_conn() -> sqlite3.Connection:
@@ -65,7 +70,13 @@ def get_conn() -> sqlite3.Connection:
 
 def close_conn() -> None:
     """Close the global database connection if it exists."""
-    global _conn
+    global _conn, _prune_thread
+    
+    # Stop the background prune thread
+    _prune_stop_event.set()
+    if _prune_thread and _prune_thread.is_alive():
+        _prune_thread.join(timeout=5)  # Wait up to 5 seconds
+    
     if _conn is not None:
         _conn.close()
         _conn = None
@@ -114,7 +125,47 @@ def _initialize(conn: sqlite3.Connection) -> None:
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_audit_user_time ON file_audit(user_id, timestamp)"
     )
+    # Additional indexes for performance optimization
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_history_timestamp ON history(timestamp)"
+    )
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_history_user_plugin ON history(user_id, plugin)"
+    )
     conn.commit()
+    
+    # Start background pruning thread
+    _start_background_prune()
+
+
+def _start_background_prune() -> None:
+    """Start a background thread to periodically prune old records."""
+    global _prune_thread
+    
+    if _prune_thread is None or not _prune_thread.is_alive():
+        _prune_stop_event.clear()
+        _prune_thread = threading.Thread(target=_background_prune_worker, daemon=True)
+        _prune_thread.start()
+
+
+def _background_prune_worker() -> None:
+    """Background worker that periodically prunes old records."""
+    while not _prune_stop_event.is_set():
+        try:
+            # Wait for the specified interval or until stop event
+            if _prune_stop_event.wait(PRUNE_INTERVAL_HOURS * 3600):
+                break  # Stop event was set
+            
+            # Perform pruning
+            prune_history()
+            prune_audit()
+            
+        except Exception as e:
+            # Log error but don't crash the thread
+            print(f"Background pruning error: {e}")
+            # Wait a bit before retrying
+            if _prune_stop_event.wait(300):  # 5 minutes
+                break
 
 
 def clear() -> None:
