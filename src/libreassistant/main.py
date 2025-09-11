@@ -143,9 +143,26 @@ def create_app() -> FastAPI:
         return {"result": result, "state": state}
 
     @app.get("/api/v1/history/{user_id}")
-    def get_history(user_id: str) -> Dict[str, Any]:
-        """Retrieve a user's past plugin invocations."""
-        return {"history": db.get_history(user_id)}
+    def get_history(user_id: str, limit: int = None, offset: int = 0) -> Dict[str, Any]:
+        """Retrieve a user's past plugin invocations with pagination support.
+        
+        Parameters:
+            user_id: User identifier
+            limit: Maximum number of entries to return (None for all)
+            offset: Number of entries to skip from the beginning
+        """
+        history = db.get_history(user_id, limit, offset)
+        total_count = db.get_history_count(user_id)
+        
+        return {
+            "history": history,
+            "pagination": {
+                "total": total_count,
+                "limit": limit,
+                "offset": offset,
+                "has_more": limit is not None and (offset + len(history)) < total_count
+            }
+        }
 
     @app.get("/api/v1/audit/file")
     def get_file_audit() -> Dict[str, Any]:
