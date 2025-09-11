@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-09-11T13:54:36.459Z",
+  "fixes": [
+    {
+      "theme": "dark",
+      "issue": "Border on Background",
+      "original": "#343a40",
+      "background": "#121212",
+      "fixed": "#7b7f83",
+      "originalRatio": 1.63,
+      "fixedRatio": 4.64,
+      "adjustment": 35,
+      "direction": "lighter"
+    },
+    {
+      "theme": "light",
+      "issue": "Border on Background",
+      "original": "#dee2e6",
+      "background": "#ffffff",
+      "fixed": "#6f7173",
+      "originalRatio": 1.3,
+      "fixedRatio": 4.9,
+      "adjustment": 50,
+      "direction": "darker"
+    },
+    {
+      "theme": "solarized",
+      "issue": "Secondary on Background",
+      "original": "#2aa198",
+      "background": "#fdf6e3",
+      "fixed": "#207972",
+      "originalRatio": 2.93,
+      "fixedRatio": 4.82,
+      "adjustment": 25,
+      "direction": "darker"
+    },
+    {
+      "theme": "solarized",
+      "issue": "Border on Background",
+      "original": "#93a1a1",
+      "background": "#fdf6e3",
+      "fixed": "#677171",
+      "originalRatio": 2.48,
+      "fixedRatio": 4.66,
+      "adjustment": 30,
+      "direction": "darker"
+    },
+    {
+      "theme": "solarized",
+      "issue": "Primary (self-contrast)",
+      "original": "#268bd2",
+      "background": "#fdf6e3",
+      "fixed": "#2076b3",
+      "originalRatio": 3.41,
+      "fixedRatio": 4.52,
+      "adjustment": 15,
+      "direction": "darker"
+    }
+  ]
+}
