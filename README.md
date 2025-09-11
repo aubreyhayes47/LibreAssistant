@@ -22,6 +22,8 @@ detail developers expect.
   each plugin.
 - **Customise the interface** – switch between light, dark, or community themes
   and tailor the look of the web page.
+- **Stay accessible** – full keyboard navigation, screen reader support, and
+  [WCAG 2.1 AA compliance](docs/accessibility.md) for users with disabilities.
 - **Stay transparent** – dashboards reveal system health and every component
   that participates in a request.
 
@@ -204,6 +206,7 @@ dashboards track each request so you can inspect how outputs were produced.
 - [docs/data-vault.md](docs/data-vault.md) – consent workflow and storage details
 - [docs/network-policy.md](docs/network-policy.md) – configuring server network policies
 - [docs/transparency.md](docs/transparency.md) – audit and transparency features
+- [docs/accessibility.md](docs/accessibility.md) – using LibreAssistant with assistive technologies
 - [docs/bug-bash-guide.md](docs/bug-bash-guide.md) – organizing bug bash sessions with new users
 - [docs/usability-walkthrough-guide.md](docs/usability-walkthrough-guide.md) – conducting user experience testing
 - [CONTRIBUTING.md](CONTRIBUTING.md) – contribution guidelines
