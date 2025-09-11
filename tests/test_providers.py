@@ -217,3 +217,60 @@ def test_local_provider_concurrent_throttle() -> None:
     assert results.count("ok") == 1
     assert results.count("Rate limit exceeded") == 4
     assert len(provider._request_times) == 1
+
+
+def test_providers_with_comprehensive_mock_environment(monkeypatch, tmp_path):
+    """Test providers with comprehensive mock environment setup."""
+    from tests.test_env_setup import TestEnvironmentSetup, mock_external_api_call
+    
+    # Set up enhanced test environment
+    env_vars = TestEnvironmentSetup.setup_test_environment_variables(monkeypatch, tmp_path)
+    
+    # Verify mock API responses are available
+    import os
+    assert os.getenv("MOCK_EXTERNAL_APIS") == "true"
+    
+    # Test mock API call functionality
+    openai_response = mock_external_api_call("openai")
+    assert "choices" in openai_response
+    assert "message" in openai_response["choices"][0]
+    
+    local_response = mock_external_api_call("local_llm")
+    assert "response" in local_response
+    
+    # Test unknown API handling
+    unknown_response = mock_external_api_call("unknown_service")
+    assert "error" in unknown_response
+
+
+def test_enhanced_mock_openai_provider(monkeypatch):
+    """Test cloud provider with enhanced mock responses."""
+    from tests.test_env_setup import TestEnvironmentSetup
+    
+    # Get structured mock response
+    api_responses = TestEnvironmentSetup.create_mock_api_responses()
+    openai_mock = api_responses["openai_completion"]
+    
+    _mock_openai(monkeypatch, choices=openai_mock["choices"])
+    
+    provider = CloudProvider(CloudConfig())
+    result = provider.generate("test prompt", api_key="test-key")
+    
+    expected_content = openai_mock["choices"][0]["message"]["content"]
+    assert result == expected_content
+
+
+def test_enhanced_mock_local_provider(monkeypatch):
+    """Test local provider with enhanced mock responses."""
+    from tests.test_env_setup import TestEnvironmentSetup
+    
+    # Get structured mock response
+    api_responses = TestEnvironmentSetup.create_mock_api_responses()
+    local_mock = api_responses["local_llm_response"]
+    
+    _mock_http(monkeypatch, response=local_mock)
+    
+    provider = LocalProvider(LocalConfig())
+    result = provider.generate("test prompt")
+    
+    assert result == local_mock["response"]
