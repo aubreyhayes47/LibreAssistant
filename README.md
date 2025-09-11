@@ -123,6 +123,64 @@ past activity, and editing your profile. Start a chat by typing a prompt and
 selecting which model provider to use. Add API keys for new providers, apply
 themes, or write your own plugins to extend the assistant.
 
+### First Steps
+
+After launching LibreAssistant, follow these steps to get started:
+
+1. **Open the Interface**: Navigate to [http://localhost:8000](http://localhost:8000)
+2. **Set Up a Provider**: 
+   - For cloud models: Add your OpenAI API key via the provider settings
+   - For local models: Ensure Ollama is running with a model loaded
+3. **Start Chatting**: Type a message in the prompt area and select your preferred provider
+4. **Explore Plugins**: Browse available plugins like Echo, File I/O, Think Tank, and Law search
+5. **Customize**: Apply themes or create your own to personalize the interface
+
+## Core Workflows
+
+### 1. Chat with AI Models
+
+```bash
+# Example: Generate text using the cloud provider
+curl -X POST http://localhost:8000/api/v1/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+        "provider": "cloud",
+        "prompt": "Explain quantum computing in simple terms"
+      }'
+```
+
+Or use the web interface by typing prompts directly in the chat area.
+
+### 2. Plugin Management
+
+LibreAssistant comes with built-in plugins that extend functionality:
+
+- **Echo Plugin**: Test and repeat messages
+- **File I/O Plugin**: Read and write files on your system
+- **Think Tank Plugin**: Brainstorm and organize ideas
+- **Law Plugin**: Search public legislation and legal documents
+
+### 3. Provider Configuration
+
+Set up different model providers for various use cases:
+
+```bash
+# Add OpenAI API key
+curl -X POST http://localhost:8000/api/v1/providers/cloud/key \
+  -H "Content-Type: application/json" \
+  -d '{"key": "your-openai-api-key"}'
+
+# For local models, configure environment variables:
+export LOCAL_URL="http://localhost:11434/api/generate"
+export LOCAL_MODEL="llama2"
+```
+
+### 4. Data Management
+
+- **View History**: Access your conversation history via the Past Requests tab
+- **Data Vault**: Securely store and manage personal data with encryption
+- **Audit Logs**: Review all system activities through transparency dashboards
+
 ## Example Requests
 
 ### Brainstorm with the Think Tank Plugin
@@ -176,12 +234,108 @@ XML with metadata about the query.
 
 ## Customise and Extend
 
-- **Add providers** – set API keys at
-  `/api/v1/providers/{name}/key` to use cloud models.
-- **Pick a theme** – apply a community style from
-  `/api/v1/themes/{name}.css` or design your own.
-- **Write plugins** – see [docs/plugin-api.md](docs/plugin-api.md) for a guide
-  to building and registering new tools.
+LibreAssistant is designed to be highly customizable. Here are the main ways to tailor it to your needs:
+
+### Model Providers
+
+Add support for different AI models and services:
+
+```bash
+# Set API keys for cloud providers
+curl -X POST http://localhost:8000/api/v1/providers/cloud/key \
+  -H "Content-Type: application/json" \
+  -d '{"key": "your-api-key"}'
+
+# Configure local model settings
+export LOCAL_URL="http://your-server:port/api/generate"
+export LOCAL_MODEL="your-model-name"
+export LOCAL_MAX_TOKENS="2048"
+export LOCAL_TEMPERATURE="0.7"
+```
+
+### Themes and Styling
+
+LibreAssistant supports multiple themes that you can switch between or create:
+
+```bash
+# Apply a built-in theme
+curl -X POST http://localhost:8000/api/v1/themes/preference/your-user-id \
+  -H "Content-Type: application/json" \
+  -d '{"theme_id": "dark"}'
+
+# Available built-in themes: light, dark, high-contrast
+```
+
+**Creating Custom Themes:**
+
+1. Create a new directory: `community-themes/my-theme/`
+2. Add `metadata.json`:
+   ```json
+   {
+     "name": "My Custom Theme",
+     "author": "Your Name",
+     "preview": "#ff6b6b"
+   }
+   ```
+3. Add `theme.css` with your custom variables:
+   ```css
+   :root {
+     --color-primary: #ff6b6b;
+     --color-background: #2c3e50;
+     --color-text: #ecf0f1;
+   }
+   ```
+4. Run the theme builder: `python scripts/build_theme_catalog.py`
+
+### Plugin Development
+
+Extend LibreAssistant's capabilities by creating custom plugins:
+
+```python
+# Example plugin structure
+from libreassistant.kernel import kernel
+
+def my_plugin_handler(user_id: str, payload: dict) -> dict:
+    # Your plugin logic here
+    return {"result": "success", "data": payload}
+
+# Register the plugin
+kernel.register_plugin("my_plugin", my_plugin_handler)
+```
+
+See [docs/plugin-api.md](docs/plugin-api.md) for detailed plugin development guidance.
+
+### Network Security
+
+Configure access controls for plugins:
+
+```json
+{
+  "plugin_name": {
+    "allowed_hosts": ["api.example.com"],
+    "blocked_protocols": ["ftp"],
+    "max_requests_per_minute": 10
+  }
+}
+```
+
+### Advanced Configuration
+
+Customize system behavior through environment variables:
+
+```bash
+# Rate limiting
+export OPENAI_RATE_LIMIT="60"
+export LOCAL_RATE_LIMIT="30"
+
+# Model parameters
+export OPENAI_MAX_TOKENS="1024"
+export OPENAI_TEMPERATURE="0.8"
+
+# Security settings
+export VAULT_ENCRYPTION="enabled"
+export AUDIT_LOGGING="verbose"
+```
 
 ## Architecture Overview
 
