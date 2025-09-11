@@ -68,8 +68,8 @@ class LAProviderSelector extends HTMLElement {
       </style>
       <div class="selector-container">
         <label for="provider-select">Provider:</label>
-        <div class="status-indicator" id="status"></div>
-        <select id="provider-select">
+        <div class="status-indicator" id="status" role="img" aria-label="Provider connection status"></div>
+        <select id="provider-select" aria-label="Select AI provider" aria-describedby="status">
           <option value="">Loading providers...</option>
         </select>
       </div>
@@ -113,6 +113,11 @@ class LAProviderSelector extends HTMLElement {
   setupEventListeners() {
     const select = this.shadowRoot.getElementById('provider-select');
     select.addEventListener('change', (event) => {
+      const selectedProvider = this.providers.find(p => p.id === event.target.value);
+      if (selectedProvider) {
+        // Update ARIA description for screen readers
+        select.setAttribute('aria-description', `Selected provider: ${selectedProvider.name} - ${selectedProvider.description}`);
+      }
       this.switchProvider(event.target.value);
     });
   }
@@ -223,13 +228,14 @@ class LAProviderSelector extends HTMLElement {
     
     const provider = this.providers.find(p => p.id === this.currentProvider);
     const statusText = {
-      'connected': 'Connected',
-      'error': 'Error',
-      'loading': 'Checking...',
-      'unknown': 'Unknown'
-    }[status] || 'Unknown';
+      'connected': 'Connected and ready',
+      'error': 'Connection error',
+      'loading': 'Checking connection...',
+      'unknown': 'Status unknown'
+    }[status] || 'Status unknown';
     
     statusIndicator.title = `${provider?.name || 'Unknown'}: ${statusText}`;
+    statusIndicator.setAttribute('aria-label', `Provider ${provider?.name || 'Unknown'} status: ${statusText}`);
   }
 
   // Public API

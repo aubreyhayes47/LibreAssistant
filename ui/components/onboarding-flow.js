@@ -144,46 +144,57 @@ class LAOnboardingFlow extends HTMLElement {
           border-radius: var(--radius-sm);
           margin: var(--spacing-md) 0;
         }
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
       </style>
-      <div class="progress-bar">
+      <div class="progress-bar" role="progressbar" aria-label="Setup progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5">
         <div class="progress-fill" id="progress"></div>
       </div>
-      <div id="error-container"></div>
-      <div class="step" data-step="0">
-        <h2>Step 1: Choose AI Engine</h2>
+      <div id="error-container" role="alert" aria-live="assertive"></div>
+      <div class="step" data-step="0" role="tabpanel" aria-labelledby="step-0-title">
+        <h2 id="step-0-title">Step 1: Choose AI Engine</h2>
         <div class="step-info">
           <p>Select whether to use cloud-based AI services or local AI models. Cloud providers offer more powerful models but send data externally.</p>
         </div>
-        <select id="engine">
+        <select id="engine" aria-label="Choose AI engine type" aria-describedby="step-0-title">
           <option value="">-- Please select --</option>
           <option value="cloud">Cloud (OpenAI, Anthropic, etc.)</option>
           <option value="local">Local (Ollama, etc.)</option>
         </select>
       </div>
-      <div class="step" data-step="1" hidden>
-        <h2>Step 2: Provider Setup</h2>
+      <div class="step" data-step="1" hidden role="tabpanel" aria-labelledby="step-1-title">
+        <h2 id="step-1-title">Step 2: Provider Setup</h2>
         <div class="step-info">
           <p>Enter your API key for the selected provider. This will be securely stored and used to authenticate with the AI service.</p>
         </div>
-        <input id="apikey" type="password" placeholder="Enter your API key" />
-        <p><small>Your API key is encrypted and stored locally.</small></p>
+        <input id="apikey" type="password" placeholder="Enter your API key" aria-label="API key" aria-describedby="api-key-help" />
+        <p id="api-key-help"><small>Your API key is encrypted and stored locally.</small></p>
       </div>
-      <div class="step" data-step="2" hidden>
-        <h2>Step 3: Configure Plugins</h2>
+      <div class="step" data-step="2" hidden role="tabpanel" aria-labelledby="step-2-title">
+        <h2 id="step-2-title">Step 3: Configure Plugins</h2>
         <div class="step-info">
           <p>Choose which plugins to enable. Plugins extend LibreAssistant's capabilities but may access additional data.</p>
         </div>
-        <ul id="plugin-list"></ul>
+        <ul id="plugin-list" role="group" aria-labelledby="step-2-title"></ul>
       </div>
-      <div class="step" data-step="3" hidden>
-        <h2>Step 4: Review Configuration</h2>
+      <div class="step" data-step="3" hidden role="tabpanel" aria-labelledby="step-3-title">
+        <h2 id="step-3-title">Step 4: Review Configuration</h2>
         <div class="step-info">
           <p>Review your settings before proceeding. You can modify these later in settings.</p>
         </div>
-        <div id="summary"></div>
+        <div id="summary" aria-label="Configuration summary"></div>
       </div>
-      <div class="step" data-step="4" hidden>
-        <h2>Step 5: Privacy Agreement</h2>
+      <div class="step" data-step="4" hidden role="tabpanel" aria-labelledby="step-4-title">
+        <h2 id="step-4-title">Step 5: Privacy Agreement</h2>
         <div class="step-info">
           <p>Please review and accept our privacy policy regarding data handling.</p>
         </div>
@@ -197,19 +208,20 @@ class LAOnboardingFlow extends HTMLElement {
             <li>Never share your data with third parties without consent</li>
           </ul>
         </div>
-        <label><input id="privacy" type="checkbox" /> I understand and agree to the privacy policy</label>
+        <label for="privacy-checkbox"><input id="privacy-checkbox" type="checkbox" aria-describedby="privacy-help" /> I understand and agree to the privacy policy</label>
+        <div id="privacy-help" class="sr-only">You must agree to continue with the setup</div>
       </div>
-      <div class="step" data-step="5" hidden>
-        <h2>Setup Complete!</h2>
+      <div class="step" data-step="5" hidden role="tabpanel" aria-labelledby="step-5-title">
+        <h2 id="step-5-title">Setup Complete!</h2>
         <div class="step-info">
           <p>LibreAssistant is now configured and ready to use.</p>
         </div>
-        <div id="completion-summary"></div>
+        <div id="completion-summary" aria-label="Setup completion summary"></div>
         <p>You can change these settings anytime in the preferences.</p>
       </div>
       <div class="controls">
-        <button id="back">Back</button>
-        <button id="next">Next</button>
+        <button id="back" aria-label="Go to previous step">Back</button>
+        <button id="next" aria-label="Go to next step">Next</button>
       </div>
     `;
   }
@@ -225,7 +237,7 @@ class LAOnboardingFlow extends HTMLElement {
     this.pluginList = this.shadowRoot.getElementById('plugin-list');
     this.summary = this.shadowRoot.getElementById('summary');
     this.completionSummary = this.shadowRoot.getElementById('completion-summary');
-    this.privacyCheck = this.shadowRoot.getElementById('privacy');
+    this.privacyCheck = this.shadowRoot.getElementById('privacy-checkbox');
     
     await this.loadPlugins();
     this.update();
