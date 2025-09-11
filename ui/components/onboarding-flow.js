@@ -279,6 +279,9 @@ class LAOnboardingFlow extends HTMLElement {
         this.setLoading(false);
       }
     });
+
+    // Add keyboard navigation support
+    this._setupKeyboardNavigation();
   }
 
   async loadPlugins() {
@@ -472,6 +475,69 @@ class LAOnboardingFlow extends HTMLElement {
         detail: { provider: this.provider, plugins: enabled }
       })
     );
+  }
+
+  _setupKeyboardNavigation() {
+    // Add keyboard event handling for the entire component
+    this.addEventListener('keydown', (e) => {
+      // Handle Enter key on form elements
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+        const activeElement = this.shadowRoot.activeElement;
+        
+        // For input fields, trigger next button
+        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT')) {
+          e.preventDefault();
+          if (!this.nextBtn.disabled) {
+            this.nextBtn.click();
+          }
+        }
+      }
+      
+      // Handle Escape key to go back
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (!this.backBtn.disabled && this.step > 0) {
+          this.backBtn.click();
+        }
+      }
+    });
+
+    // Ensure proper focus management when step changes
+    this._setupStepFocusManagement();
+  }
+
+  _setupStepFocusManagement() {
+    // Focus the first interactive element when step changes
+    const observer = new MutationObserver(() => {
+      this._focusFirstInteractiveElement();
+    });
+
+    // Observe changes to step visibility
+    this.steps.forEach(step => {
+      observer.observe(step, { attributes: true, attributeFilter: ['hidden'] });
+    });
+  }
+
+  _focusFirstInteractiveElement() {
+    const currentStep = this.steps[this.step];
+    if (!currentStep || currentStep.hidden) return;
+
+    // Find the first focusable element in the current step
+    const focusableSelectors = [
+      'input:not([disabled]):not([hidden])',
+      'select:not([disabled]):not([hidden])',
+      'textarea:not([disabled]):not([hidden])',
+      'button:not([disabled]):not([hidden])',
+      '[tabindex]:not([tabindex="-1"]):not([disabled]):not([hidden])'
+    ];
+
+    const focusableElement = currentStep.querySelector(focusableSelectors.join(', '));
+    if (focusableElement) {
+      // Small delay to ensure element is ready
+      setTimeout(() => {
+        focusableElement.focus();
+      }, 100);
+    }
   }
 }
 
