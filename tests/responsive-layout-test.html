@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Layout Test - Core Flows</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: var(--font-family-sans);
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            background: var(--color-surface);
+        }
+        
+        .test-result {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .test-controls {
+            margin: 1rem 0;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .test-controls button {
+            margin: 0.25rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--color-border);
+            background: var(--color-primary);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .test-controls button:hover {
+            background: var(--color-primary-hover);
+        }
+        
+        .viewport-controls {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--color-surface);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--color-border);
+        }
+        
+        .viewport-controls h4 {
+            margin-top: 0;
+            color: var(--color-text);
+        }
+        
+        .viewport-info {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: var(--color-background);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
+        .component-container {
+            border: 2px dashed var(--color-border);
+            padding: 1rem;
+            margin: 1rem 0;
+            background: var(--color-background);
+            min-height: 200px;
+            transition: all 0.3s ease;
+        }
+        
+        .component-container.small {
+            max-width: 320px;
+            margin: 1rem auto;
+        }
+        
+        .component-container.medium {
+            max-width: 768px;
+            margin: 1rem auto;
+        }
+        
+        .component-container.large {
+            max-width: 1200px;
+            margin: 1rem auto;
+        }
+        
+        .viewport-label {
+            position: absolute;
+            top: -20px;
+            left: 10px;
+            background: var(--color-primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .component-container {
+            position: relative;
+        }
+        
+        /* Hide components by default */
+        .component-test {
+            display: none;
+        }
+        
+        .component-test.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Responsive Layout Test - Core Flows</h1>
+    
+    <div class="viewport-controls">
+        <h4>Viewport Controls</h4>
+        <div class="test-controls">
+            <button onclick="setViewport('small')">Small (320px)</button>
+            <button onclick="setViewport('medium')">Medium (768px)</button>
+            <button onclick="setViewport('large')">Large (1200px)</button>
+            <button onclick="testAllViewports()">Test All Viewports</button>
+        </div>
+        <div class="viewport-info" id="viewport-info">
+            Current viewport: Large (1200px) - Desktop
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <div class="test-controls">
+            <button onclick="testOnboardingLayout()">Test Onboarding Flow</button>
+            <button onclick="testSwitchboardLayout()">Test Switchboard</button>
+            <button onclick="testHistoryLayout()">Test History/Past Requests</button>
+            <button onclick="testMainTabsLayout()">Test Main Tabs</button>
+            <button onclick="runAllLayoutTests()">Run All Layout Tests</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+        
+        <div id="test-results"></div>
+    </div>
+    
+    <!-- Onboarding Flow Test -->
+    <div class="test-section component-test" id="onboarding-test">
+        <h2>Onboarding Flow - Responsive Layout</h2>
+        <div class="component-container large" id="onboarding-container">
+            <div class="viewport-label">Large (Desktop)</div>
+            <la-onboarding-flow id="test-onboarding"></la-onboarding-flow>
+        </div>
+    </div>
+    
+    <!-- Switchboard Test -->
+    <div class="test-section component-test" id="switchboard-test">
+        <h2>Switchboard - Responsive Layout</h2>
+        <div class="component-container large" id="switchboard-container">
+            <div class="viewport-label">Large (Desktop)</div>
+            <la-switchboard id="test-switchboard"></la-switchboard>
+        </div>
+    </div>
+    
+    <!-- History Test -->
+    <div class="test-section component-test" id="history-test">
+        <h2>History/Past Requests - Responsive Layout</h2>
+        <div class="component-container large" id="history-container">
+            <div class="viewport-label">Large (Desktop)</div>
+            <la-past-requests id="test-history" user-id="test-user"></la-past-requests>
+        </div>
+    </div>
+    
+    <!-- Main Tabs Test -->
+    <div class="test-section component-test" id="tabs-test">
+        <h2>Main Tabs Navigation - Responsive Layout</h2>
+        <div class="component-container large" id="tabs-container">
+            <div class="viewport-label">Large (Desktop)</div>
+            <la-main-tabs id="test-tabs"></la-main-tabs>
+        </div>
+    </div>
+
+    <!-- Load Components -->
+    <script type="module" src="../ui/components/onboarding-flow.js"></script>
+    <script type="module" src="../ui/components/switchboard.js"></script>
+    <script type="module" src="../ui/components/past-requests.js"></script>
+    <script type="module" src="../ui/components/main-tabs.js"></script>
+    <script type="module" src="../ui/components/provider-selector.js"></script>
+
+    <script>
+        let currentViewport = 'large';
+        let testResults = [];
+        
+        // Viewport configuration
+        const viewports = {
+            small: { width: 320, label: 'Small (320px) - Mobile' },
+            medium: { width: 768, label: 'Medium (768px) - Tablet' },
+            large: { width: 1200, label: 'Large (1200px) - Desktop' }
+        };
+        
+        function addResult(message, isSuccess = true, type = 'default') {
+            const resultsContainer = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            if (type === 'info') div.className = 'test-result info';
+            
+            const timestamp = new Date().toLocaleTimeString();
+            div.textContent = `[${timestamp}] ${message}`;
+            resultsContainer.appendChild(div);
+            
+            // Auto-scroll to latest result
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            testResults.push({ message, isSuccess, timestamp, viewport: currentViewport });
+        }
+        
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            testResults = [];
+            addResult('Test results cleared', true, 'info');
+        }
+        
+        function setViewport(size) {
+            currentViewport = size;
+            const viewport = viewports[size];
+            
+            // Update all component containers
+            document.querySelectorAll('.component-container').forEach(container => {
+                container.className = `component-container ${size}`;
+                const label = container.querySelector('.viewport-label');
+                if (label) {
+                    label.textContent = viewport.label;
+                }
+            });
+            
+            // Update viewport info
+            document.getElementById('viewport-info').textContent = 
+                `Current viewport: ${viewport.label}`;
+            
+            addResult(`Switched to ${viewport.label}`, true, 'info');
+        }
+        
+        function showComponent(componentId) {
+            // Hide all components
+            document.querySelectorAll('.component-test').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show selected component
+            const component = document.getElementById(componentId);
+            if (component) {
+                component.classList.add('active');
+            }
+        }
+        
+        function testComponentLayout(componentId, componentName) {
+            addResult(`Testing ${componentName} layout at ${viewports[currentViewport].label}`, true, 'info');
+            
+            const component = document.querySelector(`#${componentId}`);
+            if (!component) {
+                addResult(`✗ ${componentName} component not found`, false);
+                return false;
+            }
+            
+            // Show the component for testing
+            showComponent(`${componentId.replace('test-', '')}-test`);
+            
+            let issues = 0;
+            
+            // Test 1: Component is visible and rendered
+            const computedStyle = window.getComputedStyle(component);
+            if (computedStyle.display === 'none') {
+                addResult(`✗ ${componentName} is not visible`, false);
+                issues++;
+            } else {
+                addResult(`✓ ${componentName} is visible`);
+            }
+            
+            // Test 2: Component has reasonable dimensions
+            const rect = component.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) {
+                addResult(`✗ ${componentName} has no dimensions (${rect.width}x${rect.height})`, false);
+                issues++;
+            } else {
+                addResult(`✓ ${componentName} has valid dimensions (${Math.round(rect.width)}x${Math.round(rect.height)})`);
+            }
+            
+            // Test 3: Component doesn't overflow horizontally
+            const container = component.closest('.component-container');
+            const containerWidth = container.getBoundingClientRect().width;
+            const padding = 32; // Account for container padding
+            
+            if (rect.width > (containerWidth - padding)) {
+                addResult(`✗ ${componentName} overflows container (${Math.round(rect.width)}px > ${Math.round(containerWidth - padding)}px)`, false);
+                issues++;
+            } else {
+                addResult(`✓ ${componentName} fits within container`);
+            }
+            
+            // Test 4: Check for responsive elements (if shadow DOM)
+            if (component.shadowRoot) {
+                const shadowElements = component.shadowRoot.querySelectorAll('*');
+                let responsiveElements = 0;
+                
+                shadowElements.forEach(el => {
+                    const style = window.getComputedStyle(el);
+                    if (style.width.includes('%') || style.maxWidth !== 'none' || style.flexBasis !== 'auto') {
+                        responsiveElements++;
+                    }
+                });
+                
+                if (responsiveElements > 0) {
+                    addResult(`✓ ${componentName} has ${responsiveElements} responsive elements`);
+                } else {
+                    addResult(`⚠ ${componentName} may not be fully responsive`, false);
+                    issues++;
+                }
+            }
+            
+            // Test 5: Check for text readability (font size not too small)
+            const minFontSize = currentViewport === 'small' ? 14 : 16;
+            const fontSize = parseFloat(computedStyle.fontSize);
+            
+            if (fontSize < minFontSize) {
+                addResult(`✗ ${componentName} font size too small for ${currentViewport} (${fontSize}px < ${minFontSize}px)`, false);
+                issues++;
+            } else {
+                addResult(`✓ ${componentName} has readable font size (${fontSize}px)`);
+            }
+            
+            return issues === 0;
+        }
+        
+        function testOnboardingLayout() {
+            return testComponentLayout('test-onboarding', 'Onboarding Flow');
+        }
+        
+        function testSwitchboardLayout() {
+            return testComponentLayout('test-switchboard', 'Switchboard');
+        }
+        
+        function testHistoryLayout() {
+            return testComponentLayout('test-history', 'History/Past Requests');
+        }
+        
+        function testMainTabsLayout() {
+            return testComponentLayout('test-tabs', 'Main Tabs');
+        }
+        
+        function runAllLayoutTests() {
+            addResult(`Running all layout tests at ${viewports[currentViewport].label}`, true, 'info');
+            
+            const tests = [
+                { name: 'Onboarding Flow', fn: testOnboardingLayout },
+                { name: 'Switchboard', fn: testSwitchboardLayout },
+                { name: 'History/Past Requests', fn: testHistoryLayout },
+                { name: 'Main Tabs', fn: testMainTabsLayout }
+            ];
+            
+            let passCount = 0;
+            
+            tests.forEach((test, index) => {
+                setTimeout(() => {
+                    if (test.fn()) {
+                        passCount++;
+                    }
+                    
+                    if (index === tests.length - 1) {
+                        addResult(`Layout test summary: ${passCount}/${tests.length} components passed`, 
+                                 passCount === tests.length, 'info');
+                    }
+                }, index * 500); // Stagger tests for better visibility
+            });
+        }
+        
+        function testAllViewports() {
+            addResult('Starting comprehensive viewport testing...', true, 'info');
+            
+            const viewportSizes = Object.keys(viewports);
+            let currentIndex = 0;
+            
+            function testNextViewport() {
+                if (currentIndex >= viewportSizes.length) {
+                    addResult('✓ All viewport tests completed!', true, 'info');
+                    generateTestSummary();
+                    return;
+                }
+                
+                const viewport = viewportSizes[currentIndex];
+                setViewport(viewport);
+                
+                setTimeout(() => {
+                    runAllLayoutTests();
+                    currentIndex++;
+                    setTimeout(testNextViewport, 3000); // Wait for tests to complete
+                }, 1000); // Wait for viewport change
+            }
+            
+            testNextViewport();
+        }
+        
+        function generateTestSummary() {
+            addResult('=== TEST SUMMARY ===', true, 'info');
+            
+            const summary = {};
+            testResults.forEach(result => {
+                if (!summary[result.viewport]) {
+                    summary[result.viewport] = { passed: 0, failed: 0, total: 0 };
+                }
+                if (result.message.includes('✓') || result.message.includes('✗')) {
+                    summary[result.viewport].total++;
+                    if (result.isSuccess) {
+                        summary[result.viewport].passed++;
+                    } else {
+                        summary[result.viewport].failed++;
+                    }
+                }
+            });
+            
+            Object.keys(summary).forEach(viewport => {
+                const s = summary[viewport];
+                addResult(`${viewports[viewport].label}: ${s.passed}/${s.total} tests passed`, 
+                         s.failed === 0, 'info');
+            });
+        }
+        
+        // Initialize with large viewport
+        document.addEventListener('DOMContentLoaded', () => {
+            setViewport('large');
+            setTimeout(() => {
+                addResult('Responsive layout test suite loaded', true, 'info');
+                addResult('Use the controls above to test different components and viewports', true, 'info');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

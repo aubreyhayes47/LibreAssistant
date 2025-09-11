@@ -30,7 +30,7 @@ class LAThemeSelector extends HTMLElement {
           font-family: inherit;
           font-size: var(--font-size-sm);
           cursor: pointer;
-          min-width: 120px;
+          min-width: 7.5rem;
         }
         
         /* Mobile responsive adjustments */
@@ -67,8 +67,8 @@ class LAThemeSelector extends HTMLElement {
           opacity: 0.6;
         }
         .preview {
-          width: 20px;
-          height: 20px;
+          width: var(--size-icon-md, 1.25rem);
+          height: var(--size-icon-md, 1.25rem);
           border-radius: var(--radius-sm);
           border: 1px solid var(--color-border);
           display: inline-block;

@@ -35,10 +35,14 @@ class LAConfirmDialog extends HTMLElement {
           color: var(--color-text, black);
           padding: var(--spacing-lg, 1.5rem);
           border-radius: var(--radius-md, 8px);
-          min-width: 300px;
+          min-width: var(--size-modal-min-width, 20rem);
           max-width: 90%;
           font-family: var(--font-family-sans, sans-serif);
           box-shadow: var(--shadow-modal, 0 4px 12px rgba(0, 0, 0, 0.15));
+          /* Use CSS Grid for better layout */
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+          gap: var(--spacing-sm, 0.5rem);
         }
         .close {
           position: absolute;
@@ -87,6 +91,35 @@ class LAConfirmDialog extends HTMLElement {
         .confirm:hover {
           background-color: var(--color-primary-hover, #2563eb);
         }
+        
+        /* Touch-specific styles */
+        @media (hover: none) and (pointer: coarse) {
+          button {
+            min-height: var(--touch-target-min, 44px);
+            padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
+            font-size: var(--font-size-lg, 1.125rem);
+          }
+          .close {
+            min-width: var(--touch-target-min, 44px);
+            min-height: var(--touch-target-min, 44px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .actions {
+            gap: var(--spacing-md, 1rem);
+          }
+          .dialog {
+            margin: var(--spacing-md, 1rem);
+            padding: var(--spacing-xl, 2rem);
+          }
+        }
+        
+        /* Touch feedback */
+        button.touch-active {
+          transform: scale(0.98);
+          transition: transform 0.1s ease;
+        }
       </style>
       <div class="backdrop" part="backdrop"></div>
       <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="title" aria-describedby="message">
@@ -131,6 +164,11 @@ class LAConfirmDialog extends HTMLElement {
     cancelBtn.addEventListener('click', () => hide(false));
     confirmBtn.addEventListener('click', () => hide(true));
 
+    // Add touch interaction support for all buttons
+    this._setupTouchHandlers(closeBtn);
+    this._setupTouchHandlers(cancelBtn);
+    this._setupTouchHandlers(confirmBtn);
+
     // Handle escape key and focus trapping
     this.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -140,6 +178,21 @@ class LAConfirmDialog extends HTMLElement {
         this._handleTabKey(e);
       }
     });
+  }
+
+  _setupTouchHandlers(button) {
+    // Touch feedback for visual indication
+    button.addEventListener('touchstart', (e) => {
+      button.classList.add('touch-active');
+    }, { passive: true });
+
+    button.addEventListener('touchend', (e) => {
+      button.classList.remove('touch-active');
+    }, { passive: true });
+
+    button.addEventListener('touchcancel', (e) => {
+      button.classList.remove('touch-active');
+    }, { passive: true });
   }
 
   _handleTabKey(e) {

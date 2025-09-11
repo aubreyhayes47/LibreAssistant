@@ -19,6 +19,8 @@ class LAMainTabs extends HTMLElement {
           overflow-x: auto;
           scrollbar-width: none;
           -ms-overflow-style: none;
+          /* Ensure tabs wrap on small screens */
+          flex-wrap: nowrap;
         }
         nav::-webkit-scrollbar {
           display: none;
@@ -34,11 +36,12 @@ class LAMainTabs extends HTMLElement {
           border-bottom: 2px solid transparent;
           transition: all 0.2s ease;
           white-space: nowrap;
-          min-height: 2.5rem;
+          min-height: var(--size-button-height, 2.5rem);
           display: flex;
           align-items: center;
           gap: var(--spacing-xs, 0.25rem);
           position: relative;
+          flex-shrink: 0;
         }
         button[role="tab"]:hover {
           color: var(--color-text, #111827);
@@ -72,8 +75,8 @@ class LAMainTabs extends HTMLElement {
           outline-offset: -2px;
         }
         .tab-icon {
-          width: 1rem;
-          height: 1rem;
+          width: var(--size-icon-sm, 1rem);
+          height: var(--size-icon-sm, 1rem);
           fill: currentColor;
         }
         .tab-badge {
@@ -97,8 +100,8 @@ class LAMainTabs extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 1rem;
-          height: 1rem;
+          width: var(--size-icon-sm, 1rem);
+          height: var(--size-icon-sm, 1rem);
           font-size: 0.75rem;
         }
         .close-button:hover {

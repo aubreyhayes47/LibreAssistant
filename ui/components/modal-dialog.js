@@ -36,13 +36,17 @@ class LAModalDialog extends HTMLElement {
           color: var(--color-text, black);
           padding: var(--spacing-lg, 1.5rem);
           border-radius: var(--radius-md, 8px);
-          min-width: 300px;
-          max-width: 90vw;
+          min-width: var(--size-modal-min-width, 20rem);
+          max-width: var(--size-modal-max-width, 90vw);
           max-height: 90vh;
           font-family: var(--font-family-sans, sans-serif);
           box-shadow: var(--shadow-modal, 0 4px 12px rgba(0, 0, 0, 0.15));
           animation: slideIn 0.2s ease-out;
           overflow: auto;
+          /* Use CSS Grid for better content layout */
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+          gap: var(--spacing-sm, 0.5rem);
         }
         .close {
           position: absolute;
@@ -53,8 +57,8 @@ class LAModalDialog extends HTMLElement {
           font-size: var(--font-size-lg, 1.25rem);
           cursor: pointer;
           color: var(--color-text-secondary, #6b7280);
-          width: 2rem;
-          height: 2rem;
+          width: var(--size-icon-lg, 1.5rem);
+          height: var(--size-icon-lg, 1.5rem);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -121,11 +125,11 @@ class LAModalDialog extends HTMLElement {
         }
         
         :host([size="small"]) .dialog {
-          min-width: 250px;
-          max-width: 400px;
+          min-width: 15rem;
+          max-width: 25rem;
         }
         :host([size="large"]) .dialog {
-          min-width: 600px;
+          min-width: 37.5rem;
           max-width: 80vw;
         }
         :host([size="full"]) .dialog {

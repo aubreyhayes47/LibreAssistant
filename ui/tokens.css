@@ -17,11 +17,22 @@
   --line-height-loose: 1.75;
 
   /* Spacing scale */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  --spacing-xs: 0.25rem;   /* 4px */
+  --spacing-sm: 0.5rem;    /* 8px */
+  --spacing-md: 1rem;      /* 16px */
+  --spacing-lg: 1.5rem;    /* 24px */
+  --spacing-xl: 2rem;      /* 32px */
+  --spacing-2xl: 3rem;     /* 48px */
+  
+  /* Component sizing tokens */
+  --size-icon-sm: 1rem;    /* 16px */
+  --size-icon-md: 1.25rem; /* 20px */
+  --size-icon-lg: 1.5rem;  /* 24px */
+  --size-button-height: 2.5rem;
+  --size-input-height: 2.5rem;
+  --size-modal-min-width: 20rem; /* 320px */
+  --size-modal-max-width: 90vw;
+  --size-card-min-height: 3rem;
 
   /* Border radii */
   --radius-sm: 4px;
@@ -32,6 +43,11 @@
   --focus-ring: 2px solid var(--color-primary);
   --focus-ring-offset: 2px;
   --disabled-opacity: 0.5;
+  
+  /* Touch interaction */
+  --touch-target-min: 44px; /* WCAG minimum touch target size */
+  --touch-target-comfortable: 48px; /* More comfortable size */
+  --touch-spacing: 8px; /* Minimum spacing between touch targets */
 
   /* Light theme (default) */
   --color-primary: #0d6efd;

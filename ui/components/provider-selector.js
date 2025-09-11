@@ -30,7 +30,7 @@ class LAProviderSelector extends HTMLElement {
           font-family: inherit;
           font-size: var(--font-size-sm);
           cursor: pointer;
-          min-width: 120px;
+          min-width: 7.5rem;
           transition: border-color 0.2s ease;
         }
         select:focus {

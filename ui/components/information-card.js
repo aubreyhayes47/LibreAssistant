@@ -56,13 +56,13 @@ class LAInformationCard extends HTMLElement {
           display: none;
         }
         .icon {
-          width: 1.25rem;
-          height: 1.25rem;
+          width: var(--size-icon-md, 1.25rem);
+          height: var(--size-icon-md, 1.25rem);
           flex-shrink: 0;
         }
         .status-indicator {
-          width: 0.5rem;
-          height: 0.5rem;
+          width: var(--spacing-xs, 0.25rem);
+          height: var(--spacing-xs, 0.25rem);
           border-radius: 50%;
           flex-shrink: 0;
         }
