@@ -109,22 +109,22 @@ class LAMainTabs extends HTMLElement {
           color: var(--color-danger, #ef4444);
         }
       </style>
-      <nav role="tablist">
-        <button role="tab" aria-selected="true" id="tab-switchboard">Switchboard</button>
-        <button role="tab" aria-selected="false" id="tab-catalogue">Catalogue</button>
-        <button role="tab" aria-selected="false" id="tab-past">Past Requests</button>
-        <button role="tab" aria-selected="false" id="tab-profile">User Profile</button>
-        <button role="tab" aria-selected="false" id="tab-bom">Bill of Materials</button>
-        <button role="tab" aria-selected="false" id="tab-health">System Health</button>
-        <button role="tab" aria-selected="false" id="tab-themes">Theme Marketplace</button>
+      <nav role="tablist" aria-label="Main navigation tabs">
+        <button role="tab" aria-selected="true" id="tab-switchboard" aria-controls="panel-switchboard">Switchboard</button>
+        <button role="tab" aria-selected="false" id="tab-catalogue" aria-controls="panel-catalogue">Catalogue</button>
+        <button role="tab" aria-selected="false" id="tab-past" aria-controls="panel-past">Past Requests</button>
+        <button role="tab" aria-selected="false" id="tab-profile" aria-controls="panel-profile">User Profile</button>
+        <button role="tab" aria-selected="false" id="tab-bom" aria-controls="panel-bom">Bill of Materials</button>
+        <button role="tab" aria-selected="false" id="tab-health" aria-controls="panel-health">System Health</button>
+        <button role="tab" aria-selected="false" id="tab-themes" aria-controls="panel-themes">Theme Marketplace</button>
       </nav>
-      <section id="panel-switchboard" role="tabpanel" data-active="true"><slot name="switchboard"></slot></section>
-      <section id="panel-catalogue" role="tabpanel"><slot name="catalogue"></slot></section>
-      <section id="panel-past" role="tabpanel"><slot name="past"></slot></section>
-      <section id="panel-profile" role="tabpanel"><slot name="profile"></slot></section>
-      <section id="panel-bom" role="tabpanel"><slot name="bom"></slot></section>
-      <section id="panel-health" role="tabpanel"><slot name="health"></slot></section>
-      <section id="panel-themes" role="tabpanel"><slot name="themes"></slot></section>
+      <section id="panel-switchboard" role="tabpanel" data-active="true" aria-labelledby="tab-switchboard"><slot name="switchboard"></slot></section>
+      <section id="panel-catalogue" role="tabpanel" aria-labelledby="tab-catalogue"><slot name="catalogue"></slot></section>
+      <section id="panel-past" role="tabpanel" aria-labelledby="tab-past"><slot name="past"></slot></section>
+      <section id="panel-profile" role="tabpanel" aria-labelledby="tab-profile"><slot name="profile"></slot></section>
+      <section id="panel-bom" role="tabpanel" aria-labelledby="tab-bom"><slot name="bom"></slot></section>
+      <section id="panel-health" role="tabpanel" aria-labelledby="tab-health"><slot name="health"></slot></section>
+      <section id="panel-themes" role="tabpanel" aria-labelledby="tab-themes"><slot name="themes"></slot></section>
     `;
 
     this._tabList = shadow.querySelector('[role="tablist"]');
