@@ -45,6 +45,24 @@ class LAPrimaryButton extends HTMLElement {
           transform: translateY(0);
           box-shadow: var(--shadow-button-pressed, 0 2px 4px rgba(0, 0, 0, 0.12));
         }
+        /* Touch-specific styles */
+        @media (hover: none) and (pointer: coarse) {
+          button {
+            min-height: 44px; /* WCAG touch target size */
+            padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
+          }
+          button:hover:not(:disabled) {
+            /* Disable hover effects on touch devices */
+            background-color: var(--color-primary, #3b82f6);
+            transform: none;
+            box-shadow: none;
+          }
+        }
+        /* Touch feedback */
+        button.touch-active:not(:disabled) {
+          transform: scale(0.98);
+          transition: transform 0.1s ease;
+        }
         button:disabled {
           background-color: var(--color-disabled, #9ca3af);
           color: var(--color-text-disabled, #d1d5db);
@@ -125,6 +143,42 @@ class LAPrimaryButton extends HTMLElement {
         }));
       }
     });
+
+    // Add touch interaction support
+    this._setupTouchHandlers();
+  }
+
+  _setupTouchHandlers() {
+    // Touch feedback for visual indication
+    this._button.addEventListener('touchstart', (e) => {
+      if (!this.disabled && !this.loading) {
+        this._button.classList.add('touch-active');
+      }
+    }, { passive: true });
+
+    this._button.addEventListener('touchend', (e) => {
+      this._button.classList.remove('touch-active');
+    }, { passive: true });
+
+    this._button.addEventListener('touchcancel', (e) => {
+      this._button.classList.remove('touch-active');
+    }, { passive: true });
+
+    // Ensure touch events trigger click for proper interaction
+    this._button.addEventListener('touchend', (e) => {
+      if (!this.disabled && !this.loading) {
+        // Prevent ghost click
+        e.preventDefault();
+        
+        // Trigger click programmatically for consistent behavior
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        this._button.dispatchEvent(clickEvent);
+      }
+    }, { passive: false });
   }
 
   _updateButtonAttributes() {

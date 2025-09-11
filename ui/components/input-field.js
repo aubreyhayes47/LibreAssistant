@@ -58,6 +58,17 @@ class LAInputField extends HTMLElement {
           resize: vertical;
           min-height: var(--size-card-min-height, 3rem);
         }
+        /* Touch-friendly sizing */
+        @media (hover: none) and (pointer: coarse) {
+          input, textarea {
+            min-height: 44px; /* WCAG touch target size */
+            padding: var(--spacing-md, 1rem);
+            font-size: var(--font-size-lg, 1.125rem);
+          }
+          textarea {
+            min-height: 88px; /* Double the minimum for text areas */
+          }
+        }
       </style>
       <label>
         <span class="label-text"><slot name="label"></slot></span>
@@ -76,6 +87,27 @@ class LAInputField extends HTMLElement {
     this._updateInputAttributes();
     this._input.addEventListener('input', this._handleInput.bind(this));
     this._input.addEventListener('blur', this._handleBlur.bind(this));
+    
+    // Add touch support for better mobile interaction
+    this._setupTouchHandlers();
+  }
+
+  _setupTouchHandlers() {
+    // Improve touch focus behavior
+    this._input.addEventListener('touchstart', (e) => {
+      // Add slight delay to ensure proper focus on mobile
+      setTimeout(() => {
+        if (document.activeElement !== this._input) {
+          this._input.focus();
+        }
+      }, 50);
+    }, { passive: true });
+
+    // Handle touch interaction for validation feedback
+    this._input.addEventListener('touchend', (e) => {
+      // Validate on touch end for immediate feedback
+      setTimeout(() => this._validate(), 100);
+    }, { passive: true });
   }
 
   _updateInputAttributes() {
