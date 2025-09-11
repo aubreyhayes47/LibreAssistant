@@ -110,3 +110,59 @@ def test_rejects_outside_directory(tmp_path: Path) -> None:
     result = plugin.run(state, payload)
     assert result == {"error": "path outside allowed directory"}
     assert not outside.exists()
+
+
+def test_law_plugin_with_enhanced_mock_environment(monkeypatch, tmp_path: Path) -> None:
+    """Test law plugin with comprehensive mock environment setup."""
+    from tests.test_env_setup import TestEnvironmentSetup
+    
+    # Set up enhanced test environment
+    env_vars = TestEnvironmentSetup.setup_test_environment_variables(monkeypatch, tmp_path)
+    
+    # Verify law analysis mock data is available
+    import os
+    law_response = os.getenv("LAW_ANALYSIS_MODEL_RESPONSE")
+    assert law_response is not None
+    
+    mock_data = json.loads(law_response)
+    assert "summary" in mock_data
+    assert "analysis" in mock_data
+    
+    # Test that the mock data has expected legal analysis structure
+    analysis = mock_data["analysis"]
+    assert "legal_context" in analysis
+    assert "relevant_statutes" in analysis
+    assert "precedent_cases" in analysis
+    assert "risk_assessment" in analysis
+    assert "recommendations" in analysis
+
+
+def test_law_mock_data_quality() -> None:
+    """Test the quality and completeness of law analysis mock data."""
+    from tests.test_env_setup import TestEnvironmentSetup
+    
+    mock_data = TestEnvironmentSetup.get_mock_law_analysis_response()
+    
+    # Verify structure completeness
+    assert isinstance(mock_data["summary"], str)
+    assert len(mock_data["summary"]) > 10  # Should be meaningful content
+    
+    analysis = mock_data["analysis"]
+    
+    # Verify lists contain actual data
+    assert len(analysis["relevant_statutes"]) >= 2
+    assert len(analysis["precedent_cases"]) >= 2
+    assert len(analysis["recommendations"]) >= 2
+    
+    # Verify content quality
+    for statute in analysis["relevant_statutes"]:
+        assert isinstance(statute, str)
+        assert len(statute) > 5  # Should be meaningful statute names
+    
+    for case in analysis["precedent_cases"]:
+        assert isinstance(case, str)
+        assert " v. " in case or "v." in case  # Legal case format
+    
+    for rec in analysis["recommendations"]:
+        assert isinstance(rec, str)
+        assert len(rec) > 10  # Should be meaningful recommendations
