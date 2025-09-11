@@ -152,10 +152,10 @@ class LAModalDialog extends HTMLElement {
         }
       </style>
       <div class="backdrop" part="backdrop"></div>
-      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="title">
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="title" aria-describedby="content">
         <button class="close" aria-label="Close dialog">&times;</button>
         <div id="title" class="title"><slot name="title"></slot></div>
-        <div class="content"><slot></slot></div>
+        <div id="content" class="content"><slot></slot></div>
       </div>
     `;
 
@@ -240,6 +240,10 @@ class LAModalDialog extends HTMLElement {
     this._isOpen = true;
     this.setAttribute('open', '');
     
+    // Announce to screen readers
+    const title = this.querySelector('[slot="title"]')?.textContent || 'Dialog';
+    this._announceToScreenReader(`${title} dialog opened`);
+    
     // Focus management
     requestAnimationFrame(() => {
       this._updateFocusableElements();
@@ -263,6 +267,10 @@ class LAModalDialog extends HTMLElement {
     this._isOpen = false;
     this.removeAttribute('open');
 
+    // Announce to screen readers
+    const title = this.querySelector('[slot="title"]')?.textContent || 'Dialog';
+    this._announceToScreenReader(`${title} dialog closed`);
+
     // Restore focus
     if (this._lastFocusedElement && this._lastFocusedElement.focus) {
       this._lastFocusedElement.focus();
@@ -273,6 +281,30 @@ class LAModalDialog extends HTMLElement {
       bubbles: true,
       detail: { dialog: this }
     }));
+  }
+
+  _announceToScreenReader(message) {
+    // Create or update a live region for announcements
+    if (!this._liveRegion) {
+      this._liveRegion = document.createElement('div');
+      this._liveRegion.setAttribute('aria-live', 'polite');
+      this._liveRegion.setAttribute('aria-atomic', 'true');
+      this._liveRegion.style.position = 'absolute';
+      this._liveRegion.style.left = '-10000px';
+      this._liveRegion.style.width = '1px';
+      this._liveRegion.style.height = '1px';
+      this._liveRegion.style.overflow = 'hidden';
+      document.body.appendChild(this._liveRegion);
+    }
+    
+    this._liveRegion.textContent = message;
+    
+    // Clear the message after announcement
+    setTimeout(() => {
+      if (this._liveRegion) {
+        this._liveRegion.textContent = '';
+      }
+    }, 1000);
   }
 
   toggle() {

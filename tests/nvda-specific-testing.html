@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVDA Specific Testing - LibreAssistant</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: var(--font-family-sans, sans-serif);
+            background: var(--color-background, #f5f5f5);
+            color: var(--color-text, #333);
+            line-height: 1.6;
+        }
+        
+        .nvda-info {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            padding: 1rem;
+            border-radius: var(--radius-md, 8px);
+            margin: 1rem 0;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid var(--color-border, #ddd);
+            border-radius: var(--radius-md, 8px);
+            background: var(--color-surface, white);
+        }
+        
+        .keyboard-shortcut {
+            background: #f5f5f5;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm, 4px);
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .test-result {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: var(--radius-sm, 4px);
+            border: 1px solid;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+        
+        .nvda-command {
+            background: #fff8e1;
+            border-left: 4px solid #ff9800;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+        
+        .test-controls button {
+            padding: 0.75rem 1.5rem;
+            margin: 0.5rem;
+            border: 1px solid var(--color-border, #ddd);
+            background: var(--color-primary, #3b82f6);
+            color: white;
+            border-radius: var(--radius-sm, 4px);
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        .test-controls button:focus {
+            outline: 2px solid var(--color-primary, #3b82f6);
+            outline-offset: 2px;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .live-region {
+            position: absolute;
+            left: -10000px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- NVDA specific live regions -->
+    <div class="sr-only" aria-live="polite" id="nvda-announcements"></div>
+    <div class="live-region" aria-live="assertive" id="nvda-alerts"></div>
+    
+    <header>
+        <h1>NVDA Specific Testing Suite</h1>
+        <div class="nvda-info">
+            <h2>NVDA Setup Instructions</h2>
+            <p><strong>Before starting:</strong> Ensure NVDA is running and you're familiar with basic navigation commands.</p>
+            
+            <h3>Essential NVDA Commands for Testing</h3>
+            <ul>
+                <li><span class="keyboard-shortcut">NVDA + Space</span> - Toggle between browse and focus mode</li>
+                <li><span class="keyboard-shortcut">NVDA + T</span> - Read page title</li>
+                <li><span class="keyboard-shortcut">NVDA + D</span> - Read entire document</li>
+                <li><span class="keyboard-shortcut">NVDA + F7</span> - List all elements (links, headings, etc.)</li>
+                <li><span class="keyboard-shortcut">NVDA + Ctrl + D</span> - Toggle debug logging</li>
+                <li><span class="keyboard-shortcut">H / Shift + H</span> - Navigate by headings</li>
+                <li><span class="keyboard-shortcut">F / Shift + F</span> - Navigate by form fields</li>
+                <li><span class="keyboard-shortcut">B / Shift + B</span> - Navigate by buttons</li>
+                <li><span class="keyboard-shortcut">L / Shift + L</span> - Navigate by lists</li>
+            </ul>
+            
+            <h3>NVDA Specific Features to Test</h3>
+            <ul>
+                <li>Browse mode vs Focus mode transitions</li>
+                <li>Application mode for complex widgets</li>
+                <li>Virtual buffer navigation</li>
+                <li>Live region announcements</li>
+                <li>Form mode automatic switching</li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Test 1: Browse vs Focus Mode -->
+    <section class="test-section" role="region" aria-labelledby="nvda-mode-test">
+        <h2 id="nvda-mode-test">NVDA Mode Switching Test</h2>
+        
+        <div class="nvda-command">
+            <strong>NVDA Command:</strong> Use <span class="keyboard-shortcut">NVDA + Space</span> to toggle between browse and focus mode.
+            In browse mode, use arrow keys to read content. In focus mode, interact directly with controls.
+        </div>
+        
+        <p>This paragraph should be readable in browse mode. Use down arrow to read line by line.</p>
+        
+        <div class="test-controls">
+            <button onclick="testBrowseMode()">Test Browse Mode Reading</button>
+            <button onclick="testFocusMode()">Test Focus Mode Interaction</button>
+            <button onclick="announceMode()">Announce Current Mode</button>
+        </div>
+        
+        <form>
+            <label for="test-input">Test Input (requires focus mode):
+                <input type="text" id="test-input" placeholder="Type here in focus mode">
+            </label>
+            <label for="test-select">Test Select:
+                <select id="test-select">
+                    <option>Option 1</option>
+                    <option>Option 2</option>
+                    <option>Option 3</option>
+                </select>
+            </label>
+        </form>
+        
+        <div id="mode-results"></div>
+    </section>
+
+    <!-- Test 2: Application Mode -->
+    <section class="test-section" role="region" aria-labelledby="nvda-app-mode">
+        <h2 id="nvda-app-mode">Application Mode Test</h2>
+        
+        <div class="nvda-command">
+            <strong>NVDA Behavior:</strong> Complex widgets should automatically switch to application mode.
+            Test if NVDA properly handles custom components and keyboard navigation.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="testApplicationMode()">Start Application Mode Test</button>
+            <button onclick="resetApplicationTest()">Reset Test</button>
+        </div>
+        
+        <!-- Custom tab component that should trigger application mode -->
+        <div role="application" aria-label="Custom Tab Interface">
+            <la-main-tabs id="nvda-test-tabs">
+                <div slot="tab" data-tab-id="tab1">
+                    <span>First Tab</span>
+                </div>
+                <div slot="content" data-tab-id="tab1">
+                    <h3>First Tab Content</h3>
+                    <p>This content should be navigable in application mode.</p>
+                    <button>Action Button 1</button>
+                </div>
+                
+                <div slot="tab" data-tab-id="tab2">
+                    <span>Second Tab</span>
+                </div>
+                <div slot="content" data-tab-id="tab2">
+                    <h3>Second Tab Content</h3>
+                    <p>Use arrow keys to navigate between tabs.</p>
+                    <button>Action Button 2</button>
+                </div>
+            </la-main-tabs>
+        </div>
+        
+        <div id="app-mode-results"></div>
+    </section>
+
+    <!-- Test 3: Live Region Announcements -->
+    <section class="test-section" role="region" aria-labelledby="nvda-live-regions">
+        <h2 id="nvda-live-regions">Live Region Announcements Test</h2>
+        
+        <div class="nvda-command">
+            <strong>NVDA Behavior:</strong> NVDA should announce live region updates automatically.
+            Test different politeness levels and update frequencies.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="testPoliteAnnouncement()">Test Polite Announcement</button>
+            <button onclick="testAssertiveAnnouncement()">Test Assertive Announcement</button>
+            <button onclick="testRapidUpdates()">Test Rapid Updates</button>
+            <button onclick="clearAnnouncements()">Clear Announcements</button>
+        </div>
+        
+        <div>
+            <h3>Live Region Status:</h3>
+            <div id="polite-region" aria-live="polite" aria-atomic="true" style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0;">
+                Polite announcements will appear here
+            </div>
+            <div id="assertive-region" aria-live="assertive" aria-atomic="true" style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0;">
+                Assertive announcements will appear here
+            </div>
+        </div>
+        
+        <div id="live-region-results"></div>
+    </section>
+
+    <!-- Test 4: Form Navigation and Validation -->
+    <section class="test-section" role="region" aria-labelledby="nvda-forms">
+        <h2 id="nvda-forms">NVDA Form Navigation Test</h2>
+        
+        <div class="nvda-command">
+            <strong>NVDA Commands:</strong> Use <span class="keyboard-shortcut">F / Shift + F</span> to navigate between form fields.
+            Use <span class="keyboard-shortcut">NVDA + F7</span> to get a list of all form elements.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="startFormTest()">Start Form Navigation Test</button>
+            <button onclick="triggerValidationErrors()">Trigger Validation Errors</button>
+            <button onclick="resetForm()">Reset Form</button>
+        </div>
+        
+        <form id="nvda-test-form" novalidate>
+            <fieldset>
+                <legend>User Information (Test Form)</legend>
+                
+                <la-input-field required>
+                    <span slot="label">Name (Required)</span>
+                    <span slot="help">Enter your full name</span>
+                </la-input-field>
+                
+                <la-input-field type="email" required>
+                    <span slot="label">Email (Required)</span>
+                    <span slot="help">Must be a valid email address</span>
+                </la-input-field>
+                
+                <div style="margin: 1rem 0;">
+                    <label>
+                        <input type="radio" name="nvda-test-radio" value="option1" required>
+                        Radio Option 1
+                    </label>
+                    <label>
+                        <input type="radio" name="nvda-test-radio" value="option2">
+                        Radio Option 2
+                    </label>
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <label>
+                        <input type="checkbox" id="nvda-checkbox" required>
+                        I agree to the terms (Required)
+                    </label>
+                </div>
+                
+                <button type="submit">Submit Form</button>
+            </fieldset>
+        </form>
+        
+        <div id="form-results"></div>
+    </section>
+
+    <!-- Test 5: Complex Widget Navigation -->
+    <section class="test-section" role="region" aria-labelledby="nvda-widgets">
+        <h2 id="nvda-widgets">Complex Widget Navigation</h2>
+        
+        <div class="nvda-command">
+            <strong>NVDA Behavior:</strong> Test how NVDA handles complex interactive widgets.
+            Should automatically enter focus/application mode for proper interaction.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="openComplexModal()">Open Complex Modal</button>
+            <button onclick="testTreeNavigation()">Test Tree Navigation</button>
+        </div>
+        
+        <!-- Tree widget simulation -->
+        <div role="tree" aria-label="File System Navigation" tabindex="0" id="nvda-tree" style="border: 1px solid #ddd; padding: 1rem;">
+            <div role="treeitem" aria-expanded="true" aria-level="1" tabindex="-1">
+                📁 Documents
+                <div role="group">
+                    <div role="treeitem" aria-level="2" tabindex="-1">📄 Report.pdf</div>
+                    <div role="treeitem" aria-level="2" tabindex="-1">📄 Notes.txt</div>
+                    <div role="treeitem" aria-expanded="false" aria-level="2" tabindex="-1">
+                        📁 Projects
+                        <div role="group" style="display: none;">
+                            <div role="treeitem" aria-level="3" tabindex="-1">📄 Project1.doc</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="widget-results"></div>
+    </section>
+
+    <!-- Modal for complex widget testing -->
+    <la-modal-dialog id="nvda-complex-modal">
+        <span slot="title">Complex Interactive Modal</span>
+        <div>
+            <p>This modal contains multiple interactive elements to test NVDA's focus management.</p>
+            
+            <la-main-tabs>
+                <div slot="tab" data-tab-id="modal-tab1">Tab 1</div>
+                <div slot="content" data-tab-id="modal-tab1">
+                    <h3>Modal Tab 1</h3>
+                    <la-input-field>
+                        <span slot="label">Field in Modal Tab</span>
+                    </la-input-field>
+                </div>
+                
+                <div slot="tab" data-tab-id="modal-tab2">Tab 2</div>
+                <div slot="content" data-tab-id="modal-tab2">
+                    <h3>Modal Tab 2</h3>
+                    <button>Button in Modal Tab</button>
+                </div>
+            </la-main-tabs>
+            
+            <div style="margin-top: 1rem;">
+                <button onclick="closeComplexModal()">Close Modal</button>
+            </div>
+        </div>
+    </la-modal-dialog>
+
+    <!-- Load components -->
+    <script type="module" src="../ui/components/main-tabs.js"></script>
+    <script type="module" src="../ui/components/modal-dialog.js"></script>
+    <script type="module" src="../ui/components/input-field.js"></script>
+    
+    <script>
+        // NVDA specific testing utilities
+        const nvdaAnnouncements = document.getElementById('nvda-announcements');
+        const nvdaAlerts = document.getElementById('nvda-alerts');
+        const politeRegion = document.getElementById('polite-region');
+        const assertiveRegion = document.getElementById('assertive-region');
+        
+        let announcementCounter = 0;
+        let testResults = {};
+        
+        function announceToNVDA(message, urgent = false) {
+            const target = urgent ? nvdaAlerts : nvdaAnnouncements;
+            target.textContent = message;
+            
+            setTimeout(() => {
+                target.textContent = '';
+            }, 1000);
+        }
+        
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            container.appendChild(div);
+            
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // Test 1: Browse vs Focus Mode
+        function testBrowseMode() {
+            announceToNVDA('Testing browse mode. Use arrow keys to navigate this content.');
+            addResult('mode-results', 'Browse mode test started. Use arrow keys to read content.', 'info');
+        }
+        
+        function testFocusMode() {
+            announceToNVDA('Testing focus mode. Tab to input field and type.');
+            const input = document.getElementById('test-input');
+            input.focus();
+            addResult('mode-results', 'Focus mode test started. Input field focused.', 'info');
+        }
+        
+        function announceMode() {
+            announceToNVDA('Check NVDA speech viewer to see current mode information.');
+            addResult('mode-results', 'Mode announcement requested. Check NVDA speech output.', 'info');
+        }
+        
+        // Test 2: Application Mode
+        function testApplicationMode() {
+            announceToNVDA('Testing application mode with custom tabs. Use arrow keys to navigate tabs.');
+            const tabs = document.getElementById('nvda-test-tabs');
+            if (tabs && tabs.shadowRoot) {
+                const firstTab = tabs.shadowRoot.querySelector('button[role="tab"]');
+                if (firstTab) {
+                    firstTab.focus();
+                    addResult('app-mode-results', 'Application mode test started. Tab component focused.', 'info');
+                }
+            }
+        }
+        
+        function resetApplicationTest() {
+            addResult('app-mode-results', 'Application mode test reset.', 'success');
+        }
+        
+        // Test 3: Live Regions
+        function testPoliteAnnouncement() {
+            announcementCounter++;
+            politeRegion.textContent = `Polite announcement #${announcementCounter}: This should be announced when NVDA is not busy.`;
+            addResult('live-region-results', `Polite announcement #${announcementCounter} made`, 'info');
+        }
+        
+        function testAssertiveAnnouncement() {
+            announcementCounter++;
+            assertiveRegion.textContent = `Assertive announcement #${announcementCounter}: This should interrupt other NVDA speech.`;
+            addResult('live-region-results', `Assertive announcement #${announcementCounter} made`, 'warning');
+        }
+        
+        function testRapidUpdates() {
+            let count = 0;
+            const interval = setInterval(() => {
+                count++;
+                politeRegion.textContent = `Rapid update ${count}: Testing how NVDA handles frequent changes.`;
+                
+                if (count >= 5) {
+                    clearInterval(interval);
+                    addResult('live-region-results', 'Rapid updates test completed', 'success');
+                }
+            }, 500);
+            
+            addResult('live-region-results', 'Started rapid updates test - 5 announcements in 2.5 seconds', 'info');
+        }
+        
+        function clearAnnouncements() {
+            politeRegion.textContent = 'Polite announcements will appear here';
+            assertiveRegion.textContent = 'Assertive announcements will appear here';
+            addResult('live-region-results', 'Live regions cleared', 'success');
+        }
+        
+        // Test 4: Form Navigation
+        function startFormTest() {
+            announceToNVDA('Form navigation test started. Use F and Shift+F to navigate between form fields.');
+            const form = document.getElementById('nvda-test-form');
+            const firstField = form.querySelector('la-input-field');
+            if (firstField && firstField.shadowRoot) {
+                const input = firstField.shadowRoot.querySelector('input');
+                if (input) {
+                    input.focus();
+                }
+            }
+            addResult('form-results', 'Form navigation test started. Use F key to navigate fields.', 'info');
+        }
+        
+        function triggerValidationErrors() {
+            const form = document.getElementById('nvda-test-form');
+            
+            // Try to submit empty form to trigger validation
+            const submitEvent = new Event('submit');
+            form.dispatchEvent(submitEvent);
+            
+            announceToNVDA('Validation errors triggered. Navigate to fields to hear error messages.', true);
+            addResult('form-results', 'Validation errors triggered. Check field announcements.', 'warning');
+        }
+        
+        function resetForm() {
+            document.getElementById('nvda-test-form').reset();
+            announceToNVDA('Form has been reset to initial state.');
+            addResult('form-results', 'Form reset completed', 'success');
+        }
+        
+        // Test 5: Complex Widgets
+        function openComplexModal() {
+            const modal = document.getElementById('nvda-complex-modal');
+            modal.show();
+            announceToNVDA('Complex modal opened with tabs inside. Test focus management.');
+            addResult('widget-results', 'Complex modal opened. Test focus trapping and tab navigation.', 'info');
+        }
+        
+        function closeComplexModal() {
+            const modal = document.getElementById('nvda-complex-modal');
+            modal.hide();
+        }
+        
+        function testTreeNavigation() {
+            const tree = document.getElementById('nvda-tree');
+            tree.focus();
+            announceToNVDA('Tree widget focused. Use arrow keys and Enter to navigate and expand/collapse items.');
+            addResult('widget-results', 'Tree navigation test started. Use arrow keys and Enter/Space.', 'info');
+            
+            // Set up basic tree navigation
+            tree.addEventListener('keydown', handleTreeNavigation);
+        }
+        
+        function handleTreeNavigation(e) {
+            const currentItem = document.activeElement;
+            const treeItems = Array.from(document.querySelectorAll('[role="treeitem"]'));
+            const currentIndex = treeItems.indexOf(currentItem);
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (currentIndex < treeItems.length - 1) {
+                        treeItems[currentIndex + 1].focus();
+                    }
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (currentIndex > 0) {
+                        treeItems[currentIndex - 1].focus();
+                    }
+                    break;
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    if (currentItem.hasAttribute('aria-expanded')) {
+                        const isExpanded = currentItem.getAttribute('aria-expanded') === 'true';
+                        currentItem.setAttribute('aria-expanded', !isExpanded);
+                        const group = currentItem.querySelector('[role="group"]');
+                        if (group) {
+                            group.style.display = isExpanded ? 'none' : 'block';
+                        }
+                        announceToNVDA(`${isExpanded ? 'Collapsed' : 'Expanded'} ${currentItem.textContent.trim()}`);
+                    }
+                    break;
+            }
+        }
+        
+        // Event listeners for form testing
+        document.getElementById('nvda-test-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            announceToNVDA('Form submitted successfully.', true);
+            addResult('form-results', 'Form submission completed', 'success');
+        });
+        
+        // Initialize NVDA specific features
+        document.addEventListener('DOMContentLoaded', function() {
+            announceToNVDA('NVDA testing suite loaded. Begin with any test section.');
+            
+            // Add focus indicators for better visibility during testing
+            document.addEventListener('focus', function(e) {
+                e.target.style.outline = '3px solid #ff6b6b';
+            }, true);
+            
+            document.addEventListener('blur', function(e) {
+                e.target.style.outline = '';
+            }, true);
+        });
+        
+        // Listen for NVDA specific events
+        document.addEventListener('focusin', function(e) {
+            console.log('Focus moved to:', e.target.tagName, e.target.textContent?.slice(0, 50));
+        });
+    </script>
+</body>
+</html>

@@ -407,17 +407,51 @@ class LAMainTabs extends HTMLElement {
 
     this._activeIndex = index;
 
+    // Announce tab change to screen readers
+    const tabLabel = this._tabs[index].textContent.trim();
+    const badge = this._tabs[index].querySelector('.tab-badge')?.textContent;
+    let announcement = `${tabLabel} tab selected`;
+    if (badge) {
+      announcement += `, ${badge} items`;
+    }
+    this._announceToScreenReader(announcement);
+
     // Dispatch event
     const tabId = this._tabs[index].getAttribute('aria-controls').replace('panel-', '');
     this.dispatchEvent(new CustomEvent('tab-change', {
       detail: { 
         activeIndex: index, 
         tabId,
+        tabName: tabLabel,
         tab: this._tabs[index],
         panel: this._panels[index]
       },
       bubbles: true
     }));
+  }
+
+  _announceToScreenReader(message) {
+    // Create or update a live region for announcements
+    if (!this._liveRegion) {
+      this._liveRegion = document.createElement('div');
+      this._liveRegion.setAttribute('aria-live', 'polite');
+      this._liveRegion.setAttribute('aria-atomic', 'true');
+      this._liveRegion.style.position = 'absolute';
+      this._liveRegion.style.left = '-10000px';
+      this._liveRegion.style.width = '1px';
+      this._liveRegion.style.height = '1px';
+      this._liveRegion.style.overflow = 'hidden';
+      document.body.appendChild(this._liveRegion);
+    }
+    
+    this._liveRegion.textContent = message;
+    
+    // Clear the message after announcement
+    setTimeout(() => {
+      if (this._liveRegion) {
+        this._liveRegion.textContent = '';
+      }
+    }, 1000);
   }
 
   // Public API
