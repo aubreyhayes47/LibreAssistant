@@ -217,6 +217,8 @@ class LAConfirmDialog extends HTMLElement {
 
     // Handle escape key and focus trapping
     this.addEventListener('keydown', (e) => {
+      if (!this.hasAttribute('open')) return;
+
       if (e.key === 'Escape') {
         e.preventDefault();
         hide(false);
