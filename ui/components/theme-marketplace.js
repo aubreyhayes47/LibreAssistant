@@ -142,6 +142,13 @@ class LAThemeMarketplace extends HTMLElement {
   render(list = this.themes) {
     const container = this.shadowRoot.getElementById('list');
     container.innerHTML = '';
+    
+    // Safety check to ensure list is an array
+    if (!Array.isArray(list)) {
+      console.warn('Theme list is not an array, using empty array:', list);
+      list = [];
+    }
+    
     list.forEach(theme => this.addItem(theme, container));
   }
 
