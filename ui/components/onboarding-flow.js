@@ -145,49 +145,49 @@ class LAOnboardingFlow extends HTMLElement {
           margin: var(--spacing-md) 0;
         }
       </style>
-      <div class="progress-bar">
+      <div class="progress-bar" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="6" aria-label="Onboarding progress">
         <div class="progress-fill" id="progress"></div>
       </div>
-      <div id="error-container"></div>
-      <div class="step" data-step="0">
-        <h2>Step 1: Choose AI Engine</h2>
-        <div class="step-info">
+      <div id="error-container" aria-live="polite" aria-atomic="true"></div>
+      <div class="step" data-step="0" role="main" aria-labelledby="step-0-title">
+        <h2 id="step-0-title">Step 1: Choose AI Engine</h2>
+        <div class="step-info" id="step-0-description">
           <p>Select whether to use cloud-based AI services or local AI models. Cloud providers offer more powerful models but send data externally.</p>
         </div>
-        <select id="engine">
+        <select id="engine" aria-labelledby="step-0-title" aria-describedby="step-0-description" aria-required="true">
           <option value="">-- Please select --</option>
           <option value="cloud">Cloud (OpenAI, Anthropic, etc.)</option>
           <option value="local">Local (Ollama, etc.)</option>
         </select>
       </div>
-      <div class="step" data-step="1" hidden>
-        <h2>Step 2: Provider Setup</h2>
-        <div class="step-info">
+      <div class="step" data-step="1" hidden role="main" aria-labelledby="step-1-title">
+        <h2 id="step-1-title">Step 2: Provider Setup</h2>
+        <div class="step-info" id="step-1-description">
           <p>Enter your API key for the selected provider. This will be securely stored and used to authenticate with the AI service.</p>
         </div>
-        <input id="apikey" type="password" placeholder="Enter your API key" />
-        <p><small>Your API key is encrypted and stored locally.</small></p>
+        <input id="apikey" type="password" placeholder="Enter your API key" aria-labelledby="step-1-title" aria-describedby="step-1-description step-1-security-note" aria-required="true" />
+        <p id="step-1-security-note"><small>Your API key is encrypted and stored locally.</small></p>
       </div>
-      <div class="step" data-step="2" hidden>
-        <h2>Step 3: Configure Plugins</h2>
-        <div class="step-info">
+      <div class="step" data-step="2" hidden role="main" aria-labelledby="step-2-title">
+        <h2 id="step-2-title">Step 3: Configure Plugins</h2>
+        <div class="step-info" id="step-2-description">
           <p>Choose which plugins to enable. Plugins extend LibreAssistant's capabilities but may access additional data.</p>
         </div>
-        <ul id="plugin-list"></ul>
+        <ul id="plugin-list" role="group" aria-labelledby="step-2-title" aria-describedby="step-2-description"></ul>
       </div>
-      <div class="step" data-step="3" hidden>
-        <h2>Step 4: Review Configuration</h2>
-        <div class="step-info">
+      <div class="step" data-step="3" hidden role="main" aria-labelledby="step-3-title">
+        <h2 id="step-3-title">Step 4: Review Configuration</h2>
+        <div class="step-info" id="step-3-description">
           <p>Review your settings before proceeding. You can modify these later in settings.</p>
         </div>
-        <div id="summary"></div>
+        <div id="summary" aria-labelledby="step-3-title" aria-describedby="step-3-description"></div>
       </div>
-      <div class="step" data-step="4" hidden>
-        <h2>Step 5: Privacy Agreement</h2>
-        <div class="step-info">
+      <div class="step" data-step="4" hidden role="main" aria-labelledby="step-4-title">
+        <h2 id="step-4-title">Step 5: Privacy Agreement</h2>
+        <div class="step-info" id="step-4-description">
           <p>Please review and accept our privacy policy regarding data handling.</p>
         </div>
-        <div style="background: var(--color-surface); padding: var(--spacing-md); border-radius: var(--radius-sm); margin: var(--spacing-md) 0;">
+        <div style="background: var(--color-surface); padding: var(--spacing-md); border-radius: var(--radius-sm); margin: var(--spacing-md) 0;" id="privacy-policy-content">
           <h3>Data Usage</h3>
           <p>LibreAssistant will:</p>
           <ul>
@@ -197,19 +197,19 @@ class LAOnboardingFlow extends HTMLElement {
             <li>Never share your data with third parties without consent</li>
           </ul>
         </div>
-        <label><input id="privacy" type="checkbox" /> I understand and agree to the privacy policy</label>
+        <label><input id="privacy" type="checkbox" aria-describedby="privacy-policy-content" aria-required="true" /> I understand and agree to the privacy policy</label>
       </div>
-      <div class="step" data-step="5" hidden>
-        <h2>Setup Complete!</h2>
-        <div class="step-info">
+      <div class="step" data-step="5" hidden role="main" aria-labelledby="step-5-title">
+        <h2 id="step-5-title">Setup Complete!</h2>
+        <div class="step-info" id="step-5-description">
           <p>LibreAssistant is now configured and ready to use.</p>
         </div>
-        <div id="completion-summary"></div>
+        <div id="completion-summary" aria-labelledby="step-5-title" aria-describedby="step-5-description"></div>
         <p>You can change these settings anytime in the preferences.</p>
       </div>
       <div class="controls">
-        <button id="back">Back</button>
-        <button id="next">Next</button>
+        <button id="back" aria-label="Go to previous step">Back</button>
+        <button id="next" aria-label="Go to next step">Next</button>
       </div>
     `;
   }
@@ -219,6 +219,7 @@ class LAOnboardingFlow extends HTMLElement {
     this.nextBtn = this.shadowRoot.getElementById('next');
     this.steps = this.shadowRoot.querySelectorAll('.step');
     this.progressFill = this.shadowRoot.getElementById('progress');
+    this.progressBar = this.shadowRoot.querySelector('[role="progressbar"]');
     this.errorContainer = this.shadowRoot.getElementById('error-container');
     this.engineSelect = this.shadowRoot.getElementById('engine');
     this.keyInput = this.shadowRoot.getElementById('apikey');
@@ -362,14 +363,29 @@ class LAOnboardingFlow extends HTMLElement {
       return;
     }
     
-    this.plugins.forEach(p => {
+    this.plugins.forEach((p, index) => {
       const li = document.createElement('li');
       const label = document.createElement('label');
       const toggle = document.createElement('input');
       toggle.type = 'checkbox';
       toggle.checked = p.consent;
+      toggle.id = `plugin-${index}`;
+      
+      // Add descriptive aria-label for the toggle
+      const toggleLabel = `${p.consent ? 'Disable' : 'Enable'} ${p.name} plugin`;
+      toggle.setAttribute('aria-label', toggleLabel);
+      
+      if (p.description) {
+        const descId = `plugin-desc-${index}`;
+        toggle.setAttribute('aria-describedby', descId);
+      }
+      
       toggle.addEventListener('change', async () => {
         p.consent = toggle.checked;
+        // Update aria-label based on new state
+        const newLabel = `${p.consent ? 'Disable' : 'Enable'} ${p.name} plugin`;
+        toggle.setAttribute('aria-label', newLabel);
+        
         try {
           const response = await fetch(`/api/v1/mcp/consent/${p.name}`, {
             method: 'POST',
@@ -381,6 +397,8 @@ class LAOnboardingFlow extends HTMLElement {
             // Revert the change if the request failed
             p.consent = !toggle.checked;
             toggle.checked = p.consent;
+            const revertLabel = `${p.consent ? 'Disable' : 'Enable'} ${p.name} plugin`;
+            toggle.setAttribute('aria-label', revertLabel);
             throw new Error(`Failed to update consent for ${p.name}`);
           }
         } catch (error) {
@@ -394,6 +412,7 @@ class LAOnboardingFlow extends HTMLElement {
       // Add description if available
       if (p.description) {
         const desc = document.createElement('div');
+        desc.id = `plugin-desc-${index}`;
         desc.style.fontSize = 'var(--font-size-sm)';
         desc.style.color = 'var(--color-text-secondary)';
         desc.style.marginLeft = '1.5rem';
@@ -452,17 +471,61 @@ class LAOnboardingFlow extends HTMLElement {
     const progress = ((this.step + 1) / this.steps.length) * 100;
     this.progressFill.style.width = `${progress}%`;
     
+    // Update progress bar ARIA attributes
+    this.progressBar.setAttribute('aria-valuenow', this.step + 1);
+    this.progressBar.setAttribute('aria-label', `Onboarding progress: Step ${this.step + 1} of ${this.steps.length}`);
+    
     // Update button states
     this.backBtn.disabled = this.step === 0 || this.isLoading;
     this.nextBtn.disabled = this.step === this.steps.length - 1 || this.isLoading;
     
-    // Update button text for final step
+    // Update button text and aria-label for final step
     if (this.step === this.steps.length - 1) {
       this.nextBtn.textContent = 'Finish';
+      this.nextBtn.setAttribute('aria-label', 'Complete onboarding setup');
       this.nextBtn.disabled = true; // Disable on completion step
     } else {
       this.nextBtn.textContent = 'Next';
+      this.nextBtn.setAttribute('aria-label', 'Go to next step');
     }
+    
+    // Announce step change to screen readers
+    this.announceStepChange();
+  }
+
+  announceStepChange() {
+    // Create screen reader announcement for step changes
+    const stepTitles = [
+      'Choose AI Engine',
+      'Provider Setup', 
+      'Configure Plugins',
+      'Review Configuration',
+      'Privacy Agreement',
+      'Setup Complete'
+    ];
+    
+    const announcement = `Step ${this.step + 1} of ${this.steps.length}: ${stepTitles[this.step]}`;
+    
+    // Create a temporary live region for announcements if it doesn't exist
+    let announcer = this.shadowRoot.getElementById('step-announcer');
+    if (!announcer) {
+      announcer = document.createElement('div');
+      announcer.id = 'step-announcer';
+      announcer.setAttribute('aria-live', 'assertive');
+      announcer.setAttribute('aria-atomic', 'true');
+      announcer.style.position = 'absolute';
+      announcer.style.left = '-10000px';
+      announcer.style.width = '1px';
+      announcer.style.height = '1px';
+      announcer.style.overflow = 'hidden';
+      this.shadowRoot.appendChild(announcer);
+    }
+    
+    // Clear and set the announcement
+    announcer.textContent = '';
+    setTimeout(() => {
+      announcer.textContent = announcement;
+    }, 100);
   }
 
   complete() {

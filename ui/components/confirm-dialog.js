@@ -173,8 +173,8 @@ class LAConfirmDialog extends HTMLElement {
         <div id="title" class="title"><slot name="title">Confirm</slot></div>
         <div id="message" class="message"><slot></slot></div>
         <div class="actions">
-          <button class="cancel" id="cancel-btn">Cancel</button>
-          <button class="confirm" id="confirm-btn">OK</button>
+          <button class="cancel" id="cancel-btn" aria-label="Cancel this action">Cancel</button>
+          <button class="confirm" id="confirm-btn" aria-label="Confirm this action">OK</button>
         </div>
       </div>
     `;
@@ -325,6 +325,9 @@ class LAConfirmDialog extends HTMLElement {
 
       this.setAttribute('open', '');
       
+      // Announce dialog opening to screen readers
+      this._announceDialog(title, message);
+      
       // Focus management
       requestAnimationFrame(() => {
         this._updateFocusableElements();
@@ -335,6 +338,42 @@ class LAConfirmDialog extends HTMLElement {
         }
       });
     });
+  }
+
+  _announceDialog(title, message) {
+    // Create screen reader announcement for dialog opening
+    let announcer = this.shadowRoot.getElementById('dialog-announcer');
+    if (!announcer) {
+      announcer = document.createElement('div');
+      announcer.id = 'dialog-announcer';
+      announcer.setAttribute('aria-live', 'assertive');
+      announcer.setAttribute('aria-atomic', 'true');
+      announcer.style.position = 'absolute';
+      announcer.style.left = '-10000px';
+      announcer.style.width = '1px';
+      announcer.style.height = '1px';
+      announcer.style.overflow = 'hidden';
+      this.shadowRoot.appendChild(announcer);
+    }
+    
+    const announcement = `Dialog opened: ${title}. ${message}`;
+    announcer.textContent = '';
+    setTimeout(() => {
+      announcer.textContent = announcement;
+    }, 100);
+  }
+
+  // Methods for setting custom button text and labels
+  setCancelText(text) {
+    const cancelBtn = this.shadowRoot.querySelector('#cancel-btn');
+    cancelBtn.textContent = text;
+    cancelBtn.setAttribute('aria-label', text);
+  }
+
+  setConfirmText(text) {
+    const confirmBtn = this.shadowRoot.querySelector('#confirm-btn');
+    confirmBtn.textContent = text;
+    confirmBtn.setAttribute('aria-label', text);
   }
 
   hide() {
