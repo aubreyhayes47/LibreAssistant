@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Reader User Flow Tests - LibreAssistant</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: var(--font-family-sans, sans-serif);
+            background: var(--color-background, #f5f5f5);
+            color: var(--color-text, #333);
+            line-height: 1.6;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid var(--color-border, #ddd);
+            border-radius: var(--radius-md, 8px);
+            background: var(--color-surface, white);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .flow-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-primary, #3b82f6);
+        }
+        
+        .flow-icon {
+            width: 24px;
+            height: 24px;
+            fill: var(--color-primary, #3b82f6);
+        }
+        
+        .instruction {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: var(--radius-sm, 4px);
+            margin: 1rem 0;
+        }
+        
+        .sr-instruction {
+            background: #e1f5fe;
+            border: 1px solid #81d4fa;
+            color: #01579b;
+            padding: 1rem;
+            border-radius: var(--radius-sm, 4px);
+            margin: 1rem 0;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-controls button {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--color-border, #ddd);
+            background: var(--color-primary, #3b82f6);
+            color: white;
+            border-radius: var(--radius-sm, 4px);
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        
+        .test-controls button:hover {
+            background: var(--color-primary-dark, #2563eb);
+            transform: translateY(-1px);
+        }
+        
+        .test-controls button:focus {
+            outline: 2px solid var(--color-primary, #3b82f6);
+            outline-offset: 2px;
+        }
+        
+        .test-controls button:disabled {
+            background: var(--color-disabled, #9ca3af);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .checklist {
+            margin: 1rem 0;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--radius-sm, 4px);
+            border: 1px solid #e9ecef;
+        }
+        
+        .checklist h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--color-text, #333);
+        }
+        
+        .checklist label {
+            display: flex;
+            align-items: flex-start;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            gap: 0.5rem;
+        }
+        
+        .checklist input[type="checkbox"] {
+            margin-top: 0.2rem;
+        }
+        
+        .test-result {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: var(--radius-sm, 4px);
+            font-family: monospace;
+            border: 1px solid;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+        
+        .test-result.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+        
+        .live-region {
+            position: absolute;
+            left: -10000px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+        
+        .screen-reader-info {
+            background: #e8f4f8;
+            border: 2px solid #4a90e2;
+            padding: 1rem;
+            border-radius: var(--radius-md, 8px);
+            margin: 1rem 0;
+        }
+        
+        .sr-test-focus {
+            outline: 3px solid #ff6b6b;
+            outline-offset: 2px;
+        }
+        
+        h1 {
+            color: var(--color-text, #2c3e50);
+            border-bottom: 2px solid var(--color-primary, #3b82f6);
+            padding-bottom: 0.5rem;
+        }
+        
+        h2 {
+            color: var(--color-text, #34495e);
+            margin-top: 0;
+        }
+        
+        .flow-step {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-left: 4px solid var(--color-primary, #3b82f6);
+            border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
+        }
+        
+        .flow-step h5 {
+            margin: 0 0 0.5rem 0;
+            color: var(--color-primary, #3b82f6);
+        }
+        
+        .keyboard-hint {
+            background: #f1f3f4;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm, 4px);
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Screen reader specific announcements -->
+    <div class="sr-only" aria-live="polite" id="sr-announcements"></div>
+    <div class="live-region" aria-live="assertive" id="sr-alerts"></div>
+    
+    <header>
+        <h1>Screen Reader User Flow Tests</h1>
+        <div class="instruction">
+            <strong>Testing Instructions:</strong> This page tests complete user workflows with screen readers (NVDA, VoiceOver, JAWS). 
+            Each test flow simulates real user journeys through the LibreAssistant interface.
+        </div>
+        
+        <div class="screen-reader-info">
+            <h3>Screen Reader Setup Instructions</h3>
+            <div class="flow-step">
+                <h5>For NVDA Users:</h5>
+                <p>Ensure NVDA is running. Use NVDA + Space to switch to focus mode when interacting with controls.</p>
+                <div class="keyboard-hint">Key shortcuts: Tab (navigate), Space/Enter (activate), NVDA+T (read title), NVDA+D (read document)</div>
+            </div>
+            <div class="flow-step">
+                <h5>For VoiceOver Users (macOS):</h5>
+                <p>Enable VoiceOver with Cmd+F5. Use VO+Space to interact with controls.</p>
+                <div class="keyboard-hint">Key shortcuts: VO+Right/Left (navigate), VO+Space (activate), VO+A (read all), VO+F5 (list form controls)</div>
+            </div>
+            <div class="flow-step">
+                <h5>For JAWS Users:</h5>
+                <p>Ensure JAWS is running. Use application mode for web controls.</p>
+                <div class="keyboard-hint">Key shortcuts: Tab (navigate), Space/Enter (activate), F (list form fields), H (headings list)</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flow 1: Application Onboarding -->
+    <section class="test-section" role="region" aria-labelledby="flow1-title">
+        <div class="flow-header">
+            <svg class="flow-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            <h2 id="flow1-title">Flow 1: New User Onboarding</h2>
+        </div>
+        
+        <div class="sr-instruction">
+            <strong>Screen Reader Goal:</strong> Complete the onboarding process using only screen reader navigation. 
+            Verify all steps are clearly announced and actionable.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="startOnboardingFlow()" id="start-onboarding">Start Onboarding Flow</button>
+            <button onclick="resetOnboardingFlow()" id="reset-onboarding">Reset Flow</button>
+            <button onclick="testOnboardingAccessibility()">Test Accessibility Features</button>
+        </div>
+        
+        <div id="onboarding-container">
+            <la-onboarding-flow id="test-onboarding"></la-onboarding-flow>
+        </div>
+        
+        <div class="checklist">
+            <h4>Screen Reader Verification Checklist:</h4>
+            <label><input type="checkbox" name="onboard1"> Onboarding component is announced when loaded</label>
+            <label><input type="checkbox" name="onboard2"> Each step title is clearly read</label>
+            <label><input type="checkbox" name="onboard3"> Step progress is announced (e.g., "Step 1 of 4")</label>
+            <label><input type="checkbox" name="onboard4"> Navigation buttons are clearly labeled</label>
+            <label><input type="checkbox" name="onboard5"> Disabled buttons are announced as unavailable</label>
+            <label><input type="checkbox" name="onboard6"> Form fields have proper labels and instructions</label>
+            <label><input type="checkbox" name="onboard7"> Validation errors are announced immediately</label>
+            <label><input type="checkbox" name="onboard8"> Success completion is clearly announced</label>
+        </div>
+        
+        <div id="onboarding-results"></div>
+    </section>
+
+    <!-- Flow 2: Main Navigation and Tab Management -->
+    <section class="test-section" role="region" aria-labelledby="flow2-title">
+        <div class="flow-header">
+            <svg class="flow-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+            </svg>
+            <h2 id="flow2-title">Flow 2: Main Application Navigation</h2>
+        </div>
+        
+        <div class="sr-instruction">
+            <strong>Screen Reader Goal:</strong> Navigate between different sections of the application using tabs. 
+            Verify tab relationships and content are properly announced.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="startNavigationFlow()">Start Navigation Test</button>
+            <button onclick="testTabKeyboardFlow()">Test Keyboard Navigation</button>
+            <button onclick="testTabAnnouncements()">Test Tab Announcements</button>
+        </div>
+        
+        <div id="navigation-container">
+            <la-main-tabs id="test-main-tabs">
+                <div slot="tab" data-tab-id="dashboard">
+                    <span>Dashboard</span>
+                </div>
+                <div slot="content" data-tab-id="dashboard">
+                    <h3>Dashboard Content</h3>
+                    <p>This is the main dashboard with key information and quick actions.</p>
+                    <button>View Recent Activity</button>
+                    <button>Create New Project</button>
+                </div>
+                
+                <div slot="tab" data-tab-id="projects">
+                    <span>Projects</span>
+                    <span class="tab-badge">3</span>
+                </div>
+                <div slot="content" data-tab-id="projects">
+                    <h3>Projects</h3>
+                    <p>Manage your active projects and collaborations.</p>
+                    <la-input-field>
+                        <span slot="label">Search Projects</span>
+                        <span slot="help">Enter project name or description</span>
+                    </la-input-field>
+                </div>
+                
+                <div slot="tab" data-tab-id="settings">
+                    <span>Settings</span>
+                </div>
+                <div slot="content" data-tab-id="settings">
+                    <h3>Application Settings</h3>
+                    <p>Configure your preferences and account settings.</p>
+                    <fieldset>
+                        <legend>Accessibility Preferences</legend>
+                        <label>
+                            <input type="checkbox" id="high-contrast"> Enable high contrast mode
+                        </label>
+                        <label>
+                            <input type="checkbox" id="reduce-motion"> Reduce animations
+                        </label>
+                    </fieldset>
+                </div>
+            </la-main-tabs>
+        </div>
+        
+        <div class="checklist">
+            <h4>Navigation Screen Reader Checklist:</h4>
+            <label><input type="checkbox" name="nav1"> Tab list is announced as "tablist"</label>
+            <label><input type="checkbox" name="nav2"> Each tab announces its role and selection state</label>
+            <label><input type="checkbox" name="nav3"> Tab badges/counts are properly announced</label>
+            <label><input type="checkbox" name="nav4"> Arrow key navigation works and is announced</label>
+            <label><input type="checkbox" name="nav5"> Tab panels are announced when activated</label>
+            <label><input type="checkbox" name="nav6"> Content within panels is properly structured</label>
+            <label><input type="checkbox" name="nav7"> Form controls in panels have proper labels</label>
+            <label><input type="checkbox" name="nav8"> Home/End keys work for first/last tab navigation</label>
+        </div>
+        
+        <div id="navigation-results"></div>
+    </section>
+
+    <!-- Flow 3: Modal Dialog Interactions -->
+    <section class="test-section" role="region" aria-labelledby="flow3-title">
+        <div class="flow-header">
+            <svg class="flow-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            <h2 id="flow3-title">Flow 3: Modal Dialog Workflows</h2>
+        </div>
+        
+        <div class="sr-instruction">
+            <strong>Screen Reader Goal:</strong> Interact with modal dialogs, including form submission and confirmation dialogs. 
+            Verify focus management and proper announcements.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="startModalFlow()" id="trigger-modal">Open Settings Modal</button>
+            <button onclick="startConfirmFlow()" id="trigger-confirm">Test Confirmation Dialog</button>
+            <button onclick="testModalAccessibility()">Test Modal Focus Management</button>
+        </div>
+        
+        <div class="checklist">
+            <h4>Modal Dialog Screen Reader Checklist:</h4>
+            <label><input type="checkbox" name="modal1"> Modal opening is announced to screen reader</label>
+            <label><input type="checkbox" name="modal2"> Modal title is properly announced</label>
+            <label><input type="checkbox" name="modal3"> Focus moves to modal when opened</label>
+            <label><input type="checkbox" name="modal4"> Tab cycling stays within modal</label>
+            <label><input type="checkbox" name="modal5"> Escape key closes modal and announces closure</label>
+            <label><input type="checkbox" name="modal6"> Focus returns to trigger element when closed</label>
+            <label><input type="checkbox" name="modal7"> Form errors within modal are announced</label>
+            <label><input type="checkbox" name="modal8"> Confirmation dialogs announce their purpose clearly</label>
+        </div>
+        
+        <div id="modal-results"></div>
+    </section>
+
+    <!-- Flow 4: Form Interactions and Validation -->
+    <section class="test-section" role="region" aria-labelledby="flow4-title">
+        <div class="flow-header">
+            <svg class="flow-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+            </svg>
+            <h2 id="flow4-title">Flow 4: Form Input and Validation</h2>
+        </div>
+        
+        <div class="sr-instruction">
+            <strong>Screen Reader Goal:</strong> Complete form filling with validation feedback. 
+            Verify all form controls are properly labeled and validation is announced.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="startFormFlow()">Start Form Test</button>
+            <button onclick="testFormValidation()">Test Validation Announcements</button>
+            <button onclick="resetFormFlow()">Reset Form</button>
+        </div>
+        
+        <form id="test-form" novalidate>
+            <fieldset>
+                <legend>User Profile Information</legend>
+                
+                <la-input-field required>
+                    <span slot="label">Full Name *</span>
+                    <span slot="help">Enter your first and last name</span>
+                </la-input-field>
+                
+                <la-input-field type="email" required>
+                    <span slot="label">Email Address *</span>
+                    <span slot="help">We'll use this to send you important updates</span>
+                </la-input-field>
+                
+                <la-input-field type="textarea">
+                    <span slot="label">Bio (Optional)</span>
+                    <span slot="help">Tell us a little about yourself</span>
+                </la-input-field>
+                
+                <div style="margin: 1rem 0;">
+                    <label>
+                        <input type="checkbox" required id="terms-checkbox">
+                        I agree to the <a href="#terms" onclick="openTermsModal()">Terms of Service</a> *
+                    </label>
+                </div>
+            </fieldset>
+            
+            <div class="test-controls">
+                <button type="submit">Submit Profile</button>
+                <button type="reset">Clear Form</button>
+            </div>
+        </form>
+        
+        <div class="checklist">
+            <h4>Form Screen Reader Checklist:</h4>
+            <label><input type="checkbox" name="form1"> Fieldset and legend are properly announced</label>
+            <label><input type="checkbox" name="form2"> Required fields are announced as required</label>
+            <label><input type="checkbox" name="form3"> Help text is associated and announced</label>
+            <label><input type="checkbox" name="form4"> Validation errors are announced immediately</label>
+            <label><input type="checkbox" name="form5"> Error messages are descriptive and helpful</label>
+            <label><input type="checkbox" name="form6"> Form submission result is announced</label>
+            <label><input type="checkbox" name="form7"> Links within forms are properly identified</label>
+            <label><input type="checkbox" name="form8"> Form reset is announced when triggered</label>
+        </div>
+        
+        <div id="form-results"></div>
+    </section>
+
+    <!-- Modal dialogs for testing -->
+    <la-modal-dialog id="settings-modal">
+        <span slot="title">Application Settings</span>
+        <div>
+            <h3>Accessibility Settings</h3>
+            <form>
+                <la-input-field>
+                    <span slot="label">Screen Reader Voice Speed</span>
+                    <span slot="help">Adjust the reading speed preference</span>
+                </la-input-field>
+                
+                <fieldset>
+                    <legend>Visual Preferences</legend>
+                    <label>
+                        <input type="checkbox" id="modal-high-contrast">
+                        High contrast mode
+                    </label>
+                    <label>
+                        <input type="checkbox" id="modal-large-text">
+                        Larger text size
+                    </label>
+                </fieldset>
+                
+                <div style="margin-top: 1rem;">
+                    <button type="button" onclick="saveSettings()">Save Settings</button>
+                    <button type="button" onclick="closeSettingsModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </la-modal-dialog>
+    
+    <la-confirm-dialog id="test-confirm-dialog"></la-confirm-dialog>
+    
+    <la-modal-dialog id="terms-modal">
+        <span slot="title">Terms of Service</span>
+        <div>
+            <h3>LibreAssistant Terms of Service</h3>
+            <p>This is a sample terms of service document for testing purposes.</p>
+            <p>In a real application, this would contain the actual legal terms.</p>
+            <div style="margin-top: 1rem;">
+                <button type="button" onclick="acceptTerms()">Accept Terms</button>
+                <button type="button" onclick="closeTermsModal()">Close</button>
+            </div>
+        </div>
+    </la-modal-dialog>
+
+    <!-- Load required components -->
+    <script type="module" src="../ui/components/main-tabs.js"></script>
+    <script type="module" src="../ui/components/modal-dialog.js"></script>
+    <script type="module" src="../ui/components/confirm-dialog.js"></script>
+    <script type="module" src="../ui/components/input-field.js"></script>
+    <script type="module" src="../ui/components/onboarding-flow.js"></script>
+    
+    <script>
+        // Global variables
+        const srAnnouncements = document.getElementById('sr-announcements');
+        const srAlerts = document.getElementById('sr-alerts');
+        let currentTestFlow = null;
+        let testResults = {};
+        
+        // Utility functions
+        function announceToScreenReader(message, urgent = false) {
+            const target = urgent ? srAlerts : srAnnouncements;
+            target.textContent = message;
+            
+            // Clear after announcement to allow for repeated messages
+            setTimeout(() => {
+                target.textContent = '';
+            }, 1000);
+        }
+        
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            container.appendChild(div);
+            
+            // Auto-scroll to show new results
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // Also announce important results to screen reader
+            if (type === 'error' || type === 'warning') {
+                announceToScreenReader(message, true);
+            }
+        }
+        
+        function highlightElement(element, duration = 2000) {
+            element.classList.add('sr-test-focus');
+            setTimeout(() => {
+                element.classList.remove('sr-test-focus');
+            }, duration);
+        }
+        
+        // Flow 1: Onboarding Tests
+        function startOnboardingFlow() {
+            currentTestFlow = 'onboarding';
+            announceToScreenReader('Starting onboarding flow test. Follow the prompts to complete each step.');
+            
+            const onboarding = document.getElementById('test-onboarding');
+            if (onboarding) {
+                onboarding.step = 0;
+                onboarding.setAttribute('aria-live', 'polite');
+                highlightElement(onboarding);
+                addResult('onboarding-results', 'Onboarding flow started. Use Tab and arrow keys to navigate.', 'info');
+            } else {
+                addResult('onboarding-results', 'Onboarding component not found', 'error');
+            }
+        }
+        
+        function resetOnboardingFlow() {
+            const onboarding = document.getElementById('test-onboarding');
+            if (onboarding) {
+                onboarding.step = 0;
+                announceToScreenReader('Onboarding flow has been reset to the beginning.');
+                addResult('onboarding-results', 'Onboarding flow reset to initial state', 'success');
+            }
+        }
+        
+        function testOnboardingAccessibility() {
+            const onboarding = document.getElementById('test-onboarding');
+            if (!onboarding || !onboarding.shadowRoot) {
+                addResult('onboarding-results', 'Cannot test - onboarding component not loaded', 'error');
+                return;
+            }
+            
+            const shadowRoot = onboarding.shadowRoot;
+            
+            // Test ARIA attributes
+            const hasAriaLive = onboarding.hasAttribute('aria-live');
+            const hasRole = shadowRoot.querySelector('[role]') !== null;
+            const hasHeadings = shadowRoot.querySelectorAll('h1, h2, h3, h4, h5, h6').length > 0;
+            const hasProperLabels = shadowRoot.querySelectorAll('button[aria-label], button[aria-labelledby]').length > 0;
+            
+            addResult('onboarding-results', `ARIA live region: ${hasAriaLive ? '✓' : '✗'}`, hasAriaLive ? 'success' : 'error');
+            addResult('onboarding-results', `Semantic roles: ${hasRole ? '✓' : '✗'}`, hasRole ? 'success' : 'error');
+            addResult('onboarding-results', `Heading structure: ${hasHeadings ? '✓' : '✗'}`, hasHeadings ? 'success' : 'error');
+            addResult('onboarding-results', `Button labels: ${hasProperLabels ? '✓' : '✗'}`, hasProperLabels ? 'success' : 'error');
+        }
+        
+        // Flow 2: Navigation Tests
+        function startNavigationFlow() {
+            currentTestFlow = 'navigation';
+            announceToScreenReader('Starting navigation flow test. Use arrow keys to navigate between tabs, Enter or Space to activate.');
+            
+            const tabs = document.getElementById('test-main-tabs');
+            if (tabs && tabs.shadowRoot) {
+                const firstTab = tabs.shadowRoot.querySelector('button[role="tab"]');
+                if (firstTab) {
+                    firstTab.focus();
+                    highlightElement(tabs);
+                    addResult('navigation-results', 'Navigation test started. First tab focused.', 'info');
+                } else {
+                    addResult('navigation-results', 'No tabs found in component', 'error');
+                }
+            } else {
+                addResult('navigation-results', 'Main tabs component not found or not loaded', 'error');
+            }
+        }
+        
+        function testTabKeyboardFlow() {
+            const tabs = document.getElementById('test-main-tabs');
+            if (!tabs || !tabs.shadowRoot) {
+                addResult('navigation-results', 'Cannot test - tabs component not loaded', 'error');
+                return;
+            }
+            
+            announceToScreenReader('Testing keyboard navigation. Use arrow keys to move between tabs.');
+            
+            const tabElements = tabs.shadowRoot.querySelectorAll('button[role="tab"]');
+            let currentTabIndex = 0;
+            
+            // Test arrow key simulation
+            tabElements.forEach((tab, index) => {
+                setTimeout(() => {
+                    tab.focus();
+                    announceToScreenReader(`Tab ${index + 1}: ${tab.textContent.trim()}`);
+                    addResult('navigation-results', `Focused tab ${index + 1}: ${tab.textContent.trim()}`, 'info');
+                }, index * 1000);
+            });
+        }
+        
+        function testTabAnnouncements() {
+            const tabs = document.getElementById('test-main-tabs');
+            if (!tabs || !tabs.shadowRoot) {
+                addResult('navigation-results', 'Cannot test - tabs component not loaded', 'error');
+                return;
+            }
+            
+            const shadowRoot = tabs.shadowRoot;
+            const tabList = shadowRoot.querySelector('[role="tablist"]');
+            const tabElements = shadowRoot.querySelectorAll('button[role="tab"]');
+            const tabPanels = shadowRoot.querySelectorAll('[role="tabpanel"]');
+            
+            addResult('navigation-results', `Tab list role: ${tabList ? '✓' : '✗'}`, tabList ? 'success' : 'error');
+            addResult('navigation-results', `Number of tabs: ${tabElements.length}`, 'info');
+            addResult('navigation-results', `Number of panels: ${tabPanels.length}`, 'info');
+            
+            // Test each tab's accessibility attributes
+            tabElements.forEach((tab, index) => {
+                const hasAriaSelected = tab.hasAttribute('aria-selected');
+                const hasAriaControls = tab.hasAttribute('aria-controls');
+                const hasId = tab.hasAttribute('id');
+                
+                addResult('navigation-results', 
+                    `Tab ${index + 1} accessibility: aria-selected(${hasAriaSelected}) aria-controls(${hasAriaControls}) id(${hasId})`, 
+                    (hasAriaSelected && hasAriaControls && hasId) ? 'success' : 'warning');
+            });
+        }
+        
+        // Flow 3: Modal Tests
+        function startModalFlow() {
+            currentTestFlow = 'modal';
+            announceToScreenReader('Opening settings modal. Focus will move to the modal dialog.');
+            
+            const modal = document.getElementById('settings-modal');
+            modal.show();
+            addResult('modal-results', 'Settings modal opened', 'info');
+        }
+        
+        function startConfirmFlow() {
+            currentTestFlow = 'confirm';
+            announceToScreenReader('Opening confirmation dialog.');
+            
+            const confirm = document.getElementById('test-confirm-dialog');
+            confirm.show('Are you sure you want to delete this item? This action cannot be undone.', 'Confirm Deletion')
+                .then(result => {
+                    announceToScreenReader(`Confirmation result: ${result ? 'Confirmed' : 'Cancelled'}`);
+                    addResult('modal-results', `Confirmation dialog result: ${result}`, result ? 'success' : 'info');
+                });
+            addResult('modal-results', 'Confirmation dialog opened', 'info');
+        }
+        
+        function testModalAccessibility() {
+            const modal = document.getElementById('settings-modal');
+            if (!modal.shadowRoot) {
+                addResult('modal-results', 'Cannot test - modal not loaded', 'error');
+                return;
+            }
+            
+            const shadowRoot = modal.shadowRoot;
+            const dialog = shadowRoot.querySelector('.dialog');
+            
+            const hasRole = dialog.getAttribute('role') === 'dialog';
+            const hasAriaModal = dialog.getAttribute('aria-modal') === 'true';
+            const hasAriaLabelledby = dialog.hasAttribute('aria-labelledby');
+            
+            addResult('modal-results', `Dialog role: ${hasRole ? '✓' : '✗'}`, hasRole ? 'success' : 'error');
+            addResult('modal-results', `Aria-modal: ${hasAriaModal ? '✓' : '✗'}`, hasAriaModal ? 'success' : 'error');
+            addResult('modal-results', `Aria-labelledby: ${hasAriaLabelledby ? '✓' : '✗'}`, hasAriaLabelledby ? 'success' : 'error');
+        }
+        
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.hide();
+            announceToScreenReader('Settings modal closed. Focus returned to trigger button.');
+            addResult('modal-results', 'Settings modal closed', 'info');
+        }
+        
+        function saveSettings() {
+            announceToScreenReader('Settings saved successfully.');
+            addResult('modal-results', 'Settings saved', 'success');
+            closeSettingsModal();
+        }
+        
+        // Flow 4: Form Tests
+        function startFormFlow() {
+            currentTestFlow = 'form';
+            announceToScreenReader('Starting form test. Navigate through the form fields and complete the information.');
+            
+            const form = document.getElementById('test-form');
+            const firstField = form.querySelector('la-input-field');
+            if (firstField && firstField.shadowRoot) {
+                const input = firstField.shadowRoot.querySelector('input');
+                if (input) {
+                    input.focus();
+                    highlightElement(form);
+                    addResult('form-results', 'Form test started. First field focused.', 'info');
+                }
+            }
+        }
+        
+        function testFormValidation() {
+            const form = document.getElementById('test-form');
+            const inputs = form.querySelectorAll('la-input-field');
+            
+            announceToScreenReader('Testing form validation. Required fields will show errors.');
+            
+            inputs.forEach((field, index) => {
+                if (field.hasAttribute('required')) {
+                    // Trigger validation
+                    const input = field.shadowRoot.querySelector('input, textarea');
+                    if (input) {
+                        input.focus();
+                        input.blur();
+                        addResult('form-results', `Triggered validation for field ${index + 1}`, 'info');
+                    }
+                }
+            });
+        }
+        
+        function resetFormFlow() {
+            const form = document.getElementById('test-form');
+            form.reset();
+            announceToScreenReader('Form has been reset. All fields cleared.');
+            addResult('form-results', 'Form reset completed', 'success');
+        }
+        
+        function openTermsModal() {
+            announceToScreenReader('Opening Terms of Service modal.');
+            const modal = document.getElementById('terms-modal');
+            modal.show();
+        }
+        
+        function closeTermsModal() {
+            const modal = document.getElementById('terms-modal');
+            modal.hide();
+            announceToScreenReader('Terms modal closed.');
+        }
+        
+        function acceptTerms() {
+            const checkbox = document.getElementById('terms-checkbox');
+            checkbox.checked = true;
+            announceToScreenReader('Terms accepted. You may now proceed with the form.');
+            closeTermsModal();
+        }
+        
+        // Event listeners
+        document.getElementById('test-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            announceToScreenReader('Form submitted successfully.');
+            addResult('form-results', 'Form submission completed', 'success');
+        });
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            announceToScreenReader('Screen reader user flow tests loaded. Choose a test flow to begin.');
+            
+            // Test basic component loading
+            setTimeout(() => {
+                const components = ['test-main-tabs', 'test-onboarding', 'settings-modal', 'test-confirm-dialog'];
+                let loadedCount = 0;
+                
+                components.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element && element.shadowRoot) {
+                        loadedCount++;
+                    }
+                });
+                
+                addResult('onboarding-results', `${loadedCount}/${components.length} components loaded successfully`, 
+                    loadedCount === components.length ? 'success' : 'warning');
+            }, 1000);
+        });
+        
+        // Listen for tab changes to announce them
+        document.addEventListener('tab-changed', function(e) {
+            announceToScreenReader(`Switched to ${e.detail.tabName} tab`);
+        });
+        
+        // Listen for modal events
+        document.addEventListener('dialog-open', function(e) {
+            announceToScreenReader('Modal dialog opened');
+        });
+        
+        document.addEventListener('dialog-close', function(e) {
+            announceToScreenReader('Modal dialog closed');
+        });
+    </script>
+</body>
+</html>

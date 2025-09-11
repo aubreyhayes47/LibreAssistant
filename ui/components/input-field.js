@@ -198,13 +198,42 @@ class LAInputField extends HTMLElement {
     this._error.textContent = message;
     this._error.hidden = false;
     this._input.setAttribute('aria-invalid', 'true');
-    this._input.setAttribute('aria-describedby', 'error');
+    this._input.setAttribute('aria-describedby', 'error help');
+    
+    // Announce error to screen readers
+    this._announceToScreenReader(`Error: ${message}`, true);
   }
 
   _clearError() {
     this._error.hidden = true;
     this._input.removeAttribute('aria-invalid');
-    this._input.removeAttribute('aria-describedby');
+    this._input.setAttribute('aria-describedby', 'help');
+  }
+
+  _announceToScreenReader(message, urgent = false) {
+    // Create or update a live region for announcements
+    if (!this._liveRegion) {
+      this._liveRegion = document.createElement('div');
+      this._liveRegion.setAttribute('aria-live', urgent ? 'assertive' : 'polite');
+      this._liveRegion.setAttribute('aria-atomic', 'true');
+      this._liveRegion.style.position = 'absolute';
+      this._liveRegion.style.left = '-10000px';
+      this._liveRegion.style.width = '1px';
+      this._liveRegion.style.height = '1px';
+      this._liveRegion.style.overflow = 'hidden';
+      document.body.appendChild(this._liveRegion);
+    }
+    
+    // Update aria-live if urgency changed
+    this._liveRegion.setAttribute('aria-live', urgent ? 'assertive' : 'polite');
+    this._liveRegion.textContent = message;
+    
+    // Clear the message after announcement
+    setTimeout(() => {
+      if (this._liveRegion) {
+        this._liveRegion.textContent = '';
+      }
+    }, 1000);
   }
 
   // Public API

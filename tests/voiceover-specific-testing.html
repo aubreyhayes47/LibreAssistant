@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceOver Specific Testing - LibreAssistant</title>
+    <link rel="stylesheet" href="../ui/tokens.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: var(--font-family-sans, sans-serif);
+            background: var(--color-background, #f5f5f5);
+            color: var(--color-text, #333);
+            line-height: 1.6;
+        }
+        
+        .voiceover-info {
+            background: #f3e5f5;
+            border: 2px solid #9c27b0;
+            padding: 1rem;
+            border-radius: var(--radius-md, 8px);
+            margin: 1rem 0;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid var(--color-border, #ddd);
+            border-radius: var(--radius-md, 8px);
+            background: var(--color-surface, white);
+        }
+        
+        .vo-command {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+        
+        .keyboard-shortcut {
+            background: #f5f5f5;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm, 4px);
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .test-result {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: var(--radius-sm, 4px);
+            border: 1px solid;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+        
+        .test-controls button {
+            padding: 0.75rem 1.5rem;
+            margin: 0.5rem;
+            border: 1px solid var(--color-border, #ddd);
+            background: var(--color-primary, #3b82f6);
+            color: white;
+            border-radius: var(--radius-sm, 4px);
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        .test-controls button:focus {
+            outline: 2px solid var(--color-primary, #3b82f6);
+            outline-offset: 2px;
+        }
+        
+        .rotor-hint {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            padding: 1rem;
+            border-radius: var(--radius-sm, 4px);
+            margin: 1rem 0;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .vo-cursor-hint {
+            background: #ffe4e1;
+            border: 1px solid #ff6b6b;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm, 4px);
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- VoiceOver specific announcements -->
+    <div class="sr-only" aria-live="polite" id="vo-announcements"></div>
+    <div class="sr-only" aria-live="assertive" id="vo-alerts"></div>
+    
+    <header>
+        <h1>VoiceOver Specific Testing Suite</h1>
+        <div class="voiceover-info">
+            <h2>VoiceOver Setup Instructions (macOS)</h2>
+            <p><strong>Enable VoiceOver:</strong> System Preferences → Accessibility → VoiceOver, or press <span class="keyboard-shortcut">Cmd + F5</span></p>
+            
+            <h3>Essential VoiceOver Commands</h3>
+            <ul>
+                <li><span class="keyboard-shortcut">VO + Space</span> - Interact with controls</li>
+                <li><span class="keyboard-shortcut">VO + Right/Left</span> - Navigate elements</li>
+                <li><span class="keyboard-shortcut">VO + A</span> - Read all content</li>
+                <li><span class="keyboard-shortcut">VO + F5</span> - List form controls</li>
+                <li><span class="keyboard-shortcut">VO + U</span> - Open rotor menu</li>
+                <li><span class="keyboard-shortcut">VO + H</span> - Navigate by headings</li>
+                <li><span class="keyboard-shortcut">VO + Command + H</span> - Heading rotor</li>
+                <li><span class="keyboard-shortcut">VO + Shift + Down</span> - Interact with groups</li>
+                <li><span class="keyboard-shortcut">VO + Shift + Up</span> - Stop interacting</li>
+            </ul>
+            
+            <div class="rotor-hint">
+                <strong>Rotor Navigation:</strong> The rotor (<span class="keyboard-shortcut">VO + U</span>) is VoiceOver's primary navigation tool. 
+                Use it to quickly jump between headings, links, form controls, and landmarks.
+            </div>
+        </div>
+    </header>
+
+    <!-- Test 1: VoiceOver Cursor Navigation -->
+    <section class="test-section" role="region" aria-labelledby="vo-cursor-test">
+        <h2 id="vo-cursor-test">VoiceOver Cursor Navigation Test</h2>
+        
+        <div class="vo-command">
+            <strong>VoiceOver Navigation:</strong> Use <span class="keyboard-shortcut">VO + Right/Left Arrow</span> to move the VoiceOver cursor.
+            This is different from keyboard focus and allows reading without interaction.
+        </div>
+        
+        <div class="vo-cursor-hint">
+            The VoiceOver cursor (dark rectangle) should move independently of keyboard focus (blue outline).
+            Test both types of navigation.
+        </div>
+        
+        <p>This paragraph contains <strong>bold text</strong>, <em>italic text</em>, and a <a href="#test-link">test link</a>.</p>
+        
+        <div class="test-controls">
+            <button onclick="testVOCursor()">Start Cursor Test</button>
+            <button onclick="testReadAll()">Test Read All (VO + A)</button>
+            <button onclick="announcePosition()">Announce Position</button>
+        </div>
+        
+        <ul aria-label="Test list for navigation">
+            <li>First list item with <code>code element</code></li>
+            <li>Second list item with <mark>highlighted text</mark></li>
+            <li>Third list item with <sub>subscript</sub> and <sup>superscript</sup></li>
+        </ul>
+        
+        <div id="cursor-results"></div>
+    </section>
+
+    <!-- Test 2: Rotor Navigation -->
+    <section class="test-section" role="region" aria-labelledby="vo-rotor-test">
+        <h2 id="vo-rotor-test">Rotor Navigation Test</h2>
+        
+        <div class="vo-command">
+            <strong>Rotor Usage:</strong> Press <span class="keyboard-shortcut">VO + U</span> to open the rotor.
+            Use <span class="keyboard-shortcut">Left/Right arrows</span> to select category, 
+            <span class="keyboard-shortcut">Up/Down arrows</span> to navigate items.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="testRotorHeadings()">Test Heading Navigation</button>
+            <button onclick="testRotorLinks()">Test Link Navigation</button>
+            <button onclick="testRotorForms()">Test Form Controls</button>
+            <button onclick="populateRotorContent()">Populate More Content</button>
+        </div>
+        
+        <h3>Subsection for Rotor Testing</h3>
+        <p>This section contains various elements that should appear in the rotor.</p>
+        
+        <h4>Form Elements for Rotor</h4>
+        <form>
+            <label for="vo-text">Text Input:
+                <input type="text" id="vo-text" placeholder="Test input for rotor">
+            </label>
+            
+            <label for="vo-select">Select Element:
+                <select id="vo-select">
+                    <option>Option A</option>
+                    <option>Option B</option>
+                    <option>Option C</option>
+                </select>
+            </label>
+            
+            <fieldset>
+                <legend>Radio Group</legend>
+                <label><input type="radio" name="vo-radio" value="1"> Radio 1</label>
+                <label><input type="radio" name="vo-radio" value="2"> Radio 2</label>
+            </fieldset>
+        </form>
+        
+        <h4>Links for Rotor</h4>
+        <nav aria-label="Test navigation">
+            <a href="#link1">Internal Link 1</a>
+            <a href="#link2">Internal Link 2</a>
+            <a href="https://example.com" target="_blank">External Link</a>
+        </nav>
+        
+        <div id="rotor-content" aria-live="polite"></div>
+        <div id="rotor-results"></div>
+    </section>
+
+    <!-- Test 3: Interaction and Web Spots -->
+    <section class="test-section" role="region" aria-labelledby="vo-interaction-test">
+        <h2 id="vo-interaction-test">VoiceOver Interaction Test</h2>
+        
+        <div class="vo-command">
+            <strong>Interaction:</strong> Press <span class="keyboard-shortcut">VO + Space</span> to interact with controls.
+            Use <span class="keyboard-shortcut">VO + Shift + Down Arrow</span> to interact with groups.
+            Press <span class="keyboard-shortcut">VO + Shift + Up Arrow</span> to stop interacting.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="testWebSpots()">Test Web Spots</button>
+            <button onclick="testGroupInteraction()">Test Group Interaction</button>
+            <button onclick="openInteractiveModal()">Test Modal Interaction</button>
+        </div>
+        
+        <!-- Tab component for group interaction testing -->
+        <div role="application" aria-label="Interactive Tab Component">
+            <la-main-tabs id="vo-test-tabs" role="tablist">
+                <div slot="tab" data-tab-id="vo-tab1">
+                    <span>Dashboard</span>
+                </div>
+                <div slot="content" data-tab-id="vo-tab1">
+                    <h3>Dashboard Tab Content</h3>
+                    <p>This tab requires group interaction in VoiceOver.</p>
+                    <button>Dashboard Action</button>
+                    <a href="#dash-link">Dashboard Link</a>
+                </div>
+                
+                <div slot="tab" data-tab-id="vo-tab2">
+                    <span>Settings</span>
+                </div>
+                <div slot="content" data-tab-id="vo-tab2">
+                    <h3>Settings Tab Content</h3>
+                    <la-input-field>
+                        <span slot="label">Configuration Setting</span>
+                        <span slot="help">Enter your preferred setting</span>
+                    </la-input-field>
+                </div>
+            </la-main-tabs>
+        </div>
+        
+        <!-- Custom slider for interaction testing -->
+        <div class="test-controls" style="margin-top: 2rem;">
+            <label for="vo-slider">Volume Control (Custom Slider):</label>
+            <div role="slider" 
+                 id="vo-slider"
+                 aria-valuemin="0" 
+                 aria-valuemax="100" 
+                 aria-valuenow="50"
+                 aria-label="Volume level"
+                 tabindex="0"
+                 style="width: 200px; height: 20px; background: #ddd; position: relative; border-radius: 10px;">
+                <div style="width: 50%; height: 100%; background: #4CAF50; border-radius: 10px;"></div>
+            </div>
+        </div>
+        
+        <div id="interaction-results"></div>
+    </section>
+
+    <!-- Test 4: Live Regions and Updates -->
+    <section class="test-section" role="region" aria-labelledby="vo-live-test">
+        <h2 id="vo-live-test">VoiceOver Live Regions Test</h2>
+        
+        <div class="vo-command">
+            <strong>Live Regions:</strong> VoiceOver should automatically announce changes in live regions.
+            Test different politeness levels and atomic vs non-atomic updates.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="testVOLiveRegions()">Test Live Announcements</button>
+            <button onclick="testAtomicUpdates()">Test Atomic Updates</button>
+            <button onclick="testProgressUpdates()">Test Progress Updates</button>
+            <button onclick="clearVOLiveRegions()">Clear Live Regions</button>
+        </div>
+        
+        <div>
+            <h3>Live Region Status Areas:</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+                <div>
+                    <h4>Polite Updates:</h4>
+                    <div id="vo-polite-region" 
+                         aria-live="polite" 
+                         aria-atomic="true"
+                         style="border: 2px solid #4CAF50; padding: 1rem; min-height: 3rem;">
+                        Polite announcements appear here
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>Assertive Updates:</h4>
+                    <div id="vo-assertive-region" 
+                         aria-live="assertive" 
+                         aria-atomic="false"
+                         style="border: 2px solid #ff5722; padding: 1rem; min-height: 3rem;">
+                        Assertive announcements appear here
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h4>Progress Indicator:</h4>
+                <div role="progressbar" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100" 
+                     aria-valuenow="0"
+                     aria-label="Task progress"
+                     id="vo-progress"
+                     style="width: 100%; height: 20px; background: #ddd; border-radius: 10px; overflow: hidden;">
+                    <div id="vo-progress-bar" style="width: 0%; height: 100%; background: #2196F3; transition: width 0.3s;"></div>
+                </div>
+                <div id="vo-progress-text" aria-live="polite">Ready to start</div>
+            </div>
+        </div>
+        
+        <div id="live-results"></div>
+    </section>
+
+    <!-- Test 5: VoiceOver Table Navigation -->
+    <section class="test-section" role="region" aria-labelledby="vo-table-test">
+        <h2 id="vo-table-test">VoiceOver Table Navigation Test</h2>
+        
+        <div class="vo-command">
+            <strong>Table Navigation:</strong> VoiceOver provides special table navigation commands.
+            Use <span class="keyboard-shortcut">VO + arrow keys</span> to navigate table cells.
+            Headers should be announced with each cell.
+        </div>
+        
+        <div class="test-controls">
+            <button onclick="testTableNavigation()">Test Table Navigation</button>
+            <button onclick="testTableHeaders()">Test Header Announcements</button>
+            <button onclick="addTableData()">Add Dynamic Data</button>
+        </div>
+        
+        <table id="vo-test-table" style="border-collapse: collapse; width: 100%; margin: 1rem 0;">
+            <caption>Sample Data Table for VoiceOver Testing</caption>
+            <thead>
+                <tr>
+                    <th scope="col" style="border: 1px solid #ddd; padding: 0.5rem;">Name</th>
+                    <th scope="col" style="border: 1px solid #ddd; padding: 0.5rem;">Role</th>
+                    <th scope="col" style="border: 1px solid #ddd; padding: 0.5rem;">Department</th>
+                    <th scope="col" style="border: 1px solid #ddd; padding: 0.5rem;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">John Smith</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Developer</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Engineering</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Active</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Jane Doe</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Designer</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">UX</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Active</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Bob Johnson</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Manager</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Operations</td>
+                    <td style="border: 1px solid #ddd; padding: 0.5rem;">Away</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div id="table-results"></div>
+    </section>
+
+    <!-- Modal for interaction testing -->
+    <la-modal-dialog id="vo-interactive-modal">
+        <span slot="title">VoiceOver Modal Interaction Test</span>
+        <div>
+            <p>This modal tests VoiceOver's interaction with complex content.</p>
+            
+            <form>
+                <la-input-field required>
+                    <span slot="label">Name (Required)</span>
+                    <span slot="help">Enter your full name</span>
+                </la-input-field>
+                
+                <fieldset>
+                    <legend>Preferences</legend>
+                    <label><input type="checkbox" id="vo-pref1"> Enable notifications</label>
+                    <label><input type="checkbox" id="vo-pref2"> Save preferences</label>
+                </fieldset>
+                
+                <div style="margin-top: 1rem;">
+                    <button type="button" onclick="saveModalForm()">Save Settings</button>
+                    <button type="button" onclick="closeInteractiveModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </la-modal-dialog>
+
+    <!-- Load components -->
+    <script type="module" src="../ui/components/main-tabs.js"></script>
+    <script type="module" src="../ui/components/modal-dialog.js"></script>
+    <script type="module" src="../ui/components/input-field.js"></script>
+    
+    <script>
+        // VoiceOver specific testing utilities
+        const voAnnouncements = document.getElementById('vo-announcements');
+        const voAlerts = document.getElementById('vo-alerts');
+        const voPoliteRegion = document.getElementById('vo-polite-region');
+        const voAssertiveRegion = document.getElementById('vo-assertive-region');
+        
+        let testCounter = 0;
+        let progressValue = 0;
+        
+        function announceToVO(message, urgent = false) {
+            const target = urgent ? voAlerts : voAnnouncements;
+            target.textContent = message;
+            
+            setTimeout(() => {
+                target.textContent = '';
+            }, 1000);
+        }
+        
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            container.appendChild(div);
+            
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // Test 1: VoiceOver Cursor
+        function testVOCursor() {
+            announceToVO('VoiceOver cursor test started. Use VO + Right Arrow to navigate through this content.');
+            addResult('cursor-results', 'VoiceOver cursor test started. Navigate with VO + arrows.', 'info');
+        }
+        
+        function testReadAll() {
+            announceToVO('Press VO + A to read all content on the page.');
+            addResult('cursor-results', 'Read all test. Press VO + A to hear entire page content.', 'info');
+        }
+        
+        function announcePosition() {
+            announceToVO('Check VoiceOver announcements for current cursor position.');
+            addResult('cursor-results', 'Position announcement requested. Listen for VoiceOver feedback.', 'info');
+        }
+        
+        // Test 2: Rotor Navigation
+        function testRotorHeadings() {
+            announceToVO('Open rotor with VO + U, select Headings, then navigate with up/down arrows.');
+            addResult('rotor-results', 'Heading rotor test. Use VO + U to open rotor, select Headings.', 'info');
+        }
+        
+        function testRotorLinks() {
+            announceToVO('Open rotor with VO + U, select Links to navigate between all page links.');
+            addResult('rotor-results', 'Link rotor test. Use VO + U, select Links category.', 'info');
+        }
+        
+        function testRotorForms() {
+            announceToVO('Open rotor with VO + U, select Form Controls to jump between form elements.');
+            addResult('rotor-results', 'Form controls rotor test. Use VO + U, select Form Controls.', 'info');
+        }
+        
+        function populateRotorContent() {
+            const content = document.getElementById('rotor-content');
+            content.innerHTML = `
+                <h5>Dynamically Added Heading</h5>
+                <p>This content was added dynamically and should appear in the rotor.</p>
+                <a href="#dynamic-link">Dynamic Link</a>
+                <button>Dynamic Button</button>
+            `;
+            announceToVO('New content added to page. Refresh rotor to see new items.');
+            addResult('rotor-results', 'Dynamic content added. Refresh rotor (VO + U) to see new items.', 'success');
+        }
+        
+        // Test 3: Interaction
+        function testWebSpots() {
+            announceToVO('Testing web spots. VoiceOver should identify interactive elements.');
+            const tabs = document.getElementById('vo-test-tabs');
+            if (tabs && tabs.shadowRoot) {
+                const firstTab = tabs.shadowRoot.querySelector('button[role="tab"]');
+                if (firstTab) {
+                    firstTab.focus();
+                }
+            }
+            addResult('interaction-results', 'Web spots test started. Navigate to tab component.', 'info');
+        }
+        
+        function testGroupInteraction() {
+            announceToVO('Test group interaction. Use VO + Shift + Down Arrow to interact with tab group.');
+            const tabs = document.getElementById('vo-test-tabs');
+            tabs.focus();
+            addResult('interaction-results', 'Group interaction test. Use VO + Shift + Down on tab component.', 'info');
+        }
+        
+        function openInteractiveModal() {
+            const modal = document.getElementById('vo-interactive-modal');
+            modal.show();
+            announceToVO('Interactive modal opened. Test VoiceOver navigation within modal.');
+            addResult('interaction-results', 'Interactive modal opened. Test form navigation.', 'info');
+        }
+        
+        function closeInteractiveModal() {
+            const modal = document.getElementById('vo-interactive-modal');
+            modal.hide();
+        }
+        
+        function saveModalForm() {
+            announceToVO('Modal form saved successfully.');
+            addResult('interaction-results', 'Modal form saved', 'success');
+            closeInteractiveModal();
+        }
+        
+        // Test 4: Live Regions
+        function testVOLiveRegions() {
+            testCounter++;
+            voPoliteRegion.textContent = `Polite update #${testCounter}: This should be announced when VoiceOver is ready.`;
+            
+            setTimeout(() => {
+                voAssertiveRegion.textContent = `Assertive update #${testCounter}: This should interrupt current speech.`;
+            }, 1000);
+            
+            addResult('live-results', `Live region test #${testCounter} started`, 'info');
+        }
+        
+        function testAtomicUpdates() {
+            const atomicRegion = voPoliteRegion;
+            atomicRegion.setAttribute('aria-atomic', 'true');
+            
+            // Add content gradually to test atomic behavior
+            atomicRegion.innerHTML = 'Partial content...';
+            setTimeout(() => {
+                atomicRegion.innerHTML = 'Partial content... now complete atomic update.';
+            }, 500);
+            
+            addResult('live-results', 'Atomic update test. Should announce complete content only.', 'info');
+        }
+        
+        function testProgressUpdates() {
+            progressValue = 0;
+            const progressBar = document.getElementById('vo-progress');
+            const progressBarFill = document.getElementById('vo-progress-bar');
+            const progressText = document.getElementById('vo-progress-text');
+            
+            const interval = setInterval(() => {
+                progressValue += 20;
+                progressBar.setAttribute('aria-valuenow', progressValue);
+                progressBarFill.style.width = progressValue + '%';
+                progressText.textContent = `Progress: ${progressValue}%`;
+                
+                if (progressValue >= 100) {
+                    clearInterval(interval);
+                    progressText.textContent = 'Task completed';
+                    addResult('live-results', 'Progress updates completed', 'success');
+                }
+            }, 800);
+            
+            addResult('live-results', 'Progress update test started. Listen for percentage announcements.', 'info');
+        }
+        
+        function clearVOLiveRegions() {
+            voPoliteRegion.textContent = 'Polite announcements appear here';
+            voAssertiveRegion.textContent = 'Assertive announcements appear here';
+            document.getElementById('vo-progress-text').textContent = 'Ready to start';
+            addResult('live-results', 'Live regions cleared', 'success');
+        }
+        
+        // Test 5: Table Navigation
+        function testTableNavigation() {
+            announceToVO('Table navigation test. Navigate to table and use VO + arrow keys for cell navigation.');
+            const table = document.getElementById('vo-test-table');
+            const firstCell = table.querySelector('td');
+            if (firstCell) {
+                firstCell.focus();
+            }
+            addResult('table-results', 'Table navigation test. Use VO + arrow keys within table.', 'info');
+        }
+        
+        function testTableHeaders() {
+            announceToVO('Table header test. Each cell should announce its corresponding headers.');
+            addResult('table-results', 'Header announcement test. Listen for header info with each cell.', 'info');
+        }
+        
+        function addTableData() {
+            const tbody = document.querySelector('#vo-test-table tbody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td style="border: 1px solid #ddd; padding: 0.5rem;">Alice Wilson</td>
+                <td style="border: 1px solid #ddd; padding: 0.5rem;">Tester</td>
+                <td style="border: 1px solid #ddd; padding: 0.5rem;">QA</td>
+                <td style="border: 1px solid #ddd; padding: 0.5rem;">Active</td>
+            `;
+            tbody.appendChild(newRow);
+            announceToVO('New table row added dynamically.');
+            addResult('table-results', 'Dynamic table row added', 'success');
+        }
+        
+        // Custom slider interaction
+        function setupSliderInteraction() {
+            const slider = document.getElementById('vo-slider');
+            
+            slider.addEventListener('keydown', function(e) {
+                let currentValue = parseInt(this.getAttribute('aria-valuenow'));
+                
+                switch(e.key) {
+                    case 'ArrowRight':
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        currentValue = Math.min(100, currentValue + 5);
+                        break;
+                    case 'ArrowLeft':
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        currentValue = Math.max(0, currentValue - 5);
+                        break;
+                    case 'Home':
+                        e.preventDefault();
+                        currentValue = 0;
+                        break;
+                    case 'End':
+                        e.preventDefault();
+                        currentValue = 100;
+                        break;
+                    default:
+                        return;
+                }
+                
+                this.setAttribute('aria-valuenow', currentValue);
+                const fill = this.querySelector('div');
+                fill.style.width = currentValue + '%';
+                
+                announceToVO(`Volume: ${currentValue}%`);
+            });
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            announceToVO('VoiceOver testing suite loaded. Use rotor (VO + U) to navigate test sections.');
+            setupSliderInteraction();
+            
+            // Add VoiceOver specific focus indicators
+            document.addEventListener('focus', function(e) {
+                e.target.style.outline = '3px solid #9c27b0';
+                e.target.style.outlineOffset = '2px';
+            }, true);
+            
+            document.addEventListener('blur', function(e) {
+                e.target.style.outline = '';
+                e.target.style.outlineOffset = '';
+            }, true);
+        });
+        
+        // Listen for VoiceOver specific events
+        document.addEventListener('focus', function(e) {
+            console.log('VoiceOver focus on:', e.target.tagName, e.target.textContent?.slice(0, 50));
+        });
+        
+        // Tab change announcements
+        document.addEventListener('tab-change', function(e) {
+            announceToVO(`Switched to ${e.detail.tabName} tab`);
+        });
+    </script>
+</body>
+</html>
