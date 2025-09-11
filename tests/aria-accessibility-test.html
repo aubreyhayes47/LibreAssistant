@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARIA Accessibility Improvements Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-controls button {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #ddd;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .test-controls button:hover {
+            background: #0056b3;
+        }
+        
+        .test-controls button:focus {
+            outline: 2px solid #007bff;
+            outline-offset: 2px;
+        }
+        
+        .test-result {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .checklist {
+            margin: 1rem 0;
+        }
+        
+        .checklist label {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+            cursor: pointer;
+        }
+        
+        .checklist input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        
+        .instruction {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+    </style>
+    <link rel="stylesheet" href="../ui/tokens.css">
+</head>
+<body>
+    <h1>ARIA Accessibility Improvements Test</h1>
+    
+    <div class="instruction">
+        <strong>Instructions:</strong> This page tests the ARIA accessibility improvements made to LibreAssistant components. 
+        Use keyboard navigation (Tab, Shift+Tab, Enter, Space) and screen readers to verify functionality.
+        Check each item in the checklists as you verify them.
+    </div>
+
+    <div class="test-section">
+        <h2>Theme Selector Component</h2>
+        
+        <la-theme-selector id="theme-selector"></la-theme-selector>
+        
+        <div class="test-controls">
+            <button onclick="testThemeSelector()">Test Theme Selector</button>
+        </div>
+        
+        <div class="checklist">
+            <h3>Accessibility Checklist for Theme Selector:</h3>
+            <label><input type="checkbox"> Has proper aria-label for select element</label>
+            <label><input type="checkbox"> Has aria-describedby pointing to preview</label>
+            <label><input type="checkbox"> Preview element has aria-hidden="true"</label>
+            <label><input type="checkbox"> Select updates aria-description on change</label>
+            <label><input type="checkbox"> Proper label association with for/id</label>
+        </div>
+        
+        <div id="theme-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Provider Selector Component</h2>
+        
+        <la-provider-selector id="provider-selector"></la-provider-selector>
+        
+        <div class="test-controls">
+            <button onclick="testProviderSelector()">Test Provider Selector</button>
+        </div>
+        
+        <div class="checklist">
+            <h3>Accessibility Checklist for Provider Selector:</h3>
+            <label><input type="checkbox"> Has proper aria-label for select element</label>
+            <label><input type="checkbox"> Status indicator has role="img"</label>
+            <label><input type="checkbox"> Status indicator has descriptive aria-label</label>
+            <label><input type="checkbox"> Select has aria-describedby pointing to status</label>
+            <label><input type="checkbox"> Select updates aria-description on change</label>
+        </div>
+        
+        <div id="provider-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Notification System Component</h2>
+        
+        <div class="test-controls">
+            <button onclick="testNotificationSystem()">Test Notifications</button>
+            <button onclick="showSuccessNotification()">Show Success</button>
+            <button onclick="showErrorNotification()">Show Error</button>
+            <button onclick="showInfoNotification()">Show Info</button>
+        </div>
+        
+        <div class="checklist">
+            <h3>Accessibility Checklist for Notification System:</h3>
+            <label><input type="checkbox"> Container has role="region"</label>
+            <label><input type="checkbox"> Container has aria-label</label>
+            <label><input type="checkbox"> Container has aria-live="polite"</label>
+            <label><input type="checkbox"> Individual notifications have role="alert"</label>
+            <label><input type="checkbox"> Error notifications have aria-live="assertive"</label>
+            <label><input type="checkbox"> Close buttons have proper aria-label</label>
+        </div>
+        
+        <div id="notification-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Switchboard Component</h2>
+        
+        <la-switchboard id="switchboard"></la-switchboard>
+        
+        <div class="test-controls">
+            <button onclick="testSwitchboard()">Test Switchboard</button>
+        </div>
+        
+        <div class="checklist">
+            <h3>Accessibility Checklist for Switchboard:</h3>
+            <label><input type="checkbox"> Textarea has descriptive aria-label</label>
+            <label><input type="checkbox"> Plugin select has aria-label</label>
+            <label><input type="checkbox"> Send button has aria-label</label>
+            <label><input type="checkbox"> Log container has role="log"</label>
+            <label><input type="checkbox"> Log container has aria-live="polite"</label>
+        </div>
+        
+        <div id="switchboard-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>User Profile Component</h2>
+        
+        <la-user-profile id="user-profile"></la-user-profile>
+        
+        <div class="test-controls">
+            <button onclick="testUserProfile()">Test User Profile</button>
+        </div>
+        
+        <div class="checklist">
+            <h3>Accessibility Checklist for User Profile:</h3>
+            <label><input type="checkbox"> Checkbox has proper for/id association</label>
+            <label><input type="checkbox"> Checkbox has aria-describedby</label>
+            <label><input type="checkbox"> Checkbox updates aria-checked on change</label>
+            <label><input type="checkbox"> Help text is properly associated</label>
+        </div>
+        
+        <div id="user-profile-results"></div>
+    </div>
+
+    <!-- Load components -->
+    <script type="module" src="../ui/components/theme-selector.js"></script>
+    <script type="module" src="../ui/components/provider-selector.js"></script>
+    <script type="module" src="../ui/components/notification-system.js"></script>
+    <script type="module" src="../ui/components/switchboard.js"></script>
+    <script type="module" src="../ui/components/user-profile.js"></script>
+    <script type="module" src="../ui/components/data-vault.js"></script>
+    
+    <script>
+        // Create global notification system for testing
+        const notificationSystem = document.createElement('la-notification-system');
+        document.body.appendChild(notificationSystem);
+        window.notifications = notificationSystem;
+        
+        function addResult(container, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+            
+            // Auto-scroll to show new results
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        function testThemeSelector() {
+            const results = document.getElementById('theme-results');
+            const themeSelector = document.getElementById('theme-selector');
+            
+            addResult(results, 'Testing Theme Selector accessibility...', 'info');
+            
+            setTimeout(() => {
+                const shadowRoot = themeSelector.shadowRoot;
+                if (!shadowRoot) {
+                    addResult(results, '✗ Shadow root not found', 'error');
+                    return;
+                }
+                
+                const select = shadowRoot.getElementById('theme-select');
+                const preview = shadowRoot.getElementById('preview');
+                const label = shadowRoot.querySelector('label');
+                
+                // Test aria-label
+                if (select && select.hasAttribute('aria-label')) {
+                    addResult(results, '✓ Select has aria-label: ' + select.getAttribute('aria-label'), 'success');
+                } else {
+                    addResult(results, '✗ Select missing aria-label', 'error');
+                }
+                
+                // Test aria-describedby
+                if (select && select.hasAttribute('aria-describedby')) {
+                    addResult(results, '✓ Select has aria-describedby: ' + select.getAttribute('aria-describedby'), 'success');
+                } else {
+                    addResult(results, '✗ Select missing aria-describedby', 'error');
+                }
+                
+                // Test preview aria-hidden
+                if (preview && preview.hasAttribute('aria-hidden')) {
+                    addResult(results, '✓ Preview has aria-hidden: ' + preview.getAttribute('aria-hidden'), 'success');
+                } else {
+                    addResult(results, '✗ Preview missing aria-hidden', 'error');
+                }
+                
+                // Test label association
+                if (label && label.hasAttribute('for') && select && select.id === label.getAttribute('for')) {
+                    addResult(results, '✓ Label properly associated with select', 'success');
+                } else {
+                    addResult(results, '✗ Label not properly associated', 'error');
+                }
+                
+                addResult(results, 'Theme Selector accessibility test completed', 'info');
+            }, 100);
+        }
+        
+        function testProviderSelector() {
+            const results = document.getElementById('provider-results');
+            const providerSelector = document.getElementById('provider-selector');
+            
+            addResult(results, 'Testing Provider Selector accessibility...', 'info');
+            
+            setTimeout(() => {
+                const shadowRoot = providerSelector.shadowRoot;
+                if (!shadowRoot) {
+                    addResult(results, '✗ Shadow root not found', 'error');
+                    return;
+                }
+                
+                const select = shadowRoot.getElementById('provider-select');
+                const status = shadowRoot.getElementById('status');
+                const label = shadowRoot.querySelector('label');
+                
+                // Test aria-label
+                if (select && select.hasAttribute('aria-label')) {
+                    addResult(results, '✓ Select has aria-label: ' + select.getAttribute('aria-label'), 'success');
+                } else {
+                    addResult(results, '✗ Select missing aria-label', 'error');
+                }
+                
+                // Test status role
+                if (status && status.getAttribute('role') === 'img') {
+                    addResult(results, '✓ Status has role="img"', 'success');
+                } else {
+                    addResult(results, '✗ Status missing role="img"', 'error');
+                }
+                
+                // Test status aria-label
+                if (status && status.hasAttribute('aria-label')) {
+                    addResult(results, '✓ Status has aria-label: ' + status.getAttribute('aria-label'), 'success');
+                } else {
+                    addResult(results, '✗ Status missing aria-label', 'error');
+                }
+                
+                // Test aria-describedby
+                if (select && select.hasAttribute('aria-describedby')) {
+                    addResult(results, '✓ Select has aria-describedby: ' + select.getAttribute('aria-describedby'), 'success');
+                } else {
+                    addResult(results, '✗ Select missing aria-describedby', 'error');
+                }
+                
+                addResult(results, 'Provider Selector accessibility test completed', 'info');
+            }, 100);
+        }
+        
+        function testNotificationSystem() {
+            const results = document.getElementById('notification-results');
+            
+            addResult(results, 'Testing Notification System accessibility...', 'info');
+            
+            const shadowRoot = notificationSystem.shadowRoot;
+            if (!shadowRoot) {
+                addResult(results, '✗ Shadow root not found', 'error');
+                return;
+            }
+            
+            const container = shadowRoot.getElementById('container');
+            
+            // Test container attributes
+            if (container && container.getAttribute('role') === 'region') {
+                addResult(results, '✓ Container has role="region"', 'success');
+            } else {
+                addResult(results, '✗ Container missing role="region"', 'error');
+            }
+            
+            if (container && container.hasAttribute('aria-label')) {
+                addResult(results, '✓ Container has aria-label: ' + container.getAttribute('aria-label'), 'success');
+            } else {
+                addResult(results, '✗ Container missing aria-label', 'error');
+            }
+            
+            if (container && container.getAttribute('aria-live') === 'polite') {
+                addResult(results, '✓ Container has aria-live="polite"', 'success');
+            } else {
+                addResult(results, '✗ Container missing aria-live="polite"', 'error');
+            }
+            
+            addResult(results, 'Notification System accessibility test completed', 'info');
+        }
+        
+        function testSwitchboard() {
+            const results = document.getElementById('switchboard-results');
+            const switchboard = document.getElementById('switchboard');
+            
+            addResult(results, 'Testing Switchboard accessibility...', 'info');
+            
+            setTimeout(() => {
+                const shadowRoot = switchboard.shadowRoot;
+                if (!shadowRoot) {
+                    addResult(results, '✗ Shadow root not found', 'error');
+                    return;
+                }
+                
+                const textarea = shadowRoot.getElementById('input');
+                const select = shadowRoot.getElementById('plugin');
+                const button = shadowRoot.getElementById('send');
+                const log = shadowRoot.getElementById('log');
+                
+                // Test textarea aria-label
+                if (textarea && textarea.hasAttribute('aria-label')) {
+                    addResult(results, '✓ Textarea has aria-label: ' + textarea.getAttribute('aria-label'), 'success');
+                } else {
+                    addResult(results, '✗ Textarea missing aria-label', 'error');
+                }
+                
+                // Test select aria-label
+                if (select && select.hasAttribute('aria-label')) {
+                    addResult(results, '✓ Select has aria-label: ' + select.getAttribute('aria-label'), 'success');
+                } else {
+                    addResult(results, '✗ Select missing aria-label', 'error');
+                }
+                
+                // Test button aria-label
+                if (button && button.hasAttribute('aria-label')) {
+                    addResult(results, '✓ Button has aria-label: ' + button.getAttribute('aria-label'), 'success');
+                } else {
+                    addResult(results, '✗ Button missing aria-label', 'error');
+                }
+                
+                // Test log role
+                if (log && log.getAttribute('role') === 'log') {
+                    addResult(results, '✓ Log has role="log"', 'success');
+                } else {
+                    addResult(results, '✗ Log missing role="log"', 'error');
+                }
+                
+                // Test log aria-live
+                if (log && log.getAttribute('aria-live') === 'polite') {
+                    addResult(results, '✓ Log has aria-live="polite"', 'success');
+                } else {
+                    addResult(results, '✗ Log missing aria-live="polite"', 'error');
+                }
+                
+                addResult(results, 'Switchboard accessibility test completed', 'info');
+            }, 100);
+        }
+        
+        function testUserProfile() {
+            const results = document.getElementById('user-profile-results');
+            const userProfile = document.getElementById('user-profile');
+            
+            addResult(results, 'Testing User Profile accessibility...', 'info');
+            
+            setTimeout(() => {
+                const shadowRoot = userProfile.shadowRoot;
+                if (!shadowRoot) {
+                    addResult(results, '✗ Shadow root not found', 'error');
+                    return;
+                }
+                
+                const checkbox = shadowRoot.getElementById('consent-checkbox');
+                const label = shadowRoot.querySelector('label');
+                const help = shadowRoot.getElementById('consent-help');
+                
+                // Test for/id association
+                if (label && checkbox && label.getAttribute('for') === checkbox.id) {
+                    addResult(results, '✓ Label properly associated with checkbox', 'success');
+                } else {
+                    addResult(results, '✗ Label not properly associated with checkbox', 'error');
+                }
+                
+                // Test aria-describedby
+                if (checkbox && checkbox.hasAttribute('aria-describedby')) {
+                    addResult(results, '✓ Checkbox has aria-describedby: ' + checkbox.getAttribute('aria-describedby'), 'success');
+                } else {
+                    addResult(results, '✗ Checkbox missing aria-describedby', 'error');
+                }
+                
+                // Test help text
+                if (help) {
+                    addResult(results, '✓ Help text element found', 'success');
+                } else {
+                    addResult(results, '✗ Help text element not found', 'error');
+                }
+                
+                addResult(results, 'User Profile accessibility test completed', 'info');
+            }, 100);
+        }
+        
+        function showSuccessNotification() {
+            window.notifications?.success('This is a success notification for testing ARIA features');
+        }
+        
+        function showErrorNotification() {
+            window.notifications?.error('This is an error notification for testing ARIA features');
+        }
+        
+        function showInfoNotification() {
+            window.notifications?.info('This is an info notification for testing ARIA features');
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                console.log('ARIA Accessibility Test page loaded');
+            }, 500);
+        });
+    </script>
+</body>
+</html>
