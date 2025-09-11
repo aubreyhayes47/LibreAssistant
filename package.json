@@ -5,7 +5,10 @@
   "scripts": {
     "test": "node --test --import ./register-ts-node.js tests/mcp/*.test.ts",
     "test:ui": "node --test tests/ui/*.test.js",
-    "test:all": "npm run test && npm run test:ui"
+    "test:accessibility": "node --test tests/accessibility-contrast.test.js",
+    "test:all": "npm run test && npm run test:ui && npm run test:accessibility",
+    "audit:contrast": "node scripts/audit-color-contrast.js",
+    "fix:contrast": "node scripts/fix-color-contrast.js"
   },
   "dependencies": {
     "ajv": "^8.12.0",

@@ -86,7 +86,7 @@ class LANotificationSystem extends HTMLElement {
           100% { transform: rotate(360deg); }
         }
       </style>
-      <div id="container"></div>
+      <div id="container" role="region" aria-label="Notifications" aria-live="polite" aria-atomic="false"></div>
     `;
     this.notifications = new Map();
     this.counter = 0;
@@ -98,6 +98,8 @@ class LANotificationSystem extends HTMLElement {
     
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
+    notification.setAttribute('role', 'alert');
+    notification.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
     notification.innerHTML = `
       ${this.getIcon(type)}
       <div class="content">${message}</div>
@@ -143,6 +145,7 @@ class LANotificationSystem extends HTMLElement {
     if (!notification) return;
 
     notification.className = `notification ${type} show`;
+    notification.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
     notification.innerHTML = `
       ${this.getIcon(type)}
       <div class="content">${message}</div>

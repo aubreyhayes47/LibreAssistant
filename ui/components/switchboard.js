@@ -97,14 +97,14 @@ class LASwitchboard extends HTMLElement {
         <la-provider-selector id="provider"></la-provider-selector>
       </div>
       <div class="request">
-        <textarea id="input" aria-label="Request"></textarea>
-        <select id="plugin">
+        <textarea id="input" aria-label="Enter your request or question" placeholder="What would you like to ask?"></textarea>
+        <select id="plugin" aria-label="Select plugin (optional)">
           <option value="">No plugin</option>
         </select>
-        <button id="send">Send</button>
+        <button id="send" aria-label="Send request">Send</button>
       </div>
       <div class="activity">
-        <ul id="log"></ul>
+        <ul id="log" role="log" aria-label="Request history" aria-live="polite"></ul>
       </div>
     `;
   }
@@ -217,6 +217,39 @@ class LASwitchboard extends HTMLElement {
       } finally {
         send.disabled = false;
         send.classList.remove('loading');
+      }
+    });
+
+    // Add keyboard navigation support
+    this._setupKeyboardNavigation(input, send);
+  }
+
+  _setupKeyboardNavigation(input, send) {
+    // Handle keyboard shortcuts in the input area
+    input.addEventListener('keydown', (e) => {
+      // Ctrl+Enter or Shift+Enter to send
+      if ((e.ctrlKey || e.shiftKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!send.disabled && input.value.trim()) {
+          send.click();
+        }
+      }
+      
+      // Escape to clear input
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        input.value = '';
+        input.focus();
+      }
+    });
+
+    // Ensure proper focus behavior for send button
+    send.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!send.disabled) {
+          send.click();
+        }
       }
     });
   }

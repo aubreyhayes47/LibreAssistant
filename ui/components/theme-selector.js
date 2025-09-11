@@ -77,8 +77,8 @@ class LAThemeSelector extends HTMLElement {
       </style>
       <div class="selector-container">
         <label for="theme-select">Theme:</label>
-        <span class="preview" id="preview"></span>
-        <select id="theme-select">
+        <span class="preview" id="preview" aria-hidden="true"></span>
+        <select id="theme-select" aria-label="Select application theme" aria-describedby="theme-preview">
           <option value="">Loading themes...</option>
         </select>
       </div>
@@ -128,6 +128,11 @@ class LAThemeSelector extends HTMLElement {
   setupEventListeners() {
     const select = this.shadowRoot.getElementById('theme-select');
     select.addEventListener('change', (event) => {
+      const selectedTheme = this.themes.find(t => t.id === event.target.value);
+      if (selectedTheme) {
+        // Update ARIA description for screen readers
+        select.setAttribute('aria-description', `Selected theme: ${selectedTheme.name}`);
+      }
       this.applyTheme(event.target.value);
     });
   }

@@ -144,6 +144,17 @@ class LAOnboardingFlow extends HTMLElement {
           border-radius: var(--radius-sm);
           margin: var(--spacing-md) 0;
         }
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
       </style>
       <div class="progress-bar" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="6" aria-label="Onboarding progress">
         <div class="progress-fill" id="progress"></div>
@@ -155,6 +166,7 @@ class LAOnboardingFlow extends HTMLElement {
           <p>Select whether to use cloud-based AI services or local AI models. Cloud providers offer more powerful models but send data externally.</p>
         </div>
         <select id="engine" aria-labelledby="step-0-title" aria-describedby="step-0-description" aria-required="true">
+
           <option value="">-- Please select --</option>
           <option value="cloud">Cloud (OpenAI, Anthropic, etc.)</option>
           <option value="local">Local (Ollama, etc.)</option>
@@ -205,6 +217,7 @@ class LAOnboardingFlow extends HTMLElement {
           <p>LibreAssistant is now configured and ready to use.</p>
         </div>
         <div id="completion-summary" aria-labelledby="step-5-title" aria-describedby="step-5-description"></div>
+
         <p>You can change these settings anytime in the preferences.</p>
       </div>
       <div class="controls">
@@ -226,7 +239,7 @@ class LAOnboardingFlow extends HTMLElement {
     this.pluginList = this.shadowRoot.getElementById('plugin-list');
     this.summary = this.shadowRoot.getElementById('summary');
     this.completionSummary = this.shadowRoot.getElementById('completion-summary');
-    this.privacyCheck = this.shadowRoot.getElementById('privacy');
+    this.privacyCheck = this.shadowRoot.getElementById('privacy-checkbox');
     
     await this.loadPlugins();
     this.update();
@@ -280,6 +293,9 @@ class LAOnboardingFlow extends HTMLElement {
         this.setLoading(false);
       }
     });
+
+    // Add keyboard navigation support
+    this._setupKeyboardNavigation();
   }
 
   async loadPlugins() {
@@ -535,6 +551,69 @@ class LAOnboardingFlow extends HTMLElement {
         detail: { provider: this.provider, plugins: enabled }
       })
     );
+  }
+
+  _setupKeyboardNavigation() {
+    // Add keyboard event handling for the entire component
+    this.addEventListener('keydown', (e) => {
+      // Handle Enter key on form elements
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+        const activeElement = this.shadowRoot.activeElement;
+        
+        // For input fields, trigger next button
+        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT')) {
+          e.preventDefault();
+          if (!this.nextBtn.disabled) {
+            this.nextBtn.click();
+          }
+        }
+      }
+      
+      // Handle Escape key to go back
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (!this.backBtn.disabled && this.step > 0) {
+          this.backBtn.click();
+        }
+      }
+    });
+
+    // Ensure proper focus management when step changes
+    this._setupStepFocusManagement();
+  }
+
+  _setupStepFocusManagement() {
+    // Focus the first interactive element when step changes
+    const observer = new MutationObserver(() => {
+      this._focusFirstInteractiveElement();
+    });
+
+    // Observe changes to step visibility
+    this.steps.forEach(step => {
+      observer.observe(step, { attributes: true, attributeFilter: ['hidden'] });
+    });
+  }
+
+  _focusFirstInteractiveElement() {
+    const currentStep = this.steps[this.step];
+    if (!currentStep || currentStep.hidden) return;
+
+    // Find the first focusable element in the current step
+    const focusableSelectors = [
+      'input:not([disabled]):not([hidden])',
+      'select:not([disabled]):not([hidden])',
+      'textarea:not([disabled]):not([hidden])',
+      'button:not([disabled]):not([hidden])',
+      '[tabindex]:not([tabindex="-1"]):not([disabled]):not([hidden])'
+    ];
+
+    const focusableElement = currentStep.querySelector(focusableSelectors.join(', '));
+    if (focusableElement) {
+      // Small delay to ensure element is ready
+      setTimeout(() => {
+        focusableElement.focus();
+      }, 100);
+    }
   }
 }
 
