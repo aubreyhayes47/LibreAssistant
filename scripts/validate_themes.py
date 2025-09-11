@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2024 LibreAssistant contributors.
+# Licensed under the MIT License.
+
 """
 Theme validation script for LibreAssistant.
 
