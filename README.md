@@ -118,10 +118,16 @@ the `LOCAL_` variables to point at a different server or model.
 ## Using LibreAssistant
 
 Open your browser to [http://localhost:8000](http://localhost:8000) to reach the
-switchboard. It presents tabs for writing prompts, browsing plugins, reviewing
-past activity, and editing your profile. Start a chat by typing a prompt and
-selecting which model provider to use. Add API keys for new providers, apply
-themes, or write your own plugins to extend the assistant.
+switchboard. New users will be guided through a [6-step onboarding process](docs/onboarding.md)
+to configure their AI provider, enable plugins, and review privacy settings.
+
+After onboarding, the switchboard presents tabs for writing prompts, browsing
+plugins, reviewing past activity, and editing your profile. Start a chat by
+typing a prompt and selecting which model provider to use. Add API keys for new
+providers, apply themes, or write your own plugins to extend the assistant.
+
+For detailed guidance on the initial setup process, see the
+[Onboarding Guide](docs/onboarding.md).
 
 ## Example Requests
 
@@ -193,6 +199,7 @@ dashboards track each request so you can inspect how outputs were produced.
 
 - [OVERVIEW.md](OVERVIEW.md) – background on the Model Context Protocol
 - [ARCHITECTURE.md](ARCHITECTURE.md) – system flows and design goals
+- [docs/onboarding.md](docs/onboarding.md) – step-by-step onboarding guide for new users
 - [docs/configuration.md](docs/configuration.md) – environment variables and setup
 - [docs/providers.md](docs/providers.md) – model provider settings
 - [docs/api.md](docs/api.md) – REST API endpoints
