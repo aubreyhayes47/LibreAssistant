@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Wrapper</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-brain"></i> Ollama Wrapper</h2>
+            </div>
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" data-view="models">
+                        <i class="fas fa-cubes"></i>
+                        <span>Models</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-view="server">
+                        <i class="fas fa-server"></i>
+                        <span>Server</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-view="chat">
+                        <i class="fas fa-comments"></i>
+                        <span>Chat</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-view="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" data-view="about">
+                        <i class="fas fa-info-circle"></i>
+                        <span>About</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="content-wrapper">
+                <!-- Models View -->
+                <div id="models-view" class="view active">
+                    <header class="view-header">
+                        <h1>Models</h1>
+                        <p>Manage your Ollama models</p>
+                    </header>
+                    <div class="view-content">
+                        <div class="card">
+                            <div class="models-header">
+                                <h3>Available Models</h3>
+                                <div class="models-controls">
+                                    <button id="refresh-models-btn" class="btn btn-primary">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                    <button id="download-model-btn" class="btn btn-success">
+                                        <i class="fas fa-download"></i> Download Model
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="model-status" id="model-status" style="display: none;">
+                                <div class="status-message" id="status-message"></div>
+                            </div>
+                            <div class="model-list" id="model-list">
+                                <div class="model-item loading">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Loading models...</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Download Model Modal -->
+                        <div id="download-modal" class="modal" style="display: none;">
+                            <div class="modal-content">
+                                <span class="close">&times;</span>
+                                <h3>Download Model</h3>
+                                <div class="form-group">
+                                    <label for="model-name-input">Model Name:</label>
+                                    <input type="text" id="model-name-input" placeholder="e.g., llama2, codellama, mistral">
+                                    <small>Enter the name of the model you want to download</small>
+                                </div>
+                                <div class="modal-actions">
+                                    <button id="cancel-download-btn" class="btn btn-secondary">Cancel</button>
+                                    <button id="confirm-download-btn" class="btn btn-primary">Download</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Server View -->
+                <div id="server-view" class="view">
+                    <header class="view-header">
+                        <h1>Server Monitoring</h1>
+                        <p>Monitor Ollama server logs, errors, and get troubleshooting guidance</p>
+                    </header>
+                    <div class="view-content">
+                        <nav class="server-tabs">
+                            <button class="server-tab-button active" onclick="openServerTab(event, 'logs')">
+                                <i class="fas fa-file-alt"></i> Server Logs
+                            </button>
+                            <button class="server-tab-button" onclick="openServerTab(event, 'errors')">
+                                <i class="fas fa-exclamation-triangle"></i> Error Monitor
+                            </button>
+                            <button class="server-tab-button" onclick="openServerTab(event, 'troubleshooting')">
+                                <i class="fas fa-wrench"></i> Troubleshooting
+                            </button>
+                        </nav>
+
+                        <div id="logs" class="server-tab-content active">
+                            <div class="monitoring-header">
+                                <h3><i class="fas fa-search"></i> Server Logs</h3>
+                                <div class="monitoring-controls">
+                                    <button onclick="refreshLogs()" class="btn btn-primary">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                    <button onclick="clearLogs()" class="btn btn-secondary">
+                                        <i class="fas fa-trash"></i> Clear
+                                    </button>
+                                    <label class="auto-refresh-toggle">
+                                        <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+                                        <span>Auto-refresh</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="log-viewer">
+                                <div id="serverLogs" class="logs-content">
+                                    <div class="log-entry info">
+                                        <span class="timestamp">[2024-01-15 10:30:45]</span>
+                                        <span class="level">INFO</span>
+                                        <span class="message">Ollama server starting...</span>
+                                    </div>
+                                    <div class="log-entry success">
+                                        <span class="timestamp">[2024-01-15 10:30:46]</span>
+                                        <span class="level">INFO</span>
+                                        <span class="message">Server listening on port 11434</span>
+                                    </div>
+                                    <div class="log-entry info">
+                                        <span class="timestamp">[2024-01-15 10:30:47]</span>
+                                        <span class="level">INFO</span>
+                                        <span class="message">Model loading: llama2</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="errors" class="server-tab-content">
+                            <div class="monitoring-header">
+                                <h3><i class="fas fa-exclamation-triangle"></i> Error Monitor</h3>
+                                <div class="monitoring-controls">
+                                    <button onclick="refreshErrors()" class="btn btn-primary">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                    <button onclick="clearErrors()" class="btn btn-secondary">
+                                        <i class="fas fa-trash"></i> Clear All
+                                    </button>
+                                    <select id="errorFilter" onchange="filterErrors()" class="form-select">
+                                        <option value="all">All Errors</option>
+                                        <option value="critical">Critical</option>
+                                        <option value="error">Error</option>
+                                        <option value="warning">Warning</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="error-viewer">
+                                <div id="errorList" class="errors-content">
+                                    <div class="error-entry critical">
+                                        <div class="error-header">
+                                            <span class="timestamp">[2024-01-15 10:35:12]</span>
+                                            <span class="level critical">CRITICAL</span>
+                                            <span class="error-title">Model loading failed</span>
+                                        </div>
+                                        <div class="error-details">
+                                            <p><strong>Error:</strong> Failed to load model 'llama2': insufficient memory</p>
+                                            <p><strong>Stack:</strong> ModelLoader.load() at line 45</p>
+                                            <p><strong>Suggestion:</strong> Free up system memory or use a smaller model</p>
+                                        </div>
+                                    </div>
+                                    <div class="error-entry warning">
+                                        <div class="error-header">
+                                            <span class="timestamp">[2024-01-15 10:32:30]</span>
+                                            <span class="level warning">WARNING</span>
+                                            <span class="error-title">High memory usage</span>
+                                        </div>
+                                        <div class="error-details">
+                                            <p><strong>Warning:</strong> Memory usage at 85% of available RAM</p>
+                                            <p><strong>Current usage:</strong> 6.8GB / 8GB</p>
+                                            <p><strong>Suggestion:</strong> Consider closing other applications or using a smaller model</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="troubleshooting" class="server-tab-content">
+                            <div class="monitoring-header">
+                                <h3><i class="fas fa-wrench"></i> Troubleshooting Guide</h3>
+                            </div>
+                            <div class="troubleshooting-content">
+                                <div class="troubleshooting-section">
+                                    <h4>Common Issues</h4>
+                                    
+                                    <div class="issue-item">
+                                        <h5><i class="fas fa-circle"></i> Ollama Server Not Starting</h5>
+                                        <div class="solution">
+                                            <p><strong>Symptoms:</strong> Connection refused, server not responding</p>
+                                            <p><strong>Solutions:</strong></p>
+                                            <ul>
+                                                <li>Check if Ollama is installed: <code>ollama --version</code></li>
+                                                <li>Start Ollama server: <code>ollama serve</code></li>
+                                                <li>Check if port 11434 is available: <code>netstat -tlnp | grep 11434</code></li>
+                                                <li>Verify firewall settings allow connections on port 11434</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="issue-item">
+                                        <h5><i class="fas fa-circle"></i> Model Loading Failures</h5>
+                                        <div class="solution">
+                                            <p><strong>Symptoms:</strong> "Model not found", "Failed to load model"</p>
+                                            <p><strong>Solutions:</strong></p>
+                                            <ul>
+                                                <li>List available models: <code>ollama list</code></li>
+                                                <li>Pull a model if missing: <code>ollama pull llama2</code></li>
+                                                <li>Check available disk space for model downloads</li>
+                                                <li>Verify model name spelling and availability</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="issue-item">
+                                        <h5><i class="fas fa-circle"></i> Memory Issues</h5>
+                                        <div class="solution">
+                                            <p><strong>Symptoms:</strong> Out of memory errors, slow performance</p>
+                                            <p><strong>Solutions:</strong></p>
+                                            <ul>
+                                                <li>Use smaller models (e.g., llama2:7b instead of llama2:70b)</li>
+                                                <li>Close other memory-intensive applications</li>
+                                                <li>Increase system swap space</li>
+                                                <li>Consider upgrading RAM if frequently hitting limits</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="issue-item">
+                                        <h5><i class="fas fa-circle"></i> Network Connectivity</h5>
+                                        <div class="solution">
+                                            <p><strong>Symptoms:</strong> Cannot reach Ollama API, timeouts</p>
+                                            <p><strong>Solutions:</strong></p>
+                                            <ul>
+                                                <li>Test connection: <code>curl http://localhost:11434/api/version</code></li>
+                                                <li>Check if Ollama is running: <code>ps aux | grep ollama</code></li>
+                                                <li>Verify correct host and port configuration</li>
+                                                <li>Check proxy settings if behind corporate firewall</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="troubleshooting-section">
+                                    <h4>System Requirements</h4>
+                                    <div class="requirements">
+                                        <ul>
+                                            <li><strong>Memory:</strong> Minimum 8GB RAM (16GB+ recommended for larger models)</li>
+                                            <li><strong>Storage:</strong> 10GB+ free space for models</li>
+                                            <li><strong>CPU:</strong> Modern multi-core processor</li>
+                                            <li><strong>GPU:</strong> Optional but recommended for better performance</li>
+                                            <li><strong>OS:</strong> Linux, macOS, or Windows with WSL2</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="troubleshooting-section">
+                                    <h4>Useful Commands</h4>
+                                    <div class="commands">
+                                        <div class="command-item">
+                                            <code>ollama serve</code>
+                                            <span>Start the Ollama server</span>
+                                        </div>
+                                        <div class="command-item">
+                                            <code>ollama list</code>
+                                            <span>List all downloaded models</span>
+                                        </div>
+                                        <div class="command-item">
+                                            <code>ollama pull &lt;model&gt;</code>
+                                            <span>Download a specific model</span>
+                                        </div>
+                                        <div class="command-item">
+                                            <code>ollama rm &lt;model&gt;</code>
+                                            <span>Remove a downloaded model</span>
+                                        </div>
+                                        <div class="command-item">
+                                            <code>ollama ps</code>
+                                            <span>Show running models</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat View -->
+                <div id="chat-view" class="view">
+                    <header class="view-header">
+                        <h1>Chat Console</h1>
+                        <p>Interactive chat with your Ollama models</p>
+                    </header>
+                    <div class="view-content">
+                        <div class="chat-container">
+                            <div class="model-selection-chat">
+                                <label for="chat-model-select">Select Model:</label>
+                                <select id="chat-model-select">
+                                    <option value="">Loading models...</option>
+                                </select>
+                                <button id="refresh-chat-models" class="btn btn-secondary btn-small">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="welcome-message">
+                                    <p>Welcome to the Ollama Chat Console! Select a model above and start chatting.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="chat-input-container">
+                                <textarea 
+                                    id="chat-prompt-input" 
+                                    placeholder="Type your prompt here..." 
+                                    rows="3"
+                                    disabled
+                                ></textarea>
+                                <div class="chat-actions">
+                                    <button id="send-chat-button" class="btn btn-primary" disabled>
+                                        <i class="fas fa-paper-plane"></i> Send
+                                    </button>
+                                    <button id="clear-chat-history" class="btn btn-secondary">
+                                        <i class="fas fa-trash"></i> Clear History
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="chat-error-container" id="chat-error-container" style="display: none;">
+                                <div class="error-message" id="chat-error-message"></div>
+                                <button id="close-chat-error" class="btn btn-secondary btn-small">×</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="settings-view" class="view">
+                    <header class="view-header">
+                        <h1>Settings & Configuration</h1>
+                        <p>Configure your Ollama server and application preferences</p>
+                    </header>
+                    <div class="view-content">
+                        <form id="settings-form">
+                            <!-- Ollama Server Settings -->
+                            <section class="settings-section">
+                                <h3>Ollama Server Settings</h3>
+                                
+                                <div class="form-group">
+                                    <label for="server-url">Server URL:</label>
+                                    <input type="url" id="server-url" name="serverUrl" placeholder="http://localhost:11434" required>
+                                    <span class="error-message" id="server-url-error"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="api-timeout">API Timeout (seconds):</label>
+                                    <input type="number" id="api-timeout" name="apiTimeout" min="1" max="300" value="30" required>
+                                    <span class="error-message" id="api-timeout-error"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="max-retries">Max Connection Retries:</label>
+                                    <input type="number" id="max-retries" name="maxRetries" min="0" max="10" value="3" required>
+                                    <span class="error-message" id="max-retries-error"></span>
+                                </div>
+                            </section>
+
+                            <!-- App Preferences -->
+                            <section class="settings-section">
+                                <h3>Application Preferences</h3>
+                                
+                                <div class="form-group">
+                                    <label for="theme">Theme:</label>
+                                    <select id="theme" name="theme" required>
+                                        <option value="light">Light</option>
+                                        <option value="dark">Dark</option>
+                                        <option value="auto">Auto (System)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="auto-connect">
+                                        <input type="checkbox" id="auto-connect" name="autoConnect">
+                                        Auto-connect on startup
+                                    </label>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="save-logs">
+                                        <input type="checkbox" id="save-logs" name="saveLogs">
+                                        Save connection logs
+                                    </label>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="model-cache-size">Model Cache Size (MB):</label>
+                                    <input type="number" id="model-cache-size" name="modelCacheSize" min="100" max="10000" value="1000">
+                                    <span class="error-message" id="model-cache-size-error"></span>
+                                </div>
+                            </section>
+
+                            <div class="form-actions">
+                                <button type="button" id="reset-btn" class="btn btn-secondary">Reset to Defaults</button>
+                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- About View -->
+                <div id="about-view" class="view">
+                    <header class="view-header">
+                        <h1>About</h1>
+                        <p>Information about Ollama Wrapper</p>
+                    </header>
+                    <div class="view-content">
+                        <div class="card">
+                            <h3>Ollama Wrapper</h3>
+                            <p>A simple GUI for managing and interacting with Ollama AI models.</p>
+                            <div class="about-info">
+                                <div class="info-item">
+                                    <strong>Version:</strong> 1.0.0
+                                </div>
+                                <div class="info-item">
+                                    <strong>Description:</strong> Comprehensive GUI for Ollama with chat, model management, and advanced settings
+                                </div>
+                                <div class="info-item">
+                                    <strong>License:</strong> Apache License 2.0
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="node_modules/marked/lib/marked.umd.js"></script>
+    <script src="node_modules/dompurify/dist/purify.min.js"></script>
+    <script src="markdown-utils.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
