@@ -2,7 +2,7 @@
 
 ## Overview
 
-This feature enables automatic markdown rendering for AI model responses in the Ollama Wrapper chat interfaces. It provides rich text formatting while maintaining security through XSS protection.
+This feature enables automatic markdown rendering for AI model responses in the LibreAssistant chat interfaces. It provides rich text formatting while maintaining security through XSS protection.
 
 ## Features
 
@@ -28,7 +28,7 @@ This feature enables automatic markdown rendering for AI model responses in the 
 - **Script Blocking**: Prevents execution of any JavaScript content
 - **User Input Safety**: Only renders markdown for assistant responses, user messages remain plain text
 
-## Implementation
+### Implementation
 
 ### Files Modified
 - `markdown-utils.js` - Core markdown rendering utility
@@ -59,7 +59,7 @@ if (role === 'assistant' && window.MarkdownUtils) {
 - Tested with various markdown syntax combinations
 - Verified XSS protection works correctly
 - Confirmed fallback behavior for non-markdown content
-- Tested across all three chat implementations
+- Tested across all LibreAssistant chat implementations
 
 ### Test Cases Covered
 - Basic text (no formatting)

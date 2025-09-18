@@ -1,17 +1,17 @@
 {
-  "name": "my-ollama-wrapper",
+  "name": "libreassistant",
   "version": "1.0.0",
-  "description": "A comprehensive GUI for managing your Ollama instance with chat functionality, model management, and advanced settings configuration",
+  "description": "A comprehensive GUI for managing your local AI models with chat functionality, model management, and advanced settings configuration.",
   "main": "src/main/main.js",
   "homepage": "./",
   "author": "aubreyhayes47",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aubreyhayes47/my-ollama-wrapper.git"
+    "url": "https://github.com/aubreyhayes47/LibreAssistant.git"
   },
   "bugs": {
-    "url": "https://github.com/aubreyhayes47/my-ollama-wrapper/issues"
+    "url": "https://github.com/aubreyhayes47/LibreAssistant/issues"
   },
   "keywords": [
     "electron",
@@ -40,8 +40,8 @@
     "build:analyze": "webpack-bundle-analyzer dist/renderer/static/js/*.js"
   },
   "build": {
-    "appId": "com.aubreyhayes47.my-ollama-wrapper",
-    "productName": "My Ollama Wrapper",
+    "appId": "com.aubreyhayes47.libreassistant",
+    "productName": "LibreAssistant",
     "directories": {
       "output": "dist-electron"
     },

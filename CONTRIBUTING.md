@@ -1,6 +1,6 @@
-# Contributing to My Ollama Wrapper
+# Contributing to LibreAssistant
 
-Thank you for your interest in contributing to My Ollama Wrapper! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to LibreAssistant! This document provides guidelines and information for contributors.
 
 ## Table of Contents
 
@@ -50,15 +50,15 @@ Before contributing, ensure you have:
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/my-ollama-wrapper.git
-   cd my-ollama-wrapper
-   ```
+  ```bash
+  git clone https://github.com/YOUR_USERNAME/LibreAssistant.git
+  cd LibreAssistant
+  ```
 
 3. **Add upstream remote**:
-   ```bash
-   git remote add upstream https://github.com/aubreyhayes47/my-ollama-wrapper.git
-   ```
+  ```bash
+  git remote add upstream https://github.com/aubreyhayes47/LibreAssistant.git
+  ```
 
 4. **Install dependencies**:
    ```bash
@@ -516,4 +516,4 @@ If you have questions about contributing:
 3. **Create an issue** for specific problems
 4. **Contact maintainers** for urgent matters
 
-Thank you for contributing to My Ollama Wrapper! 🚀
+Thank you for contributing to LibreAssistant! 🚀

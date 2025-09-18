@@ -1,8 +1,9 @@
+
 # Security Policy
 
 ## Supported Versions
 
-We actively support the following versions of My Ollama Wrapper:
+We actively support the following versions of LibreAssistant:
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -121,4 +122,4 @@ For security-related questions or concerns:
 - Email: [security@yourproject.com]
 - For urgent matters, use the subject line: "URGENT SECURITY ISSUE"
 
-Thank you for helping keep My Ollama Wrapper secure! 🔒
+Thank you for helping keep LibreAssistant secure! 🔒
