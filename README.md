@@ -26,72 +26,36 @@ LibreAssistant is a new project that builds on the foundation of the original **
 
 **An AI Assistant That's Actually Yours.**
 
-LibreAssistant is designed from the ground up to put you in control:
 
+LibreAssistant is a privacy-first, fully local AI assistant and plugin platform. It combines robust Ollama model management and chat features with a modern, extensible plugin system (MCP servers). LibreAssistant is the evolution of **my-ollama-wrapper**—all legacy model management features are preserved, and powerful new plugin capabilities are added.
+LibreAssistant is designed from the ground up to put you in control:
 - **Privacy First**: All processing happens locally. Your data never leaves your device, and there is absolutely no built-in data extraction or telemetry.
 - **Total Customization**: Choose any model, adjust any setting, and tailor the assistant to your exact needs.
 - **Data Sovereignty**: You own your data. LibreAssistant will never collect, transmit, or share your information.
 
-LibreAssistant is more than a chat box—it's a truly agentic assistant, with full transparency and user empowerment at its core.
-
-
-# User Experience & Workflow
-
-LibreAssistant is designed for actionable, transparent AI assistance:
-
-- **Discrete Requests, Not Just Chat**: Instead of a generic chat box, users submit specific requests (e.g., "Summarize this file", "Search CourtListener for recent cases", "Enable Brave Search plugin").
-- **Plugin-Driven Actions**: LibreAssistant activates only the plugins needed for your request, and you can always see which plugins are in use.
-- **Visual Plugin Activity**: As the assistant works, a visual indicator shows which plugins are being accessed in real time, so you always know what the assistant is doing on your behalf.
-- **No Hidden Processing**: Every action is explicit, and you remain in control of what the assistant can access or do.
-
-**Example Workflow:**
 
 1. You submit a request: _"Find and summarize the latest Supreme Court opinions using CourtListener."_
 2. LibreAssistant checks if the CourtListener plugin is enabled. If not, it prompts you to enable it (with a single click).
 3. The plugin requests an API key if needed, guiding you through a simple, non-technical setup.
+
+All legacy features are fully supported for backward compatibility and a smooth transition for users of my-ollama-wrapper. LibreAssistant adds a new plugin system for even greater extensibility.
 4. As the assistant works, you see a visual indicator showing the CourtListener plugin is active.
 5. The summary is returned, and you can review which plugins were used for full transparency.
-
-This workflow applies to all plugins—whether accessing local files, searching the web, or running custom automations.
-
-
-
 # Legacy Features from my-ollama-wrapper
 
-LibreAssistant includes all major features from the original my-ollama-wrapper project, ensuring a familiar and powerful experience for existing users:
-
-- **Model Management**: List, download, delete, and view detailed information about local Ollama models.
-- **Chat/Interaction Console**: Chat with local models, select models, view chat history, and enjoy real-time streaming responses.
-- **Server Monitoring & Troubleshooting**: Real-time server logs, error tracking, and built-in troubleshooting guides.
-- **Settings & Configuration**: Configure server URL, API timeout, retry settings, theme, and other preferences with persistent local storage.
 - **Multiple Interfaces**: Access via web browser, Electron desktop app, or Python Flask backend.
 - **Modern UI/UX**: Responsive design, theme support, and a clean, professional interface.
 
-These features are fully supported in LibreAssistant for backward compatibility and a smooth transition for users of my-ollama-wrapper.
 
-
-
-
-
-## Features
 
 ### 🤖 Chat/Interaction Console
 - **Model Selection**: Choose from available Ollama models
-- **Interactive Chat**: Console for sending prompts to models and receiving responses
 - **Chat History**: Persistent conversation history during the session
 - **Real-time Responses**: Streaming responses with typing indicators
 - **Error Handling**: Clear error messages and status indicators
 
-### 📦 Model Management
-- **Web-based GUI** - Access through your browser
 - **Model List**: View all local Ollama models with detailed information
 - **Model Metadata**: View model size, modification date, and family information
-- **Download Models**: Pull new models from Ollama registry
-- **Delete Models**: Remove models with confirmation dialogs
-- **Model Information**: View detailed metadata including modelfile and parameters
-
-### 🖥️ Server Monitoring & Troubleshooting
-- **Server Logs**: Real-time monitoring of Ollama server logs with filtering and auto-refresh
 - **Error Monitor**: Comprehensive error tracking with severity levels (Critical, Error, Warning)
 - **Troubleshooting Guide**: Built-in documentation for common issues and solutions
 - **System Requirements**: Hardware and software requirement guidelines
@@ -100,19 +64,10 @@ These features are fully supported in LibreAssistant for backward compatibility 
 ### ⚙️ Settings & Configuration
 - **Ollama Server Settings**
   - Configurable server URL (supports any Ollama instance)
-  - Adjustable API timeout (1-300 seconds)
-  - Connection retry settings (0-10 retries)
-- **Application Preferences**
   - Theme selection (Light, Dark, Auto-detect)
   - Auto-connect on startup option
-  - Connection logging preferences
-  - Model cache size configuration
-- **Local Storage Persistence** - All settings are saved locally and persist between sessions
 - **Input Validation** - Real-time validation with helpful error messages
 
-### 🎨 User Experience
-- **Responsive Design**: Works on desktop and mobile devices
-- **Real-time Updates**: Live status notifications and progress indicators
 - **Multiple Interfaces**: Web interface, Electron desktop app, and Python Flask application
 - **Confirmation Dialogs**: Safe model deletion and chat clearing
 - **Modern UI**: Clean, professional interface with proper styling

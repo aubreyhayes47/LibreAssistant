@@ -257,7 +257,11 @@ class OllamaChat {
     }
 }
 
-// Initialize the application when the DOM is loaded
+// LibreAssistant Chat Script
+// Handles chat UI, Ollama model interaction (legacy), and plugin/MCP integration (future)
+
 document.addEventListener('DOMContentLoaded', () => {
+    document.title = "LibreAssistant";
+    // TODO: Integrate plugin/MCP chat endpoints alongside Ollama model chat
     new OllamaChat();
 });

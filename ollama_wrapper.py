@@ -2,6 +2,10 @@
 """
 Ollama Wrapper GUI - A simple GUI for managing Ollama server
 """
+"""
+LibreAssistant Ollama Wrapper
+Provides Python functions for managing Ollama models (legacy) and plugin/MCP integration (future)
+"""
 
 import tkinter as tk
 from tkinter import ttk, messagebox

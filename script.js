@@ -1,5 +1,8 @@
+// Main JS for LibreAssistant
+// Handles model management (legacy), plugin/MCP integration, chat, and UI logic
+
 // Navigation and routing functionality
-class OllamaWrapperApp {
+class LibreAssistantApp {
     constructor() {
         this.currentView = 'models';
         this.init();
@@ -103,7 +106,7 @@ class OllamaWrapperApp {
             const state = { view: viewName };
             const title = this.getViewTitle(viewName);
             history.pushState(state, title, `#${viewName}`);
-            document.title = `${title} - Ollama Wrapper`;
+            document.title = `${title} - LibreAssistant`;
         }
 
         // Trigger view-specific initialization if needed
@@ -148,7 +151,7 @@ class OllamaWrapperApp {
             'settings': 'Settings',
             'about': 'About'
         };
-        return titles[viewName] || 'Ollama Wrapper';
+        return titles[viewName] || 'LibreAssistant';
     }
 
     initializeView(viewName) {
@@ -1546,7 +1549,7 @@ function formatTimestamp(timestamp) {
 
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.ollamaApp = new OllamaWrapperApp();
+    window.ollamaApp = new LibreAssistantApp();
     window.settingsManager = new SettingsManager();
 });
 

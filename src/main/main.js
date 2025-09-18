@@ -14,7 +14,7 @@ function createWindow() {
       contextIsolation: false,
       enableRemoteModule: true
     },
-    title: 'My Ollama Wrapper'
+  title: 'LibreAssistant'
   });
 
   // Load the app
@@ -32,6 +32,8 @@ function createWindow() {
   });
 }
 
+// LibreAssistant main.js (Electron main process)
+// Supports both Ollama model management (legacy) and plugin/MCP integration (future)
 // This method will be called when Electron has finished initialization
 app.whenReady().then(createWindow);
 
