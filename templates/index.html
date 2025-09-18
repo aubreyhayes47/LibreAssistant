@@ -115,6 +115,18 @@
                         <p>Send discrete requests to LibreAssistant with plugin support</p>
                     </header>
                     <div class="view-content">
+                        <div class="model-selection-bar">
+                            <div class="model-selector">
+                                <label for="request-model-select">Select Model:</label>
+                                <select id="request-model-select">
+                                    <option value="">Loading models...</option>
+                                </select>
+                                <button id="refresh-request-models" class="btn btn-secondary btn-small">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div class="requests-bar">
                             <div class="input-group">
                                 <input id="request-input" type="text" placeholder="Ask LibreAssistant..." autocomplete="off" />

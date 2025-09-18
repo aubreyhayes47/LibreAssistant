@@ -208,6 +208,7 @@ class LibreAssistantApp {
         this.setupPluginPills();
         this.setupAutoComplete();
         this.setupRequestSubmission();
+        this.loadRequestModels();
     }
 
     initCatalogueView() {
@@ -544,26 +545,42 @@ class LibreAssistantApp {
             return;
         }
 
-        modelList.innerHTML = models.map(model => `
-            <div class="model-item">
-                <div class="model-info">
-                    <div class="model-name">${model.name}</div>
-                    <div class="model-details">
-                        <span><i class="fas fa-hdd"></i> ${this.formatBytes(model.size)}</span>
-                        <span><i class="fas fa-calendar"></i> ${this.formatDate(model.modified_at)}</span>
-                        <span><i class="fas fa-tag"></i> ${model.details?.family || 'Unknown'}</span>
+        const favoriteModel = window.settingsManager ? window.settingsManager.getFavoriteModel() : null;
+
+        modelList.innerHTML = models.map(model => {
+            const isFavorite = model.name === favoriteModel;
+            return `
+                <div class="model-item ${isFavorite ? 'favorite-model' : ''}">
+                    <div class="model-info">
+                        <div class="model-name">
+                            ${model.name}
+                            ${isFavorite ? '<i class="fas fa-star favorite-star" title="Favorite Model"></i>' : ''}
+                        </div>
+                        <div class="model-details">
+                            <span><i class="fas fa-hdd"></i> ${this.formatBytes(model.size)}</span>
+                            <span><i class="fas fa-calendar"></i> ${this.formatDate(model.modified_at)}</span>
+                            <span><i class="fas fa-tag"></i> ${model.details?.family || 'Unknown'}</span>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <button class="btn btn-secondary btn-small" onclick="window.ollamaApp.showModelInfo('${model.name}')">
+                            <i class="fas fa-info-circle"></i> Info
+                        </button>
+                        ${!isFavorite ? 
+                            `<button class="btn btn-success btn-small" onclick="window.ollamaApp.setFavoriteModel('${model.name}')">
+                                <i class="fas fa-star"></i> Set as Favorite
+                            </button>` : 
+                            `<button class="btn btn-warning btn-small" onclick="window.ollamaApp.unsetFavoriteModel()">
+                                <i class="fas fa-star-half-alt"></i> Unset Favorite
+                            </button>`
+                        }
+                        <button class="btn btn-danger btn-small" onclick="window.ollamaApp.deleteModel('${model.name}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
                     </div>
                 </div>
-                <div class="model-actions">
-                    <button class="btn btn-secondary btn-small" onclick="window.ollamaApp.showModelInfo('${model.name}')">
-                        <i class="fas fa-info-circle"></i> Info
-                    </button>
-                    <button class="btn btn-danger btn-small" onclick="window.ollamaApp.deleteModel('${model.name}')">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     displayModelsError(errorMessage) {
@@ -679,7 +696,14 @@ class LibreAssistantApp {
 
             const data = await response.json();
             if (data.success) {
-                this.showStatus(`Model "${modelName}" deleted successfully!`, 'success');
+                // Check if the deleted model was the favorite
+                const favoriteModel = window.settingsManager ? window.settingsManager.getFavoriteModel() : null;
+                if (favoriteModel === modelName) {
+                    window.settingsManager.setFavoriteModel(null);
+                    this.showStatus(`Model "${modelName}" deleted successfully! (It was your favorite model, so favorite has been cleared)`, 'success');
+                } else {
+                    this.showStatus(`Model "${modelName}" deleted successfully!`, 'success');
+                }
                 // Refresh the models list
                 this.loadModels();
             } else {
@@ -733,6 +757,30 @@ class LibreAssistantApp {
         }
     }
 
+    setFavoriteModel(modelName) {
+        if (window.settingsManager) {
+            if (window.settingsManager.setFavoriteModel(modelName)) {
+                this.showStatus(`"${modelName}" set as favorite model`, 'success');
+                // Refresh the models display to show the favorite indicator
+                this.loadModels();
+            } else {
+                this.showStatus('Failed to set favorite model', 'error');
+            }
+        }
+    }
+
+    unsetFavoriteModel() {
+        if (window.settingsManager) {
+            if (window.settingsManager.setFavoriteModel(null)) {
+                this.showStatus('Favorite model unset', 'success');
+                // Refresh the models display to remove the favorite indicator
+                this.loadModels();
+            } else {
+                this.showStatus('Failed to unset favorite model', 'error');
+            }
+        }
+    }
+
     formatBytes(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -747,6 +795,64 @@ class LibreAssistantApp {
             return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         } catch {
             return 'Unknown';
+        }
+    }
+
+    // Request Models Management Methods
+    async loadRequestModels() {
+        const modelSelect = document.getElementById('request-model-select');
+        const backendUrl = 'http://localhost:5000'; // Use Flask backend
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
+        
+        if (!modelSelect) return;
+
+        // Show loading state
+        modelSelect.innerHTML = '<option value="">Loading models...</option>';
+        modelSelect.disabled = true;
+
+        try {
+            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (data.success) {
+                this.displayRequestModels(data.models || []);
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
+        } catch (error) {
+            console.error('Error loading request models:', error);
+            modelSelect.innerHTML = '<option value="">Error loading models</option>';
+        } finally {
+            modelSelect.disabled = false;
+        }
+    }
+
+    displayRequestModels(models) {
+        const modelSelect = document.getElementById('request-model-select');
+        if (!modelSelect) return;
+
+        modelSelect.innerHTML = '<option value="">Select a model...</option>';
+        
+        if (models.length === 0) {
+            modelSelect.innerHTML = '<option value="">No models found</option>';
+            return;
+        }
+
+        const favoriteModel = window.settingsManager ? window.settingsManager.getFavoriteModel() : null;
+
+        models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.name;
+            option.textContent = model.name + (model.name === favoriteModel ? ' ⭐' : '');
+            modelSelect.appendChild(option);
+        });
+
+        // Auto-select favorite model if it exists
+        if (favoriteModel) {
+            modelSelect.value = favoriteModel;
         }
     }
 
@@ -1128,20 +1234,41 @@ class LibreAssistantApp {
         const input = document.getElementById('request-input');
         const button = document.getElementById('request-submit');
         const responseBox = document.getElementById('response-box');
+        const modelSelect = document.getElementById('request-model-select');
+        const refreshButton = document.getElementById('refresh-request-models');
         
         if (!input || !button || !responseBox) return;
+
+        // Setup refresh models button
+        if (refreshButton) {
+            refreshButton.addEventListener('click', () => this.loadRequestModels());
+        }
         
         const submitRequest = () => {
             const query = input.value.trim();
+            const selectedModel = modelSelect ? modelSelect.value : '';
+            
             if (!query) return;
+            
+            if (!selectedModel) {
+                responseBox.innerHTML = `
+                    <div style="color: #e74c3c; padding: 1rem;">
+                        <h4>Error:</h4>
+                        <p>Please select a model before sending your request.</p>
+                    </div>
+                `;
+                return;
+            }
             
             // Show loading state
             responseBox.innerHTML = `
                 <div style="text-align: center; padding: 2rem;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #3498db;"></i>
-                    <p>Processing your request...</p>
+                    <p>Processing your request with ${selectedModel}...</p>
                 </div>
             `;
+            
+            const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
             
             // Make request to API
             fetch('/api/request', {
@@ -1149,14 +1276,18 @@ class LibreAssistantApp {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ query: query })
+                body: JSON.stringify({ 
+                    query: query,
+                    model: selectedModel,
+                    server_url: serverUrl
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     responseBox.innerHTML = `
                         <div class="response-content">
-                            <h4>Response:</h4>
+                            <h4>Response from ${selectedModel}:</h4>
                             <div class="response-text">${data.response || 'No response received'}</div>
                         </div>
                     `;
@@ -1355,7 +1486,8 @@ class SettingsManager {
             theme: 'light',
             autoConnect: false,
             saveLogs: false,
-            modelCacheSize: 1000
+            modelCacheSize: 1000,
+            favoriteModel: null
         };
         this.settings = this.loadSettings();
         this.initializeSettings();
@@ -1403,6 +1535,16 @@ class SettingsManager {
     resetToDefaults() {
         this.settings = { ...this.defaultSettings };
         return this.saveSettings();
+    }
+
+    // Set favorite model
+    setFavoriteModel(modelName) {
+        return this.setSetting('favoriteModel', modelName);
+    }
+
+    // Get favorite model
+    getFavoriteModel() {
+        return this.getSetting('favoriteModel');
     }
 
     // Initialize settings functionality
