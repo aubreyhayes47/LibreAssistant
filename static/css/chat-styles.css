@@ -419,3 +419,33 @@ header p {
     background: #f8f9fa;
     font-weight: 600;
 }
+
+/* Plugin-enhanced message styling */
+.message.assistant.plugin-enhanced {
+    border-left: 4px solid #3498db;
+    background: linear-gradient(90deg, #ecf0f1 0%, #ffffff 20%);
+}
+
+.message.assistant.plugin-enhanced .message-content::before {
+    content: "🔌 Plugin Enhanced";
+    display: inline-block;
+    font-size: 0.8em;
+    background: #3498db;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+/* Schema toggle styling */
+.model-selection label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.model-selection input[type="checkbox"] {
+    margin: 0;
+}

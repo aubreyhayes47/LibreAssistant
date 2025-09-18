@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LibreAssistant LLM Response Schema",
+  "description": "Schema for structured LLM responses that can contain either user messages or plugin invocations",
+  "type": "object",
+  "required": ["action", "content"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": ["message", "plugin_invoke"],
+      "description": "Type of action - either a user-facing message or a plugin invocation"
+    },
+    "content": {
+      "description": "Content of the response, structure depends on action type",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "User-facing message content",
+          "required": ["text"],
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "The message text to display to the user"
+            },
+            "markdown": {
+              "type": "boolean",
+              "description": "Whether the text contains markdown formatting",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Plugin invocation content",
+          "required": ["plugin", "input"],
+          "properties": {
+            "plugin": {
+              "type": "string",
+              "description": "ID of the plugin to invoke"
+            },
+            "input": {
+              "description": "Input data to pass to the plugin (can be any valid JSON)"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Optional explanation of why this plugin is being invoked"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "request_id": {
+      "type": "string",
+      "description": "Optional request ID for tracking purposes"
+    }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": {
+      "action": { "const": "message" }
+    }
+  },
+  "then": {
+    "properties": {
+      "content": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string" },
+          "markdown": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "else": {
+    "if": {
+      "properties": {
+        "action": { "const": "plugin_invoke" }
+      }
+    },
+    "then": {
+      "properties": {
+        "content": {
+          "type": "object",
+          "required": ["plugin", "input"],
+          "properties": {
+            "plugin": { "type": "string" },
+            "input": {},
+            "reason": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

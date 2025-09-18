@@ -163,7 +163,8 @@ class LibreAssistantApp {
             'models': 'Models',
             'server': 'Server',
             'requests': 'Requests',
-            'catalogue': 'Catalogue',
+            'catalogue': 'Plugin Catalogue',
+
             'settings': 'Settings',
             'about': 'About'
         };
@@ -181,10 +182,10 @@ class LibreAssistantApp {
                 this.initServerView();
                 break;
             case 'requests':
-                this.initRequestsModal();
+                this.initRequestsView();
                 break;
             case 'catalogue':
-                this.initCatalogueModal();
+                this.initCatalogueView();
                 break;
             case 'settings':
                 this.initSettingsView();
@@ -214,15 +215,16 @@ class LibreAssistantApp {
 
     }
 
-    initChatView() {
-        // Initialize chat view functionality
-        console.log('Chat view initialized');
-        
-        // Set up chat functionality
-        this.setupChatFunctionality();
-        
-        // Load models for chat
-        this.loadChatModels();
+    initRequestsView() {
+        // Initialize requests view functionality
+        console.log('Requests view initialized');
+        // Requests view will handle its own initialization via separate files
+    }
+
+    initCatalogueView() {
+        // Initialize plugin catalogue view functionality  
+        console.log('Plugin catalogue view initialized');
+        // Catalogue view will handle its own initialization via separate files
     }
 
     initSettingsView() {

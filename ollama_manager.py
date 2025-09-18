@@ -16,6 +16,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from plugin_config import PluginConfigManager
 from plugin_loader import PluginLoader
+from llm_protocol import llm_protocol, LLMProtocolError
 plugin_loader = PluginLoader()
 plugin_loader.discover_plugins()
 config_manager = PluginConfigManager()
@@ -363,18 +364,43 @@ def format_datetime(dt_str: str) -> str:
 # === Chat Generation Endpoint ===
 @app.route('/api/generate', methods=['POST'])
 def api_generate():
-    """API endpoint to generate a chat response using conversation history"""
+    """API endpoint to generate a chat response using conversation history with plugin support"""
     try:
         data = request.get_json(force=True)
         model = data.get('model')
         prompt = data.get('prompt')
         stream = data.get('stream', False)
         history = data.get('history', [])
+        use_schema = data.get('use_schema', True)  # Enable schema by default
+        
         if not model or not prompt:
             return jsonify({'success': False, 'error': 'Model and prompt are required'}), 400
 
+        # Get available plugins for system instructions
+        available_plugins = []
+        try:
+            plugins = plugin_api.list_plugins()
+            for plugin in plugins:
+                # Get plugin capabilities from manifest or default info
+                plugin_info = {
+                    'id': plugin.get('name', 'unknown').lower().replace(' ', '_'),
+                    'name': plugin.get('name', 'Unknown'),
+                    'description': plugin.get('description', 'No description available'),
+                    'capabilities': []  # This could be enhanced with actual capability discovery
+                }
+                available_plugins.append(plugin_info)
+        except Exception as e:
+            print(f"Warning: Could not fetch plugins for system instructions: {e}")
+
         # Build the full prompt from history
-        full_prompt = ''
+        if use_schema:
+            # Use structured system instructions
+            system_instructions = llm_protocol.generate_system_instructions(available_plugins)
+            full_prompt = f"{system_instructions}\n\nConversation History:\n"
+        else:
+            # Use legacy format for backward compatibility
+            full_prompt = ''
+        
         for turn in history:
             role = turn.get('role', 'user')
             content = turn.get('content', '')
@@ -385,6 +411,19 @@ def api_generate():
             else:
                 full_prompt += f"{role.capitalize()}: {content}\n"
         full_prompt += f"User: {prompt}\nAssistant: "
+
+        # Track request for plugin access monitoring
+        req_id = data.get('request_id') or str(uuid.uuid4())
+        if CURRENT_REQUEST.get('request_id') != req_id:
+            # New request, archive previous
+            if CURRENT_REQUEST.get('request_id') is not None:
+                RECENT_REQUESTS.append({
+                    'timestamp': time.time(),
+                    'request_id': CURRENT_REQUEST['request_id'],
+                    'plugins': CURRENT_REQUEST['plugins'][:]
+                })
+            CURRENT_REQUEST['request_id'] = req_id
+            CURRENT_REQUEST['plugins'] = []
 
         # Call Ollama API to generate a response
         try:
@@ -398,15 +437,168 @@ def api_generate():
                 timeout=60
             )
             response.raise_for_status()
-            data = response.json()
-            return jsonify({
-                'success': True,
-                'response': data.get('response', '')
-            })
+            ollama_data = response.json()
+            llm_response = ollama_data.get('response', '')
+            
+            if not use_schema:
+                # Legacy mode - return response as-is
+                return jsonify({
+                    'success': True,
+                    'response': llm_response,
+                    'request_id': req_id
+                })
+            
+            # Parse and route the structured response
+            try:
+                parsed_response = llm_protocol.parse_response(llm_response)
+                
+                if llm_protocol.is_plugin_invocation(parsed_response):
+                    # Handle plugin invocation
+                    plugin_id, plugin_input, reason = llm_protocol.extract_plugin_call(parsed_response)
+                    
+                    # Track plugin access
+                    if plugin_id not in CURRENT_REQUEST['plugins']:
+                        CURRENT_REQUEST['plugins'].append(plugin_id)
+                    
+                    # Invoke the plugin
+                    try:
+                        plugin_result = plugin_api.invoke_plugin(plugin_id, plugin_input)
+                        
+                        # Generate follow-up prompt for LLM to process plugin result
+                        follow_up_prompt = llm_protocol.create_plugin_result_prompt(
+                            plugin_id, plugin_result, prompt
+                        )
+                        
+                        # Call LLM again to process plugin result
+                        follow_up_response = requests.post(
+                            f"{api.base_url}/api/generate",
+                            json={
+                                "model": model,
+                                "prompt": follow_up_prompt,
+                                "stream": False  # Use non-streaming for plugin result processing
+                            },
+                            timeout=60
+                        )
+                        follow_up_response.raise_for_status()
+                        follow_up_data = follow_up_response.json()
+                        final_response = follow_up_data.get('response', '')
+                        
+                        # Parse the final response
+                        final_parsed = llm_protocol.parse_response(final_response)
+                        if llm_protocol.is_user_message(final_parsed):
+                            text, markdown = llm_protocol.extract_user_message(final_parsed)
+                            return jsonify({
+                                'success': True,
+                                'response': text,
+                                'plugin_used': plugin_id,
+                                'plugin_reason': reason,
+                                'markdown': markdown,
+                                'request_id': req_id
+                            })
+                        else:
+                            # Fallback if LLM doesn't return a proper message
+                            return jsonify({
+                                'success': True,
+                                'response': f"Plugin {plugin_id} executed successfully. Result: {plugin_result.get('response', plugin_result)}",
+                                'plugin_used': plugin_id,
+                                'plugin_reason': reason,
+                                'request_id': req_id
+                            })
+                    
+                    except Exception as plugin_error:
+                        return jsonify({
+                            'success': False,
+                            'error': f'Plugin {plugin_id} execution failed: {str(plugin_error)}',
+                            'request_id': req_id
+                        })
+                
+                elif llm_protocol.is_user_message(parsed_response):
+                    # Handle user-facing message
+                    text, markdown = llm_protocol.extract_user_message(parsed_response)
+                    return jsonify({
+                        'success': True,
+                        'response': text,
+                        'markdown': markdown,
+                        'request_id': req_id
+                    })
+                
+                else:
+                    # Fallback for unexpected response format
+                    return jsonify({
+                        'success': True,
+                        'response': llm_response,
+                        'schema_error': 'Unexpected response format',
+                        'request_id': req_id
+                    })
+                    
+            except LLMProtocolError as e:
+                # Schema validation failed, return raw response with warning
+                return jsonify({
+                    'success': True,
+                    'response': llm_response,
+                    'schema_error': str(e),
+                    'request_id': req_id
+                })
+                
         except requests.RequestException as e:
             return jsonify({'success': False, 'error': f'Failed to generate response: {e}'}), 500
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/llm/schema', methods=['GET'])
+def api_llm_schema():
+    """API endpoint to get the LLM response schema"""
+    try:
+        schema = llm_protocol._load_schema()
+        return jsonify({'success': True, 'schema': schema})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/llm/validate', methods=['POST'])
+def api_llm_validate():
+    """API endpoint to validate an LLM response against the schema"""
+    try:
+        data = request.get_json(force=True)
+        response_data = data.get('response')
+        if response_data is None:
+            return jsonify({'success': False, 'error': 'Response data is required'})
+        
+        llm_protocol.validate_response(response_data)
+        return jsonify({'success': True, 'valid': True})
+    except LLMProtocolError as e:
+        return jsonify({'success': True, 'valid': False, 'error': str(e)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/llm/system_instructions', methods=['GET'])
+def api_llm_system_instructions():
+    """API endpoint to get current system instructions with available plugins"""
+    try:
+        available_plugins = []
+        try:
+            plugins = plugin_api.list_plugins()
+            for plugin in plugins:
+                plugin_info = {
+                    'id': plugin.get('name', 'unknown').lower().replace(' ', '_'),
+                    'name': plugin.get('name', 'Unknown'),
+                    'description': plugin.get('description', 'No description available'),
+                    'capabilities': []
+                }
+                available_plugins.append(plugin_info)
+        except Exception as e:
+            print(f"Warning: Could not fetch plugins for system instructions: {e}")
+        
+        instructions = llm_protocol.generate_system_instructions(available_plugins)
+        return jsonify({
+            'success': True, 
+            'instructions': instructions,
+            'plugins': available_plugins
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 @app.route('/')

@@ -1,18 +1,21 @@
 class OllamaChat {
     constructor() {
-        this.baseUrl = 'http://localhost:11434';
+        this.baseUrl = ''; // Use relative URLs to work with LibreAssistant server
         this.selectedModel = '';
         this.chatHistory = [];
         this.isLoading = false;
+        this.useSchema = true; // Enable new schema protocol by default
         
         this.initializeElements();
         this.attachEventListeners();
         this.loadModels();
+        this.loadSystemInstructions();
     }
     
     initializeElements() {
         this.modelSelect = document.getElementById('model-select');
         this.refreshButton = document.getElementById('refresh-models');
+        this.schemaToggle = document.getElementById('schema-toggle');
         this.chatHistoryDiv = document.getElementById('chat-history');
         this.promptInput = document.getElementById('prompt-input');
         this.sendButton = document.getElementById('send-button');
@@ -30,6 +33,11 @@ class OllamaChat {
         
         this.refreshButton.addEventListener('click', () => {
             this.loadModels();
+        });
+        
+        this.schemaToggle.addEventListener('change', (e) => {
+            this.useSchema = e.target.checked;
+            this.loadSystemInstructions(); // Reload instructions when toggled
         });
         
         this.sendButton.addEventListener('click', () => {
@@ -57,33 +65,53 @@ class OllamaChat {
             this.modelSelect.innerHTML = '<option value="">Loading models...</option>';
             this.modelSelect.disabled = true;
             
-            const response = await fetch(`${this.baseUrl}/api/tags`);
+            const response = await fetch('/api/models');
             
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`Failed to load models: ${response.status}`);
             }
             
             const data = await response.json();
             
-            this.modelSelect.innerHTML = '<option value="">Select a model...</option>';
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load models');
+            }
+            
+            this.modelSelect.innerHTML = '<option value="">Select a model</option>';
             
             if (data.models && data.models.length > 0) {
                 data.models.forEach(model => {
                     const option = document.createElement('option');
                     option.value = model.name;
-                    option.textContent = model.name;
+                    option.textContent = `${model.name} (${model.size})`;
                     this.modelSelect.appendChild(option);
                 });
             } else {
-                this.modelSelect.innerHTML = '<option value="">No models found</option>';
+                this.modelSelect.innerHTML = '<option value="">No models available</option>';
             }
             
         } catch (error) {
             console.error('Error loading models:', error);
             this.modelSelect.innerHTML = '<option value="">Error loading models</option>';
-            this.showError('Failed to load models. Make sure Ollama is running on localhost:11434');
+            this.showError('Failed to load models. Please check if LibreAssistant is running.');
         } finally {
             this.modelSelect.disabled = false;
+        }
+    }
+    
+    async loadSystemInstructions() {
+        try {
+            const response = await fetch('/api/llm/system_instructions');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Available plugins:', data.plugins);
+                    this.availablePlugins = data.plugins || [];
+                }
+            }
+        } catch (error) {
+            console.log('Could not load system instructions:', error);
+            this.availablePlugins = [];
         }
     }
     
@@ -117,7 +145,7 @@ class OllamaChat {
         const typingId = this.addTypingIndicator();
         
         try {
-            const response = await fetch(`${this.baseUrl}/api/generate`, {
+            const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -125,7 +153,9 @@ class OllamaChat {
                 body: JSON.stringify({
                     model: this.selectedModel,
                     prompt: prompt,
-                    stream: false
+                    history: this.chatHistory.slice(-10), // Send last 10 messages for context
+                    stream: false,
+                    use_schema: this.useSchema
                 }),
             });
             
@@ -138,14 +168,38 @@ class OllamaChat {
             // Remove typing indicator
             this.removeTypingIndicator(typingId);
             
-            // Add assistant response
-            this.addMessage('assistant', data.response || 'No response received');
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to generate response');
+            }
+            
+            // Handle different response types
+            let assistantMessage = data.response || 'No response received';
+            let messageClass = 'assistant';
+            
+            // Check if a plugin was used
+            if (data.plugin_used) {
+                messageClass = 'assistant plugin-enhanced';
+                if (data.plugin_reason) {
+                    assistantMessage = `🔌 *Used ${data.plugin_used}*: ${data.plugin_reason}\n\n${assistantMessage}`;
+                } else {
+                    assistantMessage = `🔌 *Used ${data.plugin_used}*\n\n${assistantMessage}`;
+                }
+            }
+            
+            // Check for schema errors (fallback mode)
+            if (data.schema_error) {
+                console.warn('Schema validation failed:', data.schema_error);
+                assistantMessage = `⚠️ *Response format warning*\n\n${assistantMessage}`;
+            }
+            
+            // Add assistant response with proper formatting
+            this.addMessageWithClass(messageClass, assistantMessage, data.markdown);
             
         } catch (error) {
             console.error('Error sending message:', error);
             this.removeTypingIndicator(typingId);
-            this.addMessage('assistant', 'Error: Failed to get response from model. Please check if Ollama is running and the model is available.');
-            this.showError('Failed to send message. Please check your connection to Ollama.');
+            this.addMessage('assistant', 'Error: Failed to get response from model. Please check if LibreAssistant and Ollama are running.');
+            this.showError('Failed to send message. Please check your connection to LibreAssistant.');
         } finally {
             this.isLoading = false;
             this.updateInputState();
@@ -154,10 +208,15 @@ class OllamaChat {
     }
     
     addMessage(role, content) {
+        this.addMessageWithClass(role, content, false);
+    }
+    
+    addMessageWithClass(role, content, isMarkdown = false) {
         const message = {
             role: role,
             content: content,
-            timestamp: new Date().toLocaleTimeString()
+            timestamp: new Date().toLocaleTimeString(),
+            markdown: isMarkdown
         };
         
         this.chatHistory.push(message);
@@ -172,8 +231,8 @@ class OllamaChat {
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         
-        // Use markdown rendering for assistant responses, plain text for user messages
-        if (message.role === 'assistant' && window.MarkdownUtils) {
+        // Use markdown rendering for assistant responses or if explicitly marked as markdown
+        if ((message.role === 'assistant' || message.markdown) && window.MarkdownUtils) {
             contentDiv.innerHTML = window.MarkdownUtils.renderChatContent(message.content);
         } else {
             contentDiv.textContent = message.content;
