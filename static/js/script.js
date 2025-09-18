@@ -503,6 +503,7 @@ class LibreAssistantApp {
     async loadModels() {
         const modelList = document.getElementById('model-list');
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
         
         if (!modelList) return;
 
@@ -515,7 +516,7 @@ class LibreAssistantApp {
         `;
 
         try {
-            const response = await fetch(`${backendUrl}/api/models`);
+            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -627,6 +628,7 @@ class LibreAssistantApp {
         this.showStatus(`Downloading model "${modelName}"...`, 'info');
 
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
 
         try {
             const response = await fetch(`${backendUrl}/api/download`, {
@@ -634,7 +636,10 @@ class LibreAssistantApp {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ model_name: modelName })
+                body: JSON.stringify({ 
+                    model_name: modelName,
+                    server_url: serverUrl
+                })
             });
 
             if (!response.ok) {
@@ -663,6 +668,7 @@ class LibreAssistantApp {
         this.showStatus(`Deleting model "${modelName}"...`, 'info');
 
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
 
         try {
             const response = await fetch(`${backendUrl}/api/delete`, {
@@ -670,7 +676,10 @@ class LibreAssistantApp {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ model_name: modelName })
+                body: JSON.stringify({ 
+                    model_name: modelName,
+                    server_url: serverUrl
+                })
             });
 
             if (!response.ok) {
@@ -693,9 +702,10 @@ class LibreAssistantApp {
 
     async showModelInfo(modelName) {
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
 
         try {
-            const response = await fetch(`${backendUrl}/api/info/${modelName}`);
+            const response = await fetch(`${backendUrl}/api/info/${modelName}?server_url=${encodeURIComponent(serverUrl)}`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -797,6 +807,7 @@ class LibreAssistantApp {
     async loadChatModels() {
         const modelSelect = document.getElementById('chat-model-select');
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
         
         if (!modelSelect) return;
 
@@ -805,7 +816,7 @@ class LibreAssistantApp {
         modelSelect.disabled = true;
 
         try {
-            const response = await fetch(`${backendUrl}/api/models`);
+            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -1438,8 +1449,9 @@ class SettingsManager {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.settings.apiTimeout * 1000);
             const backendUrl = 'http://localhost:5000'; // Use Flask backend
+            const serverUrl = this.settings.serverUrl;
 
-            const response = await fetch(`${backendUrl}/api/server/status`, {
+            const response = await fetch(`${backendUrl}/api/server/status?server_url=${encodeURIComponent(serverUrl)}`, {
                 method: 'GET',
                 signal: controller.signal,
                 headers: {
