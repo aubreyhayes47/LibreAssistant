@@ -1,3 +1,8 @@
+import sys
+import os
+# Ensure project root is in sys.path for plugin_config import (if needed in future)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 import os
 import requests
 from flask import Flask, request, jsonify
