@@ -31,6 +31,26 @@
                 </header>
                 
                 <div class="requests-bar">
+                    <div class="controls-row">
+                        <div class="model-selection">
+                            <label for="model-select">Model:</label>
+                            <select id="model-select" class="form-select">
+                                <option value="">Loading models...</option>
+                            </select>
+                            <button id="refresh-models" class="btn btn-link" title="Refresh models">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <div class="schema-controls">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="use-schema" checked>
+                                <span>Use JSON Schema</span>
+                            </label>
+                            <button id="view-schema" class="btn btn-link" title="View JSON schema">
+                                <i class="fas fa-code"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="input-group">
                         <input id="request-input" type="text" placeholder="Ask LibreAssistant..." autocomplete="off" />
                         <button id="request-submit" class="btn btn-primary">
@@ -48,14 +68,52 @@
                 </div>
                 
                 <div id="active-plugins-bar" class="active-plugins-bar">
-                    <h4><i class="fas fa-plug"></i> Active Plugins</h4>
+                    <div class="plugins-header">
+                        <h4><i class="fas fa-plug"></i> Active Plugins</h4>
+                        <div class="plugin-actions">
+                            <button id="refresh-plugins" class="btn btn-link" title="Refresh plugins">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button id="view-system-instructions" class="btn btn-link" title="View system instructions">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div id="plugin-pills"></div>
+                    <div id="plugin-status" class="plugin-status"></div>
                 </div>
             </div>
         </main>
     </div>
 
     <!-- Plugin Modals -->
+    <div id="schema-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('schema-modal').style.display='none'">&times;</span>
+            <div>
+                <h3><i class="fas fa-code"></i> JSON Schema</h3>
+                <div class="form-row">
+                    <button id="validate-response" class="btn btn-secondary">Test Validation</button>
+                    <button id="download-schema" class="btn btn-link">Download Schema</button>
+                </div>
+                <pre id="schema-content" class="schema-display"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="instructions-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('instructions-modal').style.display='none'">&times;</span>
+            <div>
+                <h3><i class="fas fa-info-circle"></i> System Instructions</h3>
+                <div class="form-row">
+                    <button id="refresh-instructions" class="btn btn-secondary">Refresh</button>
+                    <span id="plugin-count" class="status-message"></span>
+                </div>
+                <pre id="instructions-content" class="instructions-display"></pre>
+            </div>
+        </div>
+    </div>
     <div id="brave-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <span class="close" onclick="document.getElementById('brave-modal').style.display='none'">&times;</span>
@@ -166,6 +224,51 @@
             position: relative;
         }
 
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .model-selection {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .schema-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-select {
+            padding: 0.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 1rem;
+            min-width: 150px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            margin: 0;
+        }
+
         .input-group {
             display: flex;
             gap: 0.5rem;
@@ -254,6 +357,24 @@
         .active-plugins-bar h4 {
             margin: 0 0 1rem 0;
             color: #2c3e50;
+        }
+
+        .plugins-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .plugin-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .plugin-status {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #7f8c8d;
         }
 
         #plugin-pills {
@@ -382,44 +503,257 @@
             background: #f8f9fa;
             font-weight: bold;
         }
+
+        .schema-display, .instructions-display {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+        }
+
+        .loading .fa-spinner {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-response {
+            color: #e74c3c;
+            padding: 1rem;
+            background: #fdf2f2;
+            border-radius: 4px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .plugin-indicator {
+            background: #e8f5e8;
+            border-left: 4px solid #27ae60;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.9rem;
+        }
+
+        .response-text {
+            line-height: 1.6;
+            margin-top: 1rem;
+        }
     </style>
 
     <script>
         // Initialize the requests screen
         document.addEventListener('DOMContentLoaded', function() {
+            setupModelSelection();
+            setupSchemaControls();
             setupPluginPills();
             setupAutoComplete();
             setupRequestSubmission();
         });
 
-        // Setup plugin pills functionality
-        function setupPluginPills() {
-            // Load active plugins
-            fetch('/api/plugins/accessed')
+        // Setup model selection functionality
+        function setupModelSelection() {
+            const modelSelect = document.getElementById('model-select');
+            const refreshButton = document.getElementById('refresh-models');
+            
+            function loadModels() {
+                modelSelect.innerHTML = '<option value="">Loading models...</option>';
+                
+                fetch('/api/models')
+                    .then(res => res.json())
+                    .then(data => {
+                        modelSelect.innerHTML = '';
+                        if (data.success && data.models && data.models.length > 0) {
+                            data.models.forEach(model => {
+                                const option = document.createElement('option');
+                                option.value = model.name;
+                                option.textContent = model.name;
+                                modelSelect.appendChild(option);
+                            });
+                            // Select first model by default
+                            modelSelect.value = data.models[0].name;
+                        } else {
+                            // Fallback for when no Ollama server is available - add a test model
+                            const option = document.createElement('option');
+                            option.value = 'test-model';
+                            option.textContent = 'Test Model (No Ollama)';
+                            modelSelect.appendChild(option);
+                            modelSelect.value = 'test-model';
+                            console.warn('No models available from Ollama server, using test model');
+                        }
+                    })
+                    .catch(err => {
+                        // Fallback for network errors - add a test model  
+                        modelSelect.innerHTML = '';
+                        const option = document.createElement('option');
+                        option.value = 'test-model';
+                        option.textContent = 'Test Model (No Ollama)';
+                        modelSelect.appendChild(option);
+                        modelSelect.value = 'test-model';
+                        console.error('Failed to load models:', err);
+                    });
+            }
+            
+            refreshButton.addEventListener('click', loadModels);
+            loadModels(); // Load initially
+        }
+
+        // Setup schema controls functionality
+        function setupSchemaControls() {
+            const useSchemaCheckbox = document.getElementById('use-schema');
+            const viewSchemaButton = document.getElementById('view-schema');
+            const schemaModal = document.getElementById('schema-modal');
+            const schemaContent = document.getElementById('schema-content');
+            const validateButton = document.getElementById('validate-response');
+            const downloadButton = document.getElementById('download-schema');
+            
+            viewSchemaButton.addEventListener('click', function() {
+                schemaContent.textContent = 'Loading schema...';
+                schemaModal.style.display = 'block';
+                
+                fetch('/api/llm/schema')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            schemaContent.textContent = JSON.stringify(data.schema, null, 2);
+                        } else {
+                            schemaContent.textContent = 'Error loading schema: ' + (data.error || 'Unknown error');
+                        }
+                    })
+                    .catch(err => {
+                        schemaContent.textContent = 'Network error: ' + err.message;
+                    });
+            });
+            
+            validateButton.addEventListener('click', function() {
+                // Test validation with a sample response
+                const sampleResponse = {
+                    "action": "message",
+                    "content": {
+                        "text": "This is a test message",
+                        "markdown": false
+                    }
+                };
+                
+                fetch('/api/llm/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ response: sampleResponse })
+                })
                 .then(res => res.json())
                 .then(data => {
-                    const pillsContainer = document.getElementById('plugin-pills');
-                    if (data.plugins && data.plugins.length > 0) {
-                        data.plugins.forEach(plugin => {
-                            const pill = document.createElement('span');
-                            pill.className = 'plugin-pill';
-                            pill.textContent = plugin;
-                            pill.onclick = function() {
-                                if (plugin.includes('courtlistener') || plugin.includes('CourtListener')) {
-                                    document.getElementById('courtlistener-modal').style.display = 'block';
-                                } else if (plugin.includes('brave') || plugin.includes('Brave')) {
-                                    document.getElementById('brave-modal').style.display = 'block';
-                                }
-                            };
-                            pillsContainer.appendChild(pill);
-                        });
-                    } else {
-                        pillsContainer.innerHTML = '<span style="color: #7f8c8d;">No plugins accessed yet</span>';
-                    }
+                    alert(data.success && data.valid ? 'Sample validation passed!' : 'Validation failed: ' + (data.error || 'Unknown error'));
                 })
                 .catch(err => {
-                    console.log('Could not load plugin pills:', err);
+                    alert('Validation test failed: ' + err.message);
                 });
+            });
+            
+            downloadButton.addEventListener('click', function() {
+                fetch('/api/llm/schema')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            const blob = new Blob([JSON.stringify(data.schema, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'llm-response-schema.json';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                        }
+                    })
+                    .catch(err => {
+                        alert('Failed to download schema: ' + err.message);
+                    });
+            });
+        }
+        // Setup plugin pills functionality
+        function setupPluginPills() {
+            const refreshButton = document.getElementById('refresh-plugins');
+            const viewInstructionsButton = document.getElementById('view-system-instructions');
+            const instructionsModal = document.getElementById('instructions-modal');
+            const instructionsContent = document.getElementById('instructions-content');
+            const refreshInstructionsButton = document.getElementById('refresh-instructions');
+            const pluginCountSpan = document.getElementById('plugin-count');
+            const pluginStatus = document.getElementById('plugin-status');
+            
+            function loadPlugins() {
+                // Load active plugins
+                fetch('/api/plugins/list')
+                    .then(res => res.json())
+                    .then(data => {
+                        const pillsContainer = document.getElementById('plugin-pills');
+                        if (data.success && data.plugins && data.plugins.length > 0) {
+                            pillsContainer.innerHTML = '';
+                            const runningPlugins = data.plugins.filter(p => p.running);
+                            
+                            runningPlugins.forEach(plugin => {
+                                const pill = document.createElement('span');
+                                pill.className = 'plugin-pill';
+                                pill.innerHTML = `<i class="fas fa-plug"></i> ${plugin.name}`;
+                                pill.title = plugin.description;
+                                pill.onclick = function() {
+                                    showPluginInfo(plugin);
+                                };
+                                pillsContainer.appendChild(pill);
+                            });
+                            
+                            pluginStatus.textContent = `${runningPlugins.length} active plugin(s)`;
+                        } else {
+                            pillsContainer.innerHTML = '<span style="color: #7f8c8d;">No active plugins</span>';
+                            pluginStatus.textContent = 'No plugins running';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Could not load plugin pills:', err);
+                        document.getElementById('plugin-pills').innerHTML = '<span style="color: #e74c3c;">Error loading plugins</span>';
+                        pluginStatus.textContent = 'Error loading plugins';
+                    });
+            }
+            
+            function loadSystemInstructions() {
+                instructionsContent.textContent = 'Loading system instructions...';
+                
+                fetch('/api/llm/system_instructions')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            instructionsContent.textContent = data.instructions;
+                            pluginCountSpan.textContent = `Available plugins: ${data.plugins ? data.plugins.length : 0}`;
+                        } else {
+                            instructionsContent.textContent = 'Error loading instructions: ' + (data.error || 'Unknown error');
+                        }
+                    })
+                    .catch(err => {
+                        instructionsContent.textContent = 'Network error: ' + err.message;
+                    });
+            }
+            
+            function showPluginInfo(plugin) {
+                alert(`Plugin: ${plugin.name}\nID: ${plugin.id}\nDescription: ${plugin.description}\nStatus: ${plugin.status}\nVersion: ${plugin.version}`);
+            }
+            
+            refreshButton.addEventListener('click', loadPlugins);
+            viewInstructionsButton.addEventListener('click', function() {
+                instructionsModal.style.display = 'block';
+                loadSystemInstructions();
+            });
+            refreshInstructionsButton.addEventListener('click', loadSystemInstructions);
+            
+            loadPlugins(); // Load initially
         }
 
         // Setup autocomplete functionality
@@ -475,22 +809,33 @@
             const input = document.getElementById('request-input');
             const button = document.getElementById('request-submit');
             const responseBox = document.getElementById('response-box');
+            const modelSelect = document.getElementById('model-select');
+            const useSchemaCheckbox = document.getElementById('use-schema');
 
             function sendRequest() {
                 const prompt = input.value.trim();
+                const selectedModel = modelSelect.value;
+                const useSchema = useSchemaCheckbox.checked;
+                
                 if (!prompt) return;
+                
+                if (!selectedModel) {
+                    showResponse({error: 'Please select a model before sending your request.'});
+                    return;
+                }
 
                 // Clear placeholder and show loading
                 responseBox.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Processing your request...</div>';
                 
-                // For now, this is a placeholder - in a real implementation, this would call the LibreAssistant API
+                // Use the /api/generate endpoint with proper schema support
                 fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: 'default', // This would be selected from available models
+                        model: selectedModel,
                         prompt: prompt,
-                        use_schema: true
+                        use_schema: useSchema,
+                        stream: false
                     })
                 })
                 .then(res => res.json())
@@ -500,9 +845,11 @@
                             text: data.response,
                             markdown: data.markdown,
                             plugin_used: data.plugin_used,
-                            plugin_reason: data.plugin_reason
+                            plugin_reason: data.plugin_reason,
+                            schema_used: useSchema,
+                            schema_error: data.schema_error
                         });
-                        // Update plugin pills
+                        // Refresh plugin pills to show any newly accessed plugins
                         setupPluginPills();
                     } else {
                         showResponse({error: data.error || 'Request failed'});
@@ -524,7 +871,7 @@
         }
 
         // Show response in the response box
-        function showResponse({text, markdown, error, plugin_used, plugin_reason}) {
+        function showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error}) {
             const box = document.getElementById('response-box');
             
             if (error) {
@@ -533,12 +880,28 @@
             }
             
             let content = '';
+            
+            // Schema status indicator
+            if (schema_used) {
+                if (schema_error) {
+                    content += `<div class="schema-warning" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 0.8rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; font-size: 0.9rem;">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>Schema Warning:</strong> ${schema_error}
+                    </div>`;
+                } else {
+                    content += `<div class="schema-success" style="background: #d4edda; border-left: 4px solid #28a745; padding: 0.8rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; font-size: 0.9rem;">
+                        <i class="fas fa-check-circle"></i> <strong>Schema Validation:</strong> Response validated successfully
+                    </div>`;
+                }
+            }
+            
+            // Plugin usage indicator
             if (plugin_used) {
-                content += `<div class="plugin-indicator"><i class="fas fa-plug"></i> Used plugin: <strong>${plugin_used}</strong>`;
+                content += `<div class="plugin-indicator"><i class="fas fa-plug"></i> <strong>Plugin Used:</strong> ${plugin_used}`;
                 if (plugin_reason) content += ` - ${plugin_reason}`;
                 content += '</div>';
             }
             
+            // Response content
             if (markdown) {
                 // Simple markdown rendering (you might want to use a proper markdown library)
                 content += `<div class="response-text">${text}</div>`;
