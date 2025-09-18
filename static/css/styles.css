@@ -1154,6 +1154,24 @@ code {
     margin-top: 1.5rem;
 }
 
+/* Large modal for requests and catalogue */
+.large-modal {
+    max-width: 90%;
+    width: 90%;
+    margin: 5% auto;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .large-modal {
+        width: 95%;
+        margin: 3% auto;
+        max-height: 90vh;
+        padding: 1rem;
+    }
+}
+
 /* Status Message Styles */
 .model-status {
     margin-bottom: 1rem;
