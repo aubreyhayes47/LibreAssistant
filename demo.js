@@ -1,3 +1,6 @@
+// LibreAssistant Demo Script
+// Simulates chat UI and model/plugin responses without Ollama backend
+
 class OllamaChatDemo {
     constructor() {
         this.selectedModel = '';
@@ -242,5 +245,7 @@ class OllamaChatDemo {
 
 // Initialize the demo when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    document.title = "LibreAssistant Demo";
+    // TODO: Add plugin/MCP simulation for plugin chat endpoints
     new OllamaChatDemo();
 });

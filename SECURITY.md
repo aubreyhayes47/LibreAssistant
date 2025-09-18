@@ -1,3 +1,18 @@
+# Security Policy for LibreAssistant
+
+This document outlines the security policy for the LibreAssistant project. The policy applies to all legacy Ollama/model management features and the new plugin/MCP server functionality.
+## Supported Versions
+
+Currently, the following versions are supported:
+
+| Version                | Supported          |
+|------------------------|-------------------|
+| my-ollama-wrapper 1.x  | Yes (legacy)      |
+| LibreAssistant 2.x     | Yes (current)     |
+LibreAssistant is committed to supporting all legacy features from my-ollama-wrapper while introducing new plugin/MCP capabilities.
+## Reporting a Vulnerability
+
+If you discover a security vulnerability in LibreAssistant (including legacy Ollama/model management or plugin/MCP features), please report it by opening a GitHub issue or contacting the maintainers directly. We will respond promptly and coordinate a fix.
 
 # Security Policy
 

@@ -1,5 +1,43 @@
 # Contributing to LibreAssistant
 
+
+Thank you for your interest in contributing to LibreAssistant! LibreAssistant is a privacy-first, fully local AI assistant and plugin platform. It preserves all legacy Ollama/model management features from my-ollama-wrapper and adds a modern plugin (MCP server) system. All contributions are welcome, whether you are fixing bugs, adding features, improving documentation, or helping with testing.
+
+---
+
+## 📦 Contributing New Plugins (MCP Servers)
+
+LibreAssistant supports a robust plugin system. To contribute a new plugin:
+
+1. **Structure:** Place your plugin in a new subdirectory under `plugins/` (e.g. `plugins/my-plugin/`).
+2. **Manifest:** Include a `plugin-manifest.json` file describing your plugin (see [PLUGIN_API.md](./PLUGIN_API.md)).
+3. **Entrypoint:** Provide a server script (e.g. `server.py`) that implements the MCP server protocol (Flask/FastAPI recommended).
+4. **Testing:** Add tests or a test script for your plugin. Ensure it works independently and with LibreAssistant.
+5. **Documentation:** Document your endpoints, config, and permissions in the manifest and a README if needed.
+6. **Minimal Permissions:** Request only the permissions your plugin needs.
+7. **Security:** Validate all input and sandbox file/network access as appropriate.
+
+For full details, see the [PLUGIN_API.md](./PLUGIN_API.md) file.
+
+---
+## Project Scope
+
+LibreAssistant provides a user-friendly, local-first interface for managing Ollama models and interacting with them via chat. The project now supports a plugin system (MCP servers) for extensibility, while all legacy model management features remain fully supported.
+## How to Contribute
+
+1. **Fork the repository** and create your branch from `main`.
+2. **Install dependencies** using `npm install` (for Node/Electron) or `pip install -r requirements.txt` (for Python backend).
+3. **Test your changes** locally. Ensure both model management and plugin features work as expected.
+4. **Write clear commit messages** and document your changes in the PR description.
+5. **Submit a pull request** and respond to any review feedback.
+## Code of Conduct
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to keep our community welcoming and inclusive.
+## Legacy Compatibility
+
+If you are migrating from my-ollama-wrapper, all your existing workflows and scripts should continue to work. If you encounter any issues, please open an issue or pull request. LibreAssistant is committed to full backward compatibility for model management features.
+# Contributing to LibreAssistant
+
 Thank you for your interest in contributing to LibreAssistant! This document provides guidelines and information for contributors.
 
 ## Table of Contents
@@ -517,3 +555,5 @@ If you have questions about contributing:
 4. **Contact maintainers** for urgent matters
 
 Thank you for contributing to LibreAssistant! 🚀
+
+For plugin development, see [PLUGIN_API.md](./PLUGIN_API.md).

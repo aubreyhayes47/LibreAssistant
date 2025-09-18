@@ -1,16 +1,207 @@
+
+
+from collections import deque
+
+from typing import List, Dict
+
+# Rolling log of recent requests and their accessed plugins
+RECENT_REQUESTS = deque(maxlen=20)  # Each entry: {'timestamp': ..., 'request_id': ..., 'plugins': [plugin_id, ...]}
+CURRENT_REQUEST = {'request_id': None, 'plugins': []}
+
+import uuid
+import time
+
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from plugin_config import PluginConfigManager
+from plugin_loader import PluginLoader
+plugin_loader = PluginLoader()
+plugin_loader.discover_plugins()
+config_manager = PluginConfigManager()
+
+
+
+
+# Flask app setup
+app = Flask(__name__)
+CORS(app)
+
+# Diagnostic health check route for test visibility
+@app.route('/api/healthz')
+def api_healthz():
+    return jsonify({'status': 'ok'})
+
+# Get plugin config
+@app.route('/api/plugin/config/<plugin_id>', methods=['GET'])
+def api_plugin_config_get(plugin_id):
+    cfg = config_manager.get_plugin_config(plugin_id)
+    return jsonify({'success': True, 'config': cfg})
+
+# Set plugin config
+@app.route('/api/plugin/config/<plugin_id>', methods=['POST'])
+def api_plugin_config_set(plugin_id):
+    data = request.get_json(force=True)
+    config_manager.set_plugin_config(plugin_id, data.get('config', {}))
+    return jsonify({'success': True})
+
+# --- Plugin Activity Visualization Endpoint ---
+@app.route('/api/plugins/activity')
+def api_plugins_activity():
+    """API endpoint to get real-time plugin activity for UI visualization"""
+    try:
+        # For each plugin, return id, name, icon, description, active (bool), lastAction
+        plugins = []
+        for plugin in plugin_loader.plugins:
+            plugins.append({
+                'id': plugin.id,
+                'name': getattr(plugin, 'name', plugin.id),
+                'icon': getattr(plugin, 'icon', None),
+                'description': getattr(plugin, 'description', ''),
+                'active': getattr(plugin, 'is_active', lambda: False)() or getattr(plugin, 'is_running', lambda: False)(),
+                'lastAction': getattr(plugin, 'last_action', None)
+            })
+        return jsonify(plugins)
+    except Exception as e:
+        return jsonify([])
+
+
+# Register plugin config endpoints after app is created
+
+
+# Register all plugin endpoints after app and plugin_loader are initialized
+@app.route('/api/plugin/status', methods=['GET'])
+def api_plugin_status_all():
+    plugin_loader.discover_plugins()  # Refresh status
+    statuses = {}
+    for plugin in plugin_loader.plugins:
+        statuses[plugin.id] = {
+            'status': plugin.status,
+            'last_error': plugin.last_error,
+            'running': plugin.is_running(),
+        }
+    return jsonify({'success': True, 'statuses': statuses})
+
+@app.route('/api/plugin/status/<plugin_id>', methods=['GET'])
+def api_plugin_status_one(plugin_id):
+    plugin = plugin_loader.get_plugin_by_id(plugin_id)
+    if not plugin:
+        return jsonify({'success': False, 'error': 'Plugin not found'}), 404
+    return jsonify({'success': True, 'status': plugin.status, 'last_error': plugin.last_error, 'running': plugin.is_running()})
+
+
+
+@app.route('/api/plugin/permissions/<plugin_id>', methods=['GET'])
+def api_plugin_permissions_get(plugin_id):
+    plugin = plugin_loader.get_plugin_by_id(plugin_id)
+    if not plugin:
+        return jsonify({'success': False, 'error': 'Plugin not found'}), 404
+    perms = plugin_loader.get_permissions_status(plugin)
+    return jsonify({'success': True, **perms})
+
+@app.route('/api/plugin/permissions/<plugin_id>', methods=['POST'])
+def api_plugin_permissions_post(plugin_id):
+    plugin = plugin_loader.get_plugin_by_id(plugin_id)
+    if not plugin:
+        return jsonify({'success': False, 'error': 'Plugin not found'}), 404
+    data = request.get_json(force=True)
+    grant = set(data.get('grant', []))
+    plugin.approve_permissions(grant)
+    return jsonify({'success': True})
+
+@app.route('/api/plugin/enable', methods=['POST'])
+def api_plugin_enable():
+    plugin_id = request.json.get('plugin_id')
+    if not plugin_id:
+        return jsonify({'success': False, 'error': 'plugin_id required'})
+    ok = plugin_loader.start_plugin(plugin_id)
+    if ok:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Failed to start plugin'})
+
+@app.route('/api/plugin/disable', methods=['POST'])
+def api_plugin_disable():
+    plugin_id = request.json.get('plugin_id')
+    if not plugin_id:
+        return jsonify({'success': False, 'error': 'plugin_id required'})
+    ok = plugin_loader.stop_plugin(plugin_id)
+    if ok:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Failed to stop plugin'})
 # === Chat Generation Endpoint ===
 
 #!/usr/bin/env python3
 """
-Ollama Model Manager Web GUI
+LibreAssistant Manager Web GUI
 
-A simple web-based GUI for managing local Ollama models with the ability to:
-- List all local models
-- View model metadata
-- Download new models
-- Import models
-- Delete models (with confirmation)
+A web-based GUI for managing both:
+- Local Ollama models (list, view, download, import, delete)
+- LibreAssistant plugins (MCP servers: list, view, install, import, delete, invoke)
 """
+# ...existing code...
+
+# --- Plugin API Client ---
+class PluginAPI:
+    """Client for interacting with LibreAssistant plugins (MCP servers)"""
+    def __init__(self, base_url: str = "http://localhost:5001"):
+        self.base_url = base_url.rstrip('/')
+    def list_plugins(self) -> List[Dict]:
+        try:
+            response = requests.get(f"{self.base_url}/api/plugins", timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            return data.get('plugins', [])
+        except requests.RequestException as e:
+            raise Exception(f"Failed to connect to LibreAssistant plugin server: {e}")
+    def install_plugin(self, plugin_name: str) -> bool:
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/install",
+                json={"name": plugin_name},
+                timeout=300
+            )
+            response.raise_for_status()
+            return True
+        except requests.RequestException as e:
+            raise Exception(f"Failed to install plugin: {e}")
+    def delete_plugin(self, plugin_name: str) -> bool:
+        try:
+            response = requests.delete(
+                f"{self.base_url}/api/delete",
+                json={"name": plugin_name},
+                timeout=30
+            )
+            response.raise_for_status()
+            return True
+        except requests.RequestException as e:
+            raise Exception(f"Failed to delete plugin: {e}")
+    def show_plugin_info(self, plugin_name: str) -> Dict:
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/show",
+                json={"name": plugin_name},
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise Exception(f"Failed to get plugin info: {e}")
+
+    def invoke_plugin(self, plugin: str, input_data) -> Dict:
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/invoke",
+                json={"plugin": plugin, "input": input_data},
+                timeout=60
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise Exception(f"Failed to invoke plugin: {e}")
+
+plugin_api = PluginAPI()
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_cors import CORS
@@ -77,6 +268,7 @@ class OllamaAPI:
         except requests.RequestException as e:
             raise Exception(f"Failed to get model info: {e}")
 
+api = OllamaAPI()
 
 def format_size(size_bytes: int) -> str:
     """Format size in bytes to human readable format"""
@@ -102,11 +294,6 @@ def format_datetime(dt_str: str) -> str:
         return dt_str
 
 
-# Flask app setup
-app = Flask(__name__)
-app.secret_key = 'ollama-manager-secret-key'
-CORS(app)  # Enable CORS for all domains on all routes
-api = OllamaAPI()
 
 
 # === Chat Generation Endpoint ===
@@ -160,10 +347,10 @@ def api_generate():
 
 @app.route('/')
 def index():
-    """Main page showing model list"""
+    """Main page showing models and plugins"""
     try:
         models = api.list_models()
-        # Format models for display
+        plugins = plugin_api.list_plugins()
         formatted_models = []
         for model in models:
             formatted_models.append({
@@ -173,10 +360,117 @@ def index():
                 'family': model.get('details', {}).get('family', 'Unknown'),
                 'raw_size': model.get('size', 0)
             })
-        
-        return render_template('index.html', models=formatted_models, error=None)
+        formatted_plugins = []
+        for plugin in plugins:
+            formatted_plugins.append({
+                'name': plugin.get('name', 'Unknown'),
+                'size': format_size(plugin.get('size', 0)),
+                'modified_at': format_datetime(plugin.get('modified_at', '')),
+                'type': plugin.get('type', 'Unknown'),
+                'raw_size': plugin.get('size', 0)
+            })
+        return render_template('index.html', models=formatted_models, plugins=formatted_plugins, error=None)
     except Exception as e:
-        return render_template('index.html', models=[], error=str(e))
+        return render_template('index.html', models=[], plugins=[], error=str(e))
+
+# --- Plugin endpoints ---
+@app.route('/api/plugins')
+def api_plugins():
+    try:
+        plugins = plugin_api.list_plugins()
+        formatted_plugins = []
+        for plugin in plugins:
+            formatted_plugins.append({
+                'name': plugin.get('name', 'Unknown'),
+                'size': format_size(plugin.get('size', 0)),
+                'modified_at': format_datetime(plugin.get('modified_at', '')),
+                'type': plugin.get('type', 'Unknown'),
+                'raw_size': plugin.get('size', 0)
+            })
+        return jsonify({'success': True, 'plugins': formatted_plugins})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/plugin/install', methods=['POST'])
+def api_plugin_install():
+    try:
+        plugin_name = request.json.get('plugin_name')
+        if not plugin_name:
+            return jsonify({'success': False, 'error': 'Plugin name is required'})
+        def install_plugin():
+            try:
+                plugin_api.install_plugin(plugin_name)
+            except Exception as e:
+                print(f"Install error: {e}")
+        thread = threading.Thread(target=install_plugin)
+        thread.daemon = True
+        thread.start()
+        return jsonify({'success': True, 'message': f'Install started for {plugin_name}'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/plugin/delete', methods=['POST'])
+def api_plugin_delete():
+    try:
+        plugin_name = request.json.get('plugin_name')
+        if not plugin_name:
+            return jsonify({'success': False, 'error': 'Plugin name is required'})
+        plugin_api.delete_plugin(plugin_name)
+        return jsonify({'success': True, 'message': f'Plugin {plugin_name} deleted successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/plugin/info/<plugin_name>')
+def api_plugin_info(plugin_name):
+    try:
+        info = plugin_api.show_plugin_info(plugin_name)
+        return jsonify({'success': True, 'info': info})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/plugin/invoke', methods=['POST'])
+def api_plugin_invoke():
+    try:
+        data = request.get_json(force=True)
+        plugin = data.get('plugin')
+        input_data = data.get('input')
+        if not plugin or input_data is None:
+            return jsonify({'success': False, 'error': 'Plugin and input data are required'}), 400
+
+        # Track plugin access for this request
+        req_id = data.get('request_id') or str(uuid.uuid4())
+        if CURRENT_REQUEST.get('request_id') != req_id:
+            # New request, archive previous
+            if CURRENT_REQUEST.get('request_id') is not None:
+                RECENT_REQUESTS.append({
+                    'timestamp': time.time(),
+                    'request_id': CURRENT_REQUEST['request_id'],
+                    'plugins': CURRENT_REQUEST['plugins'][:]
+                })
+            CURRENT_REQUEST['request_id'] = req_id
+            CURRENT_REQUEST['plugins'] = []
+        if plugin not in CURRENT_REQUEST['plugins']:
+            CURRENT_REQUEST['plugins'].append(plugin)
+
+        result = plugin_api.invoke_plugin(plugin, input_data)
+        return jsonify({'success': True, 'response': result.get('response', ''), 'request_id': req_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+# Endpoint to get plugins accessed for the most recent request
+@app.route('/api/plugins/accessed', methods=['GET'])
+def api_plugins_accessed():
+    """Return the list of plugin IDs accessed for the current or most recent request."""
+    try:
+        # Return current request if active, else last from RECENT_REQUESTS
+        if CURRENT_REQUEST.get('request_id') and CURRENT_REQUEST['plugins']:
+            return jsonify({'request_id': CURRENT_REQUEST['request_id'], 'plugins': CURRENT_REQUEST['plugins']})
+        elif RECENT_REQUESTS:
+            last = RECENT_REQUESTS[-1]
+            return jsonify({'request_id': last['request_id'], 'plugins': last['plugins']})
+        else:
+            return jsonify({'request_id': None, 'plugins': []})
+    except Exception as e:
+        return jsonify({'request_id': None, 'plugins': [], 'error': str(e)})
 
 
 @app.route('/api/models')
@@ -863,16 +1157,4 @@ def create_templates():
         f.write(index_html)
 
 
-def main():
-    """Main entry point"""
-    # Create templates directory and files
-    create_templates()
-    
-    # Run the Flask app
-    print("Starting Ollama Model Manager...")
-    print("Open your browser and go to: http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=False)
-
-
-if __name__ == "__main__":
-    main()
+## (Removed main() and app.run() to avoid duplicate app context in tests)

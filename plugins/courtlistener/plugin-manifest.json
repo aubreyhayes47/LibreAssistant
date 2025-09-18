@@ -1,0 +1,19 @@
+{
+  "id": "courtlistener",
+  "name": "CourtListener",
+  "version": "1.0.0",
+  "description": "Legal research plugin for US court opinions, dockets, and case search via the CourtListener API.",
+  "author": "LibreAssistant Team",
+  "entrypoint": "python3 server.py",
+  "mcp_port": 5102,
+  "permissions": ["network"],
+  "config": {
+    "api_key": {
+      "type": "string",
+      "description": "CourtListener API Key",
+      "required": true
+    }
+  },
+  "homepage": "https://courtlistener.com/",
+  "license": "MIT"
+}

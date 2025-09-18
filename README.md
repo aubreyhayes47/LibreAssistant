@@ -1,7 +1,32 @@
 
 # LibreAssistant
 
-LibreAssistant is a new project that builds on the foundation of the original **my-ollama-wrapper**. While LibreAssistant introduces a new vision and feature set, it retains and extends the robust Ollama management and chat capabilities from its predecessor.
+
+**LibreAssistant** is a privacy-first, fully local AI assistant and plugin platform. It combines robust Ollama model management and chat features with a modern, extensible plugin system (MCP servers). LibreAssistant is the evolution of **my-ollama-wrapper**—all legacy model management features are preserved, and powerful new plugin capabilities are added.
+
+---
+
+## 🚀 What’s New in LibreAssistant
+
+- **Plugin System (MCP Servers):** Run first- and third-party plugins as secure, isolated microservices. Extend LibreAssistant with new capabilities—search, file I/O, legal research, and more.
+- **Plugin Catalogue & Management UI:** Browse, enable/disable, and configure plugins with a single click. No technical knowledge required.
+- **Real-Time Plugin Activity Bar:** See which plugins are active for each request, with live visualization and clickable plugin pills for logs/details.
+- **Legacy Model Management:** All Ollama model management, chat, and troubleshooting features from my-ollama-wrapper are fully supported.
+- **First-Party Plugins:** Includes Local File I/O, CourtListener, Brave Search, and a test plugin for development.
+
+---
+
+## 📸 Screenshots
+
+> _If you have not yet added screenshots, place them in a `screenshots/` folder and update the links below._
+
+![Plugin Catalogue UI](screenshots/plugin-catalogue.png)
+_Plugin catalogue: browse, enable, and configure plugins._
+
+![Plugin Activity Bar](screenshots/plugin-activity-bar.gif)
+_Real-time plugin activity bar and request visualization._
+
+---
 
 ---
 
@@ -10,6 +35,8 @@ LibreAssistant is a new project that builds on the foundation of the original **
 - [Vision & Philosophy](#libreassistant-vision--philosophy)
 - [User Experience & Workflow](#user-experience--workflow)
 - [Legacy Features from my-ollama-wrapper](#legacy-features-from-my-ollama-wrapper)
+- [Plugin System & Management](#plugin-system--management)
+- [Plugin API & MCP Server Guide](#plugin-api--mcp-server-guide)
 - [Roadmap](#roadmap)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -26,72 +53,80 @@ LibreAssistant is a new project that builds on the foundation of the original **
 
 **An AI Assistant That's Actually Yours.**
 
-LibreAssistant is designed from the ground up to put you in control:
 
+LibreAssistant is a privacy-first, fully local AI assistant and plugin platform. It combines robust Ollama model management and chat features with a modern, extensible plugin system (MCP servers). LibreAssistant is the evolution of **my-ollama-wrapper**—all legacy model management features are preserved, and powerful new plugin capabilities are added.
+LibreAssistant is designed from the ground up to put you in control:
 - **Privacy First**: All processing happens locally. Your data never leaves your device, and there is absolutely no built-in data extraction or telemetry.
 - **Total Customization**: Choose any model, adjust any setting, and tailor the assistant to your exact needs.
 - **Data Sovereignty**: You own your data. LibreAssistant will never collect, transmit, or share your information.
 
-LibreAssistant is more than a chat box—it's a truly agentic assistant, with full transparency and user empowerment at its core.
-
-
-# User Experience & Workflow
-
-LibreAssistant is designed for actionable, transparent AI assistance:
-
-- **Discrete Requests, Not Just Chat**: Instead of a generic chat box, users submit specific requests (e.g., "Summarize this file", "Search CourtListener for recent cases", "Enable Brave Search plugin").
-- **Plugin-Driven Actions**: LibreAssistant activates only the plugins needed for your request, and you can always see which plugins are in use.
-- **Visual Plugin Activity**: As the assistant works, a visual indicator shows which plugins are being accessed in real time, so you always know what the assistant is doing on your behalf.
-- **No Hidden Processing**: Every action is explicit, and you remain in control of what the assistant can access or do.
-
-**Example Workflow:**
 
 1. You submit a request: _"Find and summarize the latest Supreme Court opinions using CourtListener."_
 2. LibreAssistant checks if the CourtListener plugin is enabled. If not, it prompts you to enable it (with a single click).
 3. The plugin requests an API key if needed, guiding you through a simple, non-technical setup.
+
+
 4. As the assistant works, you see a visual indicator showing the CourtListener plugin is active.
 5. The summary is returned, and you can review which plugins were used for full transparency.
-
-This workflow applies to all plugins—whether accessing local files, searching the web, or running custom automations.
-
-
-
 # Legacy Features from my-ollama-wrapper
 
-LibreAssistant includes all major features from the original my-ollama-wrapper project, ensuring a familiar and powerful experience for existing users:
-
-- **Model Management**: List, download, delete, and view detailed information about local Ollama models.
-- **Chat/Interaction Console**: Chat with local models, select models, view chat history, and enjoy real-time streaming responses.
-- **Server Monitoring & Troubleshooting**: Real-time server logs, error tracking, and built-in troubleshooting guides.
-- **Settings & Configuration**: Configure server URL, API timeout, retry settings, theme, and other preferences with persistent local storage.
 - **Multiple Interfaces**: Access via web browser, Electron desktop app, or Python Flask backend.
 - **Modern UI/UX**: Responsive design, theme support, and a clean, professional interface.
 
-These features are fully supported in LibreAssistant for backward compatibility and a smooth transition for users of my-ollama-wrapper.
+All legacy features are fully supported for backward compatibility and a smooth transition for users of my-ollama-wrapper. LibreAssistant adds a new plugin system for even greater extensibility.
 
+---
 
+# Plugin System & Management
 
+LibreAssistant’s plugin system is built around **MCP servers**—microservice plugins that run as separate processes and communicate with the core assistant. This enables powerful, secure, and extensible automation.
 
+---
 
-## Features
+## Plugin API & MCP Server Guide
+
+For details on creating your own plugins, see the [PLUGIN_API.md](./PLUGIN_API.md) file. It covers the manifest format, MCP server protocol, example code, and best practices for plugin authors.
+
+## Plugin Catalogue & Real-Time Activity
+
+- **Browse Plugins:** Open the Plugin Catalogue from the main UI to see all available plugins, their status, and descriptions.
+- **Enable/Disable:** Toggle plugins on or off with a single click. Permissions and config are managed through the UI.
+- **Configure Plugins:** Set API keys, preferences, and other options directly from the plugin’s config panel.
+- **Real-Time Activity Bar:** When you send a request, the activity bar shows which plugins are being used, with live updates and color-coded status.
+- **Plugin Pills:** Click any plugin pill in the activity bar to view logs, details, or open a modal with more information.
+
+## How to Enable/Disable Plugins
+
+1. Open the Plugin Catalogue (from the sidebar or main menu).
+2. Find the plugin you want to enable/disable.
+3. Click the toggle switch. If permissions or config are required, you’ll be prompted.
+4. The plugin’s status and activity will update in real time.
+
+## Viewing Plugin Activity
+
+- The activity bar at the top of the requests screen shows all plugins involved in the current or recent requests.
+- Hover or click a plugin pill to see logs, errors, or details.
+- All plugin actions are transparent—see exactly what each plugin accessed or modified.
+
+---
+
+## First-Party Plugins
+
+| Plugin Name         | Purpose                                                      |
+|--------------------|-------------------------------------------------------------|
+| Local File I/O     | Securely read/write files on your device (with consent)      |
+| CourtListener      | Search and retrieve legal opinions/dockets from CourtListener |
+| Brave Search       | Search the web using Brave Search (privacy-respecting)        |
+| Test Plugin        | Minimal plugin for development and testing                    |
 
 ### 🤖 Chat/Interaction Console
 - **Model Selection**: Choose from available Ollama models
-- **Interactive Chat**: Console for sending prompts to models and receiving responses
 - **Chat History**: Persistent conversation history during the session
 - **Real-time Responses**: Streaming responses with typing indicators
 - **Error Handling**: Clear error messages and status indicators
 
-### 📦 Model Management
-- **Web-based GUI** - Access through your browser
 - **Model List**: View all local Ollama models with detailed information
 - **Model Metadata**: View model size, modification date, and family information
-- **Download Models**: Pull new models from Ollama registry
-- **Delete Models**: Remove models with confirmation dialogs
-- **Model Information**: View detailed metadata including modelfile and parameters
-
-### 🖥️ Server Monitoring & Troubleshooting
-- **Server Logs**: Real-time monitoring of Ollama server logs with filtering and auto-refresh
 - **Error Monitor**: Comprehensive error tracking with severity levels (Critical, Error, Warning)
 - **Troubleshooting Guide**: Built-in documentation for common issues and solutions
 - **System Requirements**: Hardware and software requirement guidelines
@@ -100,19 +135,10 @@ These features are fully supported in LibreAssistant for backward compatibility 
 ### ⚙️ Settings & Configuration
 - **Ollama Server Settings**
   - Configurable server URL (supports any Ollama instance)
-  - Adjustable API timeout (1-300 seconds)
-  - Connection retry settings (0-10 retries)
-- **Application Preferences**
   - Theme selection (Light, Dark, Auto-detect)
   - Auto-connect on startup option
-  - Connection logging preferences
-  - Model cache size configuration
-- **Local Storage Persistence** - All settings are saved locally and persist between sessions
 - **Input Validation** - Real-time validation with helpful error messages
 
-### 🎨 User Experience
-- **Responsive Design**: Works on desktop and mobile devices
-- **Real-time Updates**: Live status notifications and progress indicators
 - **Multiple Interfaces**: Web interface, Electron desktop app, and Python Flask application
 - **Confirmation Dialogs**: Safe model deletion and chat clearing
 - **Modern UI**: Clean, professional interface with proper styling
