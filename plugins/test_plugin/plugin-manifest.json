@@ -1,6 +1,6 @@
 {
   "name": "Test Plugin",
-  "id": "test_plugin",
+  "id": "test-plugin",
   "version": "1.0.0",
   "description": "A dummy plugin for testing enable/disable/config endpoints.",
   "author": "LibreAssistant Test Suite",
