@@ -557,18 +557,16 @@
             document.getElementById('brave-status').textContent = 'Searching...';
             
             try {
-                const res = await fetch('/api/plugin/invoke', {
+                // Call Brave Search endpoint directly
+                const res = await fetch('http://localhost:5103/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        plugin: 'brave_search',
-                        input: { query: query }
-                    })
+                    body: JSON.stringify({ query: query })
                 });
                 const data = await res.json();
                 
                 if (data.success) {
-                    showResponse({text: data.response, markdown: true});
+                    showResponse({text: JSON.stringify(data, null, 2), markdown: false});
                     document.getElementById('brave-modal').style.display = 'none';
                 } else {
                     document.getElementById('brave-status').textContent = 'Error: ' + (data.error || 'Search failed');
@@ -585,18 +583,16 @@
             document.getElementById('cl-status').textContent = 'Searching...';
             
             try {
-                const res = await fetch('/api/plugin/invoke', {
+                // Call CourtListener search endpoint directly
+                const res = await fetch('http://localhost:5102/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        plugin: 'courtlistener',
-                        input: { action: 'search', query: query }
-                    })
+                    body: JSON.stringify({ query: query })
                 });
                 const data = await res.json();
                 
                 if (data.success) {
-                    showResponse({text: data.response, markdown: true});
+                    showResponse({text: JSON.stringify(data, null, 2), markdown: false});
                     document.getElementById('courtlistener-modal').style.display = 'none';
                 } else {
                     document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Search failed');
@@ -613,18 +609,16 @@
             document.getElementById('cl-status').textContent = 'Fetching opinion...';
             
             try {
-                const res = await fetch('/api/plugin/invoke', {
+                // Call CourtListener opinion endpoint directly
+                const res = await fetch('http://localhost:5102/opinion', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        plugin: 'courtlistener',
-                        input: { action: 'opinion', opinion_id: id }
-                    })
+                    body: JSON.stringify({ opinion_id: id })
                 });
                 const data = await res.json();
                 
                 if (data.success) {
-                    showResponse({text: data.response, markdown: true});
+                    showResponse({text: JSON.stringify(data, null, 2), markdown: false});
                     document.getElementById('courtlistener-modal').style.display = 'none';
                 } else {
                     document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Fetch failed');
@@ -641,18 +635,16 @@
             document.getElementById('cl-status').textContent = 'Fetching docket...';
             
             try {
-                const res = await fetch('/api/plugin/invoke', {
+                // Call CourtListener docket endpoint directly
+                const res = await fetch('http://localhost:5102/docket', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        plugin: 'courtlistener',
-                        input: { action: 'docket', docket_id: id }
-                    })
+                    body: JSON.stringify({ docket_id: id })
                 });
                 const data = await res.json();
                 
                 if (data.success) {
-                    showResponse({text: data.response, markdown: true});
+                    showResponse({text: JSON.stringify(data, null, 2), markdown: false});
                     document.getElementById('courtlistener-modal').style.display = 'none';
                 } else {
                     document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Fetch failed');

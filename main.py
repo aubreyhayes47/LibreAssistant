@@ -8,7 +8,7 @@ import os
 import signal
 import sys
 import time
-from ollama_manager import app, create_templates
+from ollama_manager import app, create_templates, set_plugin_loader
 from plugin_loader import PluginLoader
 
 # Global plugin loader instance for cleanup
@@ -59,6 +59,10 @@ def auto_start_plugins():
             failed_count += 1
     
     print(f"[AutoStart] Plugin startup complete: {started_count} started, {failed_count} failed")
+    
+    # Share the plugin_loader instance with ollama_manager
+    set_plugin_loader(plugin_loader)
+    
     return plugin_loader
 
 def signal_handler(signum, frame):
@@ -82,6 +86,11 @@ if __name__ == "__main__":
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         # Auto-start plugin servers only in main process
         plugin_loader = auto_start_plugins()
+    else:
+        # In the reloaded process, we need to set up the plugin_loader too
+        plugin_loader = PluginLoader()
+        plugin_loader.discover_plugins()
+        set_plugin_loader(plugin_loader)
     
     print("[Main] Starting Flask application...")
     try:

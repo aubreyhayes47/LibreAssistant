@@ -16,6 +16,20 @@ BASE_DIR = os.path.expanduser(os.environ.get('LOCAL_FILEIO_BASEDIR', '~/LibreAss
 if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR, exist_ok=True)
 
+@app.route('/api/plugins', methods=['GET'])
+def get_plugins():
+    """Return plugin metadata for discovery"""
+    return jsonify({
+        'plugins': [{
+            'name': 'Local File I/O',
+            'id': 'local-fileio',
+            'version': '1.0.0',
+            'description': 'Securely read, write, list, and delete files on your device within a sandboxed directory.',
+            'type': 'MCP Plugin',
+            'status': 'running'
+        }]
+    })
+
 def safe_path(path):
     """Ensure path is within BASE_DIR."""
     full = os.path.abspath(os.path.join(BASE_DIR, path))

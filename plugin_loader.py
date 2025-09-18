@@ -170,6 +170,17 @@ class Plugin:
 
     def is_running(self) -> bool:
         return self.process is not None and self.process.poll() is None
+    
+    def is_reachable(self) -> bool:
+        """Check if plugin is reachable via HTTP (more reliable than process tracking)"""
+        if not self.mcp_port:
+            return False
+        try:
+            import requests
+            response = requests.get(f"http://localhost:{self.mcp_port}/api/plugins", timeout=2)
+            return response.status_code == 200
+        except:
+            return False
 
     def _monitor_process(self):
         if not self.process:

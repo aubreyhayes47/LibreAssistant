@@ -1384,7 +1384,7 @@ class LibreAssistantApp {
         
         plugins.forEach(plugin => {
             const pluginCard = document.createElement('div');
-            pluginCard.className = `plugin-card ${plugin.enabled ? 'enabled' : 'disabled'}`;
+            pluginCard.className = `plugin-card ${plugin.running ? 'enabled' : 'disabled'}`;
             
             pluginCard.innerHTML = `
                 <div class="plugin-header">
@@ -1393,8 +1393,8 @@ class LibreAssistantApp {
                         <p>${plugin.description || 'No description available'}</p>
                     </div>
                     <div class="plugin-status">
-                        <span class="status-badge ${plugin.enabled ? 'enabled' : 'disabled'}">
-                            ${plugin.enabled ? 'Enabled' : 'Disabled'}
+                        <span class="status-badge ${plugin.running ? 'enabled' : 'disabled'}">
+                            ${plugin.running ? 'Enabled' : 'Disabled'}
                         </span>
                     </div>
                 </div>
@@ -1403,12 +1403,12 @@ class LibreAssistantApp {
                     <p><strong>Status:</strong> ${plugin.running ? 'Running' : 'Stopped'}</p>
                 </div>
                 <div class="plugin-actions">
-                    <button class="btn btn-primary" onclick="window.ollamaApp.showPluginDetails('${plugin.name}')">
+                    <button class="btn btn-primary" onclick="window.ollamaApp.showPluginDetails('${plugin.id}')">
                         Details
                     </button>
-                    <button class="btn ${plugin.enabled ? 'btn-danger' : 'btn-success'}" 
-                            onclick="window.ollamaApp.togglePlugin('${plugin.name}', ${!plugin.enabled})">
-                        ${plugin.enabled ? 'Disable' : 'Enable'}
+                    <button class="btn ${plugin.running ? 'btn-danger' : 'btn-success'}" 
+                            onclick="window.ollamaApp.togglePlugin('${plugin.id}', ${!plugin.running})">
+                        ${plugin.running ? 'Disable' : 'Enable'}
                     </button>
                 </div>
             `;
@@ -1452,8 +1452,8 @@ class LibreAssistantApp {
     }
 
     // Toggle plugin enabled/disabled state
-    togglePlugin(pluginName, enable) {
-        console.log(`${enable ? 'Enabling' : 'Disabling'} plugin: ${pluginName}`);
+    togglePlugin(pluginId, enable) {
+        console.log(`${enable ? 'Enabling' : 'Disabling'} plugin: ${pluginId}`);
         
         const endpoint = enable ? '/api/plugin/enable' : '/api/plugin/disable';
         
@@ -1462,7 +1462,7 @@ class LibreAssistantApp {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ plugin_id: pluginName })
+            body: JSON.stringify({ plugin_id: pluginId })
         })
         .then(response => response.json())
         .then(data => {
