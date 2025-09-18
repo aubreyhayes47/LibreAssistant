@@ -70,7 +70,7 @@ LibreAssistant is designed from the ground up to put you in control:
 5. The summary is returned, and you can review which plugins were used for full transparency.
 # Legacy Features from my-ollama-wrapper
 
-- **Multiple Interfaces**: Access via web browser, Electron desktop app, or Python Flask backend.
+- **Multiple Interfaces**: Access via web browser or Python Flask backend.
 - **Modern UI/UX**: Responsive design, theme support, and a clean, professional interface.
 
 All legacy features are fully supported for backward compatibility and a smooth transition for users of my-ollama-wrapper. LibreAssistant adds a new plugin system for even greater extensibility.
@@ -139,7 +139,7 @@ For details on creating your own plugins, see the [PLUGIN_API.md](./PLUGIN_API.m
   - Auto-connect on startup option
 - **Input Validation** - Real-time validation with helpful error messages
 
-- **Multiple Interfaces**: Web interface, Electron desktop app, and Python Flask application
+- **Flask Web Application**: Modern, responsive web interface served by Flask
 - **Confirmation Dialogs**: Safe model deletion and chat clearing
 - **Modern UI**: Clean, professional interface with proper styling
 - **Theme Support**: Multiple themes including system preference detection
@@ -152,12 +152,10 @@ Before you begin, ensure you have the following installed:
 
 #### Required
 - **[Ollama](https://ollama.ai/)**: Must be installed and running on your system
-- **Node.js**: Version 18.0 or higher (for development and desktop app)
-- **npm**: Version 8.0 or higher (comes with Node.js)
+- **Python 3.8+**: For running the Flask backend
 
 #### Recommended
 - **Git**: For cloning the repository and contributing
-- **Python 3.8+**: For running the Flask backend (optional)
 - **VS Code**: For development (with recommended extensions)
 
 #### System Requirements
@@ -167,46 +165,26 @@ Before you begin, ensure you have the following installed:
 
 ### Installation Options
 
-#### Option 1: Simple Web Interface (Recommended)
+#### Option 1: Flask Web Application (Recommended)
 
-Simply clone this repository and open `index.html` in any modern web browser:
-
-```bash
-git clone https://github.com/aubreyhayes47/my-ollama-wrapper.git
-cd my-ollama-wrapper
-# Open index.html in your browser for full functionality
-# Open demo.html for demo mode without Ollama backend
-```
-
-#### Option 2: Electron Desktop Application
-
-For a native desktop experience:
+Clone and run the Flask application:
 
 ```bash
-git clone https://github.com/aubreyhayes47/my-ollama-wrapper.git
-cd my-ollama-wrapper
-npm install
-npm run electron
+git clone https://github.com/aubreyhayes47/LibreAssistant.git
+cd LibreAssistant
+pip install -r requirements.txt
+python main.py
 ```
 
-#### Option 3: Development Environment
+Then open your browser to `http://localhost:5000`.
+
+#### Option 2: Development Environment
 
 For contributing or customizing:
 
 ```bash
-git clone https://github.com/aubreyhayes47/my-ollama-wrapper.git
-cd my-ollama-wrapper
-npm install
-npm run start
-```
-
-#### Option 4: Python Flask Application (Advanced)
-
-For the Python backend:
-
-```bash
-git clone https://github.com/aubreyhayes47/my-ollama-wrapper.git
-cd my-ollama-wrapper
+git clone https://github.com/aubreyhayes47/LibreAssistant.git
+cd LibreAssistant
 pip install -r requirements.txt
 python main.py
 ```
@@ -241,69 +219,33 @@ python main.py
    ollama list
    ```
 
-### Web Interface (Recommended)
+### Flask Web Application
 
-1. Open `index.html` in your web browser
-2. The application will automatically detect your Ollama installation
-3. Select a model from the dropdown menu
-4. Start chatting with your local models!
-
-### Desktop Application
-
-1. Run the Electron app:
-   ```bash
-   npm run electron
-   ```
-2. Use the desktop interface for a native experience
-
-### Python Flask Application
-
-1. Start the Flask backend:
+1. Start the Flask application:
    ```bash
    python main.py
    ```
 2. Open your browser to `http://localhost:5000`
+3. The application will automatically detect your Ollama installation
+4. Select a model from the dropdown menu
+5. Start chatting with your local models!
 
-## Building
+## Running the Application
 
-### Web Application
+### Development Mode
 
-#### Build for Development
-```bash
-npm run start
-```
-
-#### Build for Production
-```bash
-npm run build
-```
-
-### Desktop Application
-
-#### Build Electron App
-```bash
-npm run electron-pack
-```
-
-#### For Development Testing
-```bash
-npm run electron-dev
-```
-
-#### Combined Development (Webpack + Electron)
-```bash
-npm run electron-dev-start
-```
-
-Built applications will be available in the `dist-electron/` directory.
-
-### Python Application
-
-The Python Flask application doesn't require building - simply run:
+For development with debug features enabled:
 
 ```bash
 python main.py
 ```
+
+The Flask application will start with debug mode enabled, providing:
+- Automatic code reloading
+- Detailed error messages
+- Interactive debugger
+
+### Production Deployment
 
 For production deployment, consider using a WSGI server like Gunicorn:
 
@@ -318,66 +260,57 @@ gunicorn main:app
 
 1. Fork the repository
 2. Clone your fork locally
-3. Install dependencies: `npm install`
-4. Start development server: `npm run start`
+3. Install Python dependencies: `pip install -r requirements.txt`
+4. Start development server: `python main.py`
 5. Make your changes
-6. Test your changes: `npm test` (when available)
+6. Test your changes: `python test_ollama_manager.py`
 7. Submit a pull request
 
 ### Available Scripts
 
-- `npm run start` - Start development server with webpack
-- `npm run build` - Build for production
-- `npm run electron` - Start Electron desktop app
-- `npm run electron-dev` - Start Electron in development mode
-- `npm run electron-pack` - Build and package Electron app
-- `npm run electron-dev-start` - Start both webpack dev server and Electron
+- `python main.py` - Start Flask development server
+- `python test_ollama_manager.py` - Run tests
 
 ### Project Structure
 
 ```
-my-ollama-wrapper/
-├── src/                    # Source code
-│   ├── main/              # Electron main process
-│   │   └── main.js        # Electron main entry point
-│   └── renderer/          # Electron renderer process
-│       ├── App.js         # Main React component
-│       ├── App.css        # Component styles
-│       ├── index.js       # React entry point
-│       └── index.css      # Global styles
-├── public/                # Static assets
-│   └── index.html         # HTML template
-├── dist-electron/         # Built Electron app (generated)
-├── node_modules/          # Dependencies (generated)
-├── chat.html              # Standalone chat interface
-├── chat-script.js         # Chat functionality
-├── chat-styles.css        # Chat styles
-├── demo.html              # Demo interface
-├── demo.js                # Demo functionality
-├── index.html             # Main web interface
-├── script.js              # Main application logic
-├── styles.css             # Main application styles
-├── cli.py                 # Command line interface
-├── main.py                # Flask application entry
-├── ollama_manager.py      # Ollama API management
+LibreAssistant/
+├── static/                 # Static assets served by Flask
+│   ├── css/               # Stylesheets
+│   │   ├── styles.css     # Main application styles
+│   │   └── chat-styles.css # Chat interface styles
+│   └── js/                # JavaScript files
+│       ├── script.js      # Main application logic
+│       ├── chat-script.js # Chat functionality
+│       ├── demo.js        # Demo functionality
+│       └── markdown-utils.js # Markdown utilities
+├── templates/             # Flask templates
+│   ├── index.html         # Main web interface
+│   ├── chat.html          # Standalone chat interface
+│   ├── demo.html          # Demo interface
+│   ├── plugin_catalogue.html # Plugin catalogue
+│   └── requests_screen.html # Requests screen
+├── plugins/               # Plugin directory
+├── main.py                # Flask application entry point
+├── ollama_manager.py      # Flask app and Ollama API management
 ├── ollama_wrapper.py      # Ollama wrapper functionality
+├── plugin_api.py          # Plugin API functionality
+├── plugin_config.py       # Plugin configuration management
+├── plugin_loader.py       # Plugin loading system
 ├── requirements.txt       # Python dependencies
-├── package.json           # Project dependencies and scripts
-├── webpack.config.js      # Webpack configuration
 ├── CONTRIBUTING.md        # Contribution guidelines
 └── README.md              # This file
 ```
 
 ### Key Files Explained
 
-- **`index.html`**: Main web interface with full functionality
-- **`chat.html`**: Standalone chat interface
-- **`demo.html`**: Demo mode without Ollama backend
-- **`src/main/main.js`**: Electron main process configuration
-- **`src/renderer/`**: React components for Electron app
-- **`ollama_manager.py`**: Core Python integration with Ollama API
-- **`script.js`**: Main JavaScript application logic
-- **`webpack.config.js`**: Build configuration for development and production
+- **`main.py`**: Flask application entry point
+- **`ollama_manager.py`**: Core Flask app with Ollama API integration
+- **`templates/index.html`**: Main web interface with full functionality
+- **`templates/chat.html`**: Standalone chat interface
+- **`templates/demo.html`**: Demo mode without Ollama backend
+- **`static/js/script.js`**: Main JavaScript application logic
+- **`static/css/styles.css`**: Main application stylesheets
 
 ## Contributing
 
@@ -420,15 +353,6 @@ We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) fi
 3. Check system resources (RAM/CPU usage)
 4. Try a smaller model for testing: `ollama pull tinyllama`
 
-#### Electron App Issues
-
-**Problem**: Desktop app fails to start
-**Solutions**:
-1. Ensure Node.js 18+ is installed
-2. Reinstall dependencies: `rm -rf node_modules && npm install`
-3. Try running in development mode: `npm run electron-dev`
-4. Check console for error messages
-
 #### Python Flask Issues
 
 **Problem**: Flask application fails to start
@@ -437,6 +361,15 @@ We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) fi
 2. Check Python version: `python --version` (3.8+ required)
 3. Verify Ollama is running before starting Flask
 4. Check for port conflicts (default: 5000)
+
+#### Web Interface Issues
+
+**Problem**: Web interface doesn't load or shows errors
+**Solutions**:
+1. Ensure Flask application is running: `python main.py`
+2. Check browser console for JavaScript errors
+3. Verify you're accessing the correct URL: `http://localhost:5000`
+4. Clear browser cache and reload the page
 
 ### Getting Help
 
@@ -447,9 +380,9 @@ If you encounter issues not covered here:
 3. Create a new issue with:
    - Detailed description of the problem
    - Steps to reproduce
-   - System information (OS, Node.js version, etc.)
+   - System information (OS, Python version, etc.)
    - Error messages and logs
-   - Which interface you're using (web, Electron, or Python)
+   - Flask application logs
 
 # Roadmap
 
