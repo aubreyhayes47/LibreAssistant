@@ -83,21 +83,6 @@ class LibreAssistantApp {
     }
 
     showView(viewName, updateHistory = true) {
-        // Handle modal views differently
-        if (viewName === 'requests' || viewName === 'catalogue') {
-            this.openModal(viewName);
-            this.updateActiveNav(viewName);
-            this.currentView = viewName;
-            
-            if (updateHistory) {
-                const state = { view: viewName };
-                const title = this.getViewTitle(viewName);
-                history.pushState(state, title, `#${viewName}`);
-                document.title = `${title} - LibreAssistant`;
-            }
-            return;
-        }
-
         // Hide all views
         const allViews = document.querySelectorAll('.view');
         allViews.forEach(view => {
@@ -218,13 +203,19 @@ class LibreAssistantApp {
     initRequestsView() {
         // Initialize requests view functionality
         console.log('Requests view initialized');
-        // Requests view will handle its own initialization via separate files
+        
+        // Setup plugin pills functionality
+        this.setupPluginPills();
+        this.setupAutoComplete();
+        this.setupRequestSubmission();
     }
 
     initCatalogueView() {
         // Initialize plugin catalogue view functionality  
         console.log('Plugin catalogue view initialized');
-        // Catalogue view will handle its own initialization via separate files
+        
+        // Setup plugin catalogue functionality
+        this.setupPluginCatalogue();
     }
 
     initSettingsView() {
@@ -1050,98 +1041,307 @@ class LibreAssistantApp {
         }
     }
 
-    // Modal handling methods
-    openModal(modalType) {
-        let modalId, contentId, endpoint;
-        
-        if (modalType === 'requests') {
-            modalId = 'requests-modal';
-            contentId = 'requests-modal-content';
-            endpoint = '/requests_screen';
-        } else if (modalType === 'catalogue') {
-            modalId = 'catalogue-modal';
-            contentId = 'catalogue-modal-content';
-            endpoint = '/plugin_catalogue';
-        } else {
-            return;
-        }
-
-        const modal = document.getElementById(modalId);
-        const content = document.getElementById(contentId);
-        
-        if (modal && content) {
-            // Load content if not already loaded
-            if (!content.innerHTML.trim()) {
-                this.loadModalContent(endpoint, contentId);
-            }
-            modal.style.display = 'block';
-            this.setupModalCloseHandlers(modalId);
-        }
+    // Plugin pills functionality for requests view
+    setupPluginPills() {
+        fetch('/api/plugins/accessed')
+            .then(res => res.json())
+            .then(data => {
+                const pillsContainer = document.getElementById('plugin-pills');
+                if (!pillsContainer) return;
+                
+                if (data.plugins && data.plugins.length > 0) {
+                    data.plugins.forEach(plugin => {
+                        const pill = document.createElement('span');
+                        pill.className = 'plugin-pill';
+                        pill.textContent = plugin;
+                        pill.onclick = function() {
+                            console.log(`Plugin ${plugin} clicked`);
+                            // Future: Add plugin-specific actions
+                        };
+                        pillsContainer.appendChild(pill);
+                    });
+                } else {
+                    pillsContainer.innerHTML = '<span style="color: #7f8c8d;">No plugins accessed yet</span>';
+                }
+            })
+            .catch(err => {
+                console.log('Could not load plugin pills:', err);
+                const pillsContainer = document.getElementById('plugin-pills');
+                if (pillsContainer) {
+                    pillsContainer.innerHTML = '<span style="color: #e74c3c;">Failed to load plugins</span>';
+                }
+            });
     }
 
-    async loadModalContent(endpoint, contentId) {
-        const content = document.getElementById(contentId);
-        if (!content) return;
+    // Setup autocomplete functionality for requests
+    setupAutoComplete() {
+        const input = document.getElementById('request-input');
+        const list = document.getElementById('autocomplete-list');
+        
+        if (!input || !list) return;
+        
+        const suggestions = [
+            'Search for recent AI research',
+            'Find legal cases about privacy',
+            'What are the latest tech trends?',
+            'Search for court opinions on data protection',
+            'Help me find information about...',
+            'What is the current status of...'
+        ];
 
-        try {
-            content.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+        input.addEventListener('input', function() {
+            const value = this.value.toLowerCase();
+            list.innerHTML = '';
             
-            const response = await fetch(endpoint);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (value.length > 0) {
+                const matches = suggestions.filter(s => s.toLowerCase().includes(value));
+                if (matches.length > 0) {
+                    matches.forEach(match => {
+                        const item = document.createElement('div');
+                        item.className = 'autocomplete-item';
+                        item.textContent = match;
+                        item.onclick = function() {
+                            input.value = match;
+                            list.style.display = 'none';
+                        };
+                        list.appendChild(item);
+                    });
+                    list.style.display = 'block';
+                } else {
+                    list.style.display = 'none';
+                }
+            } else {
+                list.style.display = 'none';
             }
+        });
+
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !list.contains(e.target)) {
+                list.style.display = 'none';
+            }
+        });
+    }
+
+    // Setup request submission functionality
+    setupRequestSubmission() {
+        const input = document.getElementById('request-input');
+        const button = document.getElementById('request-submit');
+        const responseBox = document.getElementById('response-box');
+        
+        if (!input || !button || !responseBox) return;
+        
+        const submitRequest = () => {
+            const query = input.value.trim();
+            if (!query) return;
             
-            const html = await response.text();
-            content.innerHTML = html;
+            // Show loading state
+            responseBox.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #3498db;"></i>
+                    <p>Processing your request...</p>
+                </div>
+            `;
             
-            // Initialize any scripts in the loaded content
-            const scripts = content.querySelectorAll('script');
-            scripts.forEach(script => {
-                const newScript = document.createElement('script');
-                newScript.textContent = script.textContent;
-                document.head.appendChild(newScript);
-                document.head.removeChild(newScript);
+            // Make request to API
+            fetch('/api/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    responseBox.innerHTML = `
+                        <div class="response-content">
+                            <h4>Response:</h4>
+                            <div class="response-text">${data.response || 'No response received'}</div>
+                        </div>
+                    `;
+                } else {
+                    responseBox.innerHTML = `
+                        <div style="color: #e74c3c; padding: 1rem;">
+                            <h4>Error:</h4>
+                            <p>${data.error || 'Request failed'}</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                responseBox.innerHTML = `
+                    <div style="color: #e74c3c; padding: 1rem;">
+                        <h4>Error:</h4>
+                        <p>Failed to process request: ${error.message}</p>
+                    </div>
+                `;
             });
             
-        } catch (error) {
-            console.error('Error loading modal content:', error);
-            content.innerHTML = `<div style="text-align: center; padding: 40px; color: red;">
-                <i class="fas fa-exclamation-triangle"></i> 
-                Failed to load content: ${error.message}
-            </div>`;
-        }
-    }
-
-    setupModalCloseHandlers(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-
-        // Close button handler
-        const closeBtn = modal.querySelector('.close');
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                modal.style.display = 'none';
-            };
-        }
-
-        // Click outside to close
-        modal.onclick = (event) => {
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
+            input.value = '';
         };
+        
+        button.addEventListener('click', submitRequest);
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitRequest();
+            }
+        });
     }
 
-    initRequestsModal() {
-        // Initialize requests modal functionality
-        console.log('Requests modal initialized');
+    // Setup plugin catalogue functionality
+    setupPluginCatalogue() {
+        this.loadPlugins();
+        this.setupPluginSearch();
+        this.setupPluginRefresh();
     }
 
-    initCatalogueModal() {
-        // Initialize catalogue modal functionality
-        console.log('Catalogue modal initialized');
+    // Load and display plugins
+    loadPlugins() {
+        const catalogueList = document.getElementById('catalogue-list');
+        if (!catalogueList) return;
+        
+        catalogueList.innerHTML = `
+            <div class="loading-plugins">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading plugins...</span>
+            </div>
+        `;
+        
+        fetch('/api/plugins/list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.plugins) {
+                    this.displayPlugins(data.plugins);
+                } else {
+                    catalogueList.innerHTML = `
+                        <div class="loading-plugins">
+                            <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
+                            <span>Failed to load plugins</span>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading plugins:', error);
+                catalogueList.innerHTML = `
+                    <div class="loading-plugins">
+                        <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
+                        <span>Error loading plugins: ${error.message}</span>
+                    </div>
+                `;
+            });
     }
 
+    // Display plugins in the catalogue
+    displayPlugins(plugins) {
+        const catalogueList = document.getElementById('catalogue-list');
+        if (!catalogueList) return;
+        
+        if (plugins.length === 0) {
+            catalogueList.innerHTML = `
+                <div class="loading-plugins">
+                    <i class="fas fa-puzzle-piece" style="color: #7f8c8d;"></i>
+                    <span>No plugins found</span>
+                </div>
+            `;
+            return;
+        }
+        
+        catalogueList.innerHTML = '';
+        
+        plugins.forEach(plugin => {
+            const pluginCard = document.createElement('div');
+            pluginCard.className = `plugin-card ${plugin.enabled ? 'enabled' : 'disabled'}`;
+            
+            pluginCard.innerHTML = `
+                <div class="plugin-header">
+                    <div class="plugin-info">
+                        <h3>${plugin.name}</h3>
+                        <p>${plugin.description || 'No description available'}</p>
+                    </div>
+                    <div class="plugin-status">
+                        <span class="status-badge ${plugin.enabled ? 'enabled' : 'disabled'}">
+                            ${plugin.enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                    </div>
+                </div>
+                <div class="plugin-details">
+                    <p><strong>Type:</strong> ${plugin.type || 'Unknown'}</p>
+                    <p><strong>Status:</strong> ${plugin.running ? 'Running' : 'Stopped'}</p>
+                </div>
+                <div class="plugin-actions">
+                    <button class="btn btn-primary" onclick="window.ollamaApp.showPluginDetails('${plugin.name}')">
+                        Details
+                    </button>
+                    <button class="btn ${plugin.enabled ? 'btn-danger' : 'btn-success'}" 
+                            onclick="window.ollamaApp.togglePlugin('${plugin.name}', ${!plugin.enabled})">
+                        ${plugin.enabled ? 'Disable' : 'Enable'}
+                    </button>
+                </div>
+            `;
+            
+            catalogueList.appendChild(pluginCard);
+        });
+    }
+
+    // Setup plugin search functionality
+    setupPluginSearch() {
+        const searchInput = document.getElementById('plugin-search');
+        const filterSelect = document.getElementById('plugin-filter');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', () => this.filterPlugins());
+        }
+        
+        if (filterSelect) {
+            filterSelect.addEventListener('change', () => this.filterPlugins());
+        }
+    }
+
+    // Setup plugin refresh functionality
+    setupPluginRefresh() {
+        const refreshButton = document.getElementById('refresh-plugins');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', () => this.loadPlugins());
+        }
+    }
+
+    // Filter plugins based on search and filter criteria
+    filterPlugins() {
+        console.log('Filtering plugins...');
+        // Implementation for filtering plugins would go here
+    }
+
+    // Show plugin details
+    showPluginDetails(pluginName) {
+        console.log(`Showing details for plugin: ${pluginName}`);
+        alert(`Plugin details for ${pluginName} - Feature coming soon!`);
+    }
+
+    // Toggle plugin enabled/disabled state
+    togglePlugin(pluginName, enable) {
+        console.log(`${enable ? 'Enabling' : 'Disabling'} plugin: ${pluginName}`);
+        
+        fetch('/api/plugin/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ plugin: pluginName, enable: enable })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.loadPlugins(); // Refresh the plugin list
+            } else {
+                alert(`Failed to ${enable ? 'enable' : 'disable'} plugin: ${data.error}`);
+            }
+        })
+        .catch(error => {
+            alert(`Error ${enable ? 'enabling' : 'disabling'} plugin: ${error.message}`);
+        });
+    }
 }
 
 // Settings manager for configuration and preferences

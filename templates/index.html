@@ -105,24 +105,67 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Requests View -->
+                <div id="requests-view" class="view">
+                    <header class="view-header">
+                        <h1>Make Requests</h1>
+                        <p>Send discrete requests to LibreAssistant with plugin support</p>
+                    </header>
+                    <div class="view-content">
+                        <div class="requests-bar">
+                            <div class="input-group">
+                                <input id="request-input" type="text" placeholder="Ask LibreAssistant..." autocomplete="off" />
+                                <button id="request-submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Send
+                                </button>
+                            </div>
+                            <ul id="autocomplete-list" class="autocomplete-list" style="display:none;"></ul>
+                        </div>
                         
-                        <!-- Requests Modal -->
-                        <div id="requests-modal" class="modal" style="display: none;">
-                            <div class="modal-content large-modal">
-                                <span class="close" id="close-requests-modal">&times;</span>
-                                <div id="requests-modal-content">
-                                    <!-- Content will be loaded dynamically -->
-                                </div>
+                        <div id="response-box" class="response-box">
+                            <div class="placeholder-message">
+                                <i class="fas fa-comment-dots"></i>
+                                <span>Responses will appear here. Try asking a question or request!</span>
                             </div>
                         </div>
                         
-                        <!-- Catalogue Modal -->
-                        <div id="catalogue-modal" class="modal" style="display: none;">
-                            <div class="modal-content large-modal">
-                                <span class="close" id="close-catalogue-modal">&times;</span>
-                                <div id="catalogue-modal-content">
-                                    <!-- Content will be loaded dynamically -->
-                                </div>
+                        <div id="active-plugins-bar" class="active-plugins-bar">
+                            <h4><i class="fas fa-plug"></i> Active Plugins</h4>
+                            <div id="plugin-pills"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plugin Catalogue View -->
+                <div id="catalogue-view" class="view">
+                    <header class="view-header">
+                        <h1><i class="fas fa-puzzle-piece"></i> Plugin Catalogue</h1>
+                        <p>Manage, enable, and configure LibreAssistant plugins</p>
+                    </header>
+                    <div class="view-content">
+                        <div class="catalogue-controls">
+                            <div class="search-filter-row">
+                                <input id="plugin-search" type="text" placeholder="Search plugins..." class="search-input">
+                                <select id="plugin-filter" class="filter-select">
+                                    <option value="all">All Plugins</option>
+                                    <option value="enabled">Enabled Only</option>
+                                    <option value="disabled">Disabled Only</option>
+                                    <option value="running">Running</option>
+                                    <option value="stopped">Stopped</option>
+                                </select>
+                                <button id="refresh-plugins" class="btn btn-primary">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="catalogue-list" id="catalogue-list">
+                            <div class="loading-plugins">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading plugins...</span>
                             </div>
                         </div>
                     </div>
