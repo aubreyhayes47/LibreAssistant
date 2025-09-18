@@ -1455,12 +1455,14 @@ class LibreAssistantApp {
     togglePlugin(pluginName, enable) {
         console.log(`${enable ? 'Enabling' : 'Disabling'} plugin: ${pluginName}`);
         
-        fetch('/api/plugin/toggle', {
+        const endpoint = enable ? '/api/plugin/enable' : '/api/plugin/disable';
+        
+        fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ plugin: pluginName, enable: enable })
+            body: JSON.stringify({ plugin_id: pluginName })
         })
         .then(response => response.json())
         .then(data => {
