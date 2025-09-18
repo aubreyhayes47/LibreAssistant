@@ -83,6 +83,21 @@ class LibreAssistantApp {
     }
 
     showView(viewName, updateHistory = true) {
+        // Handle modal views differently
+        if (viewName === 'requests' || viewName === 'catalogue') {
+            this.openModal(viewName);
+            this.updateActiveNav(viewName);
+            this.currentView = viewName;
+            
+            if (updateHistory) {
+                const state = { view: viewName };
+                const title = this.getViewTitle(viewName);
+                history.pushState(state, title, `#${viewName}`);
+                document.title = `${title} - LibreAssistant`;
+            }
+            return;
+        }
+
         // Hide all views
         const allViews = document.querySelectorAll('.view');
         allViews.forEach(view => {
@@ -139,7 +154,7 @@ class LibreAssistantApp {
     }
 
     isValidView(viewName) {
-        const validViews = ['models', 'server', 'chat', 'settings', 'about'];
+        const validViews = ['models', 'server', 'requests', 'catalogue', 'settings', 'about'];
         return validViews.includes(viewName);
     }
 
@@ -147,7 +162,8 @@ class LibreAssistantApp {
         const titles = {
             'models': 'Models',
             'server': 'Server',
-            'chat': 'Chat',
+            'requests': 'Requests',
+            'catalogue': 'Catalogue',
             'settings': 'Settings',
             'about': 'About'
         };
@@ -164,8 +180,11 @@ class LibreAssistantApp {
             case 'server':
                 this.initServerView();
                 break;
-            case 'chat':
-                this.initChatView();
+            case 'requests':
+                this.initRequestsModal();
+                break;
+            case 'catalogue':
+                this.initCatalogueModal();
                 break;
             case 'settings':
                 this.initSettingsView();
@@ -1001,6 +1020,98 @@ class LibreAssistantApp {
         if (errorContainer) {
             errorContainer.style.display = 'none';
         }
+    }
+
+    // Modal handling methods
+    openModal(modalType) {
+        let modalId, contentId, endpoint;
+        
+        if (modalType === 'requests') {
+            modalId = 'requests-modal';
+            contentId = 'requests-modal-content';
+            endpoint = '/requests_screen';
+        } else if (modalType === 'catalogue') {
+            modalId = 'catalogue-modal';
+            contentId = 'catalogue-modal-content';
+            endpoint = '/plugin_catalogue';
+        } else {
+            return;
+        }
+
+        const modal = document.getElementById(modalId);
+        const content = document.getElementById(contentId);
+        
+        if (modal && content) {
+            // Load content if not already loaded
+            if (!content.innerHTML.trim()) {
+                this.loadModalContent(endpoint, contentId);
+            }
+            modal.style.display = 'block';
+            this.setupModalCloseHandlers(modalId);
+        }
+    }
+
+    async loadModalContent(endpoint, contentId) {
+        const content = document.getElementById(contentId);
+        if (!content) return;
+
+        try {
+            content.innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            
+            const response = await fetch(endpoint);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const html = await response.text();
+            content.innerHTML = html;
+            
+            // Initialize any scripts in the loaded content
+            const scripts = content.querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                newScript.textContent = script.textContent;
+                document.head.appendChild(newScript);
+                document.head.removeChild(newScript);
+            });
+            
+        } catch (error) {
+            console.error('Error loading modal content:', error);
+            content.innerHTML = `<div style="text-align: center; padding: 40px; color: red;">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Failed to load content: ${error.message}
+            </div>`;
+        }
+    }
+
+    setupModalCloseHandlers(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+
+        // Close button handler
+        const closeBtn = modal.querySelector('.close');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                modal.style.display = 'none';
+            };
+        }
+
+        // Click outside to close
+        modal.onclick = (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+    }
+
+    initRequestsModal() {
+        // Initialize requests modal functionality
+        console.log('Requests modal initialized');
+    }
+
+    initCatalogueModal() {
+        // Initialize catalogue modal functionality
+        console.log('Catalogue modal initialized');
     }
 
 }
