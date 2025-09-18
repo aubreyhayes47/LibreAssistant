@@ -1,0 +1,4 @@
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: jsonschema in /usr/lib/python3/dist-packages (4.10.3)
+Requirement already satisfied: attrs>=17.4.0 in /usr/lib/python3/dist-packages (from jsonschema) (23.2.0)
+Requirement already satisfied: pyrsistent!=0.17.0,!=0.17.1,!=0.17.2,>=0.14.0 in /usr/lib/python3/dist-packages (from jsonschema) (0.20.0)
