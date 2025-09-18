@@ -590,7 +590,7 @@ def api_request():
                 })
             
             # Use the first available model if the requested one doesn't exist
-            available_model_names = [m.get('name', '').split(':')[0] for m in models]
+            available_model_names = [m.get('name', '') for m in models]
             if model not in available_model_names and available_model_names:
                 model = models[0].get('name', 'llama2')
                 
