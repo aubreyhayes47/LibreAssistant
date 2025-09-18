@@ -139,7 +139,7 @@ class LibreAssistantApp {
     }
 
     isValidView(viewName) {
-        const validViews = ['models', 'server', 'chat', 'settings', 'about'];
+        const validViews = ['models', 'server', 'requests', 'catalogue', 'settings', 'about'];
         return validViews.includes(viewName);
     }
 
@@ -147,7 +147,8 @@ class LibreAssistantApp {
         const titles = {
             'models': 'Models',
             'server': 'Server',
-            'chat': 'Chat',
+            'requests': 'Requests',
+            'catalogue': 'Plugin Catalogue',
             'settings': 'Settings',
             'about': 'About'
         };
@@ -164,8 +165,11 @@ class LibreAssistantApp {
             case 'server':
                 this.initServerView();
                 break;
-            case 'chat':
-                this.initChatView();
+            case 'requests':
+                this.initRequestsView();
+                break;
+            case 'catalogue':
+                this.initCatalogueView();
                 break;
             case 'settings':
                 this.initSettingsView();
@@ -195,15 +199,16 @@ class LibreAssistantApp {
 
     }
 
-    initChatView() {
-        // Initialize chat view functionality
-        console.log('Chat view initialized');
-        
-        // Set up chat functionality
-        this.setupChatFunctionality();
-        
-        // Load models for chat
-        this.loadChatModels();
+    initRequestsView() {
+        // Initialize requests view functionality
+        console.log('Requests view initialized');
+        // Requests view will handle its own initialization via separate files
+    }
+
+    initCatalogueView() {
+        // Initialize plugin catalogue view functionality  
+        console.log('Plugin catalogue view initialized');
+        // Catalogue view will handle its own initialization via separate files
     }
 
     initSettingsView() {

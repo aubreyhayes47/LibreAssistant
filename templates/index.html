@@ -29,9 +29,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-view="chat">
-                        <i class="fas fa-comments"></i>
-                        <span>Chat</span>
+                    <a href="/requests_screen" class="nav-link" data-view="requests">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Requests</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/plugin_catalogue" class="nav-link" data-view="catalogue">
+                        <i class="fas fa-puzzle-piece"></i>
+                        <span>Plugin Catalogue</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -314,55 +320,6 @@
                     </div>
                 </div>
 
-                <!-- Chat View -->
-                <div id="chat-view" class="view">
-                    <header class="view-header">
-                        <h1>Chat Console</h1>
-                        <p>Interactive chat with your AI models</p>
-                    </header>
-                    <div class="view-content">
-                        <div class="chat-container">
-                            <div class="model-selection-chat">
-                                <label for="chat-model-select">Select Model:</label>
-                                <select id="chat-model-select">
-                                    <option value="">Loading models...</option>
-                                </select>
-                                <button id="refresh-chat-models" class="btn btn-secondary btn-small">
-                                    <i class="fas fa-sync-alt"></i> Refresh
-                                </button>
-                            </div>
-
-                            <div class="chat-messages" id="chat-messages">
-                                <div class="welcome-message">
-                                    <p>Welcome to the Ollama Chat Console! Select a model above and start chatting.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="chat-input-container">
-                                <textarea 
-                                    id="chat-prompt-input" 
-                                    placeholder="Type your prompt here..." 
-                                    rows="3"
-                                    disabled
-                                ></textarea>
-                                <div class="chat-actions">
-                                    <button id="send-chat-button" class="btn btn-primary" disabled>
-                                        <i class="fas fa-paper-plane"></i> Send
-                                    </button>
-                                    <button id="clear-chat-history" class="btn btn-secondary">
-                                        <i class="fas fa-trash"></i> Clear History
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="chat-error-container" id="chat-error-container" style="display: none;">
-                                <div class="error-message" id="chat-error-message"></div>
-                                <button id="close-chat-error" class="btn btn-secondary btn-small">×</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Settings View -->
                 <div id="settings-view" class="view">
                     <header class="view-header">
@@ -451,7 +408,7 @@
                                     <strong>Version:</strong> 1.0.0
                                 </div>
                                 <div class="info-item">
-                                    <strong>Description:</strong> Comprehensive GUI for local AI with chat, model management, and advanced settings
+                                    <strong>Description:</strong> Comprehensive GUI for local AI with requests, model management, and plugin integration
                                 </div>
                                 <div class="info-item">
                                     <strong>License:</strong> Apache License 2.0
