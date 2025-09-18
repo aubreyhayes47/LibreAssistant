@@ -69,6 +69,8 @@ class Plugin:
         self.process = None
         self.status = "stopped"  # "running", "stopped", "error"
         self.last_error = None
+        self.stdout_file = None
+        self.stderr_file = None
 
     def __repr__(self):
         return f"<Plugin {self.id} v{self.version} at {self.path} status={self.status}>"
@@ -109,14 +111,14 @@ class Plugin:
                 env.update(extra_env)
             # Split entrypoint for subprocess, run in plugin dir
             cmd = self.entrypoint if isinstance(self.entrypoint, list) else self.entrypoint.split()
-            stdout_f = open(self.stdout_log, "ab")
-            stderr_f = open(self.stderr_log, "ab")
+            self.stdout_file = open(self.stdout_log, "ab")
+            self.stderr_file = open(self.stderr_log, "ab")
             self.process = subprocess.Popen(
                 cmd,
                 cwd=self.path,
                 env=env,
-                stdout=stdout_f,
-                stderr=stderr_f,
+                stdout=self.stdout_file,
+                stderr=self.stderr_file,
             )
             self.status = "running"
             self.last_error = None
@@ -157,6 +159,14 @@ class Plugin:
                 self.process.kill()
             self.status = "stopped"
         self.process = None
+        
+        # Close file handles
+        if self.stdout_file:
+            self.stdout_file.close()
+            self.stdout_file = None
+        if self.stderr_file:
+            self.stderr_file.close()
+            self.stderr_file = None
 
     def is_running(self) -> bool:
         return self.process is not None and self.process.poll() is None
@@ -271,6 +281,21 @@ class PluginLoader:
             if plugin.id == plugin_id:
                 return plugin
         return None
+
+    def auto_approve_all_plugins(self):
+        """Auto-approve all permissions for all plugins (for auto-start mode)"""
+        for plugin in self.plugins:
+            if plugin.permissions_required():
+                plugin.approve_permissions(plugin.permissions_required())
+                plugin.user_approved = True
+                print(f"[AutoStart] Auto-approved permissions for {plugin.id}: {plugin.permissions_required()}")
+
+    def prompt_user_for_permissions(self, plugin: 'Plugin') -> set:
+        """Stub: In production, integrate with UI/backend to prompt user for permissions."""
+        # For now, auto-approve all permissions (replace with real UI prompt)
+        print(f"[PluginLoader] Auto-approving permissions for {plugin.id}: {plugin.permissions_required()}")
+        # In a real app, this would be a UI dialog or API call
+        return plugin.permissions_required()
 
 # Example usage (for testing):
 # if __name__ == "__main__":
