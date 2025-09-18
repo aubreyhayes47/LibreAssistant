@@ -1165,6 +1165,7 @@ class LibreAssistantApp {
                         <div style="color: #e74c3c; padding: 1rem;">
                             <h4>Error:</h4>
                             <p>${data.error || 'Request failed'}</p>
+                            ${data.suggestion ? `<p style="color: #7f8c8d; font-style: italic; margin-top: 0.5rem;"><strong>Suggestion:</strong> ${data.suggestion}</p>` : ''}
                         </div>
                     `;
                 }
