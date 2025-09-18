@@ -7,6 +7,15 @@
   "entrypoint": "python3 server.py",
   "mcp_port": 5103,
   "permissions": ["network"],
+  "capabilities": {
+    "web_search": {
+      "search": {
+        "description": "Search the web for information on any topic",
+        "input_example": {"query": "latest news about artificial intelligence"},
+        "use_cases": ["Current events research", "Fact checking", "Finding recent information", "Market research", "Academic research"]
+      }
+    }
+  },
   "config": {
     "api_key": {
       "type": "string",

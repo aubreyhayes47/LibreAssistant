@@ -7,6 +7,15 @@
   "entrypoint": "python3 server.py",
   "mcp_port": 5199,
   "permissions": [],
+  "capabilities": {
+    "testing": {
+      "echo": {
+        "description": "Simple echo functionality for testing plugin invocation",
+        "input_example": {"message": "Hello World"},
+        "use_cases": ["Testing plugin connectivity", "Debugging plugin system", "Development testing"]
+      }
+    }
+  },
   "config": {},
   "homepage": "https://example.com/",
   "license": "MIT"

@@ -421,13 +421,22 @@ def api_generate():
         try:
             plugins = plugin_api.list_plugins()
             for plugin in plugins:
-                # Get plugin capabilities from manifest or default info
+                plugin_id = plugin.get('id', 'unknown')
+                plugin_obj = plugin_loader.get_plugin_by_id(plugin_id)
+                
+                # Get enhanced plugin information from manifest
                 plugin_info = {
-                    'id': plugin.get('name', 'unknown').lower().replace(' ', '_'),
+                    'id': plugin_id,
                     'name': plugin.get('name', 'Unknown'),
                     'description': plugin.get('description', 'No description available'),
-                    'capabilities': []  # This could be enhanced with actual capability discovery
+                    'capabilities': {}
                 }
+                
+                # Extract capabilities from plugin manifest if available
+                if plugin_obj and hasattr(plugin_obj, 'manifest'):
+                    manifest_capabilities = plugin_obj.manifest.get('capabilities', {})
+                    plugin_info['capabilities'] = manifest_capabilities
+                
                 available_plugins.append(plugin_info)
         except Exception as e:
             print(f"Warning: Could not fetch plugins for system instructions: {e}")
@@ -728,12 +737,22 @@ def api_llm_system_instructions():
         try:
             plugins = plugin_api.list_plugins()
             for plugin in plugins:
+                plugin_id = plugin.get('id', 'unknown')
+                plugin_obj = plugin_loader.get_plugin_by_id(plugin_id)
+                
+                # Get enhanced plugin information from manifest
                 plugin_info = {
-                    'id': plugin.get('name', 'unknown').lower().replace(' ', '_'),
+                    'id': plugin_id,
                     'name': plugin.get('name', 'Unknown'),
                     'description': plugin.get('description', 'No description available'),
-                    'capabilities': []
+                    'capabilities': {}
                 }
+                
+                # Extract capabilities from plugin manifest if available
+                if plugin_obj and hasattr(plugin_obj, 'manifest'):
+                    manifest_capabilities = plugin_obj.manifest.get('capabilities', {})
+                    plugin_info['capabilities'] = manifest_capabilities
+                
                 available_plugins.append(plugin_info)
         except Exception as e:
             print(f"Warning: Could not fetch plugins for system instructions: {e}")

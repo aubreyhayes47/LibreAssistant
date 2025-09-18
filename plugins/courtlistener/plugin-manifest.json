@@ -7,6 +7,25 @@
   "entrypoint": "python3 server.py",
   "mcp_port": 5102,
   "permissions": ["network"],
+  "capabilities": {
+    "legal_research": {
+      "search": {
+        "description": "Search for legal cases and court opinions",
+        "input_example": {"query": "copyright infringement", "court": "supreme"},
+        "use_cases": ["Legal precedent research", "Case law analysis", "Court opinion retrieval", "Legal document search"]
+      },
+      "opinion": {
+        "description": "Retrieve full text of a specific court opinion",
+        "input_example": {"opinion_id": "123456"},
+        "use_cases": ["Reading full court decisions", "Detailed legal analysis", "Citation verification"]
+      },
+      "docket": {
+        "description": "Get docket information for a specific case",
+        "input_example": {"docket_id": "789012"},
+        "use_cases": ["Case timeline analysis", "Procedural history", "Court filing research"]
+      }
+    }
+  },
   "config": {
     "api_key": {
       "type": "string",

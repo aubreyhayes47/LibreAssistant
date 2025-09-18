@@ -4,7 +4,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 import json
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -23,6 +23,23 @@ def get_plugins():
             'status': 'running'
         }]
     })
+
+@app.route('/echo', methods=['POST'])
+def echo():
+    """Echo back the input message for testing"""
+    try:
+        data = request.get_json(force=True)
+        message = data.get('message', 'No message provided')
+        return jsonify({
+            'success': True,
+            'response': f'Echo: {message}',
+            'original_input': data
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 @app.route('/health', methods=['GET'])
 def health_check():

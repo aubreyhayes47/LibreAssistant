@@ -61,14 +61,14 @@ class LLMProtocol:
         return response_data
     
     def generate_system_instructions(self, available_plugins: List[Dict]) -> str:
-        """Generate system instructions that expose available plugins to the LLM"""
+        """Generate enhanced system instructions that expose available plugins with detailed capabilities to the LLM"""
         
         base_instructions = """You are LibreAssistant, an AI assistant with access to various plugins for enhanced capabilities.
 
-IMPORTANT: You must respond using a specific JSON format for ALL responses. This allows the system to properly route your requests.
+CRITICAL: You MUST respond using a specific JSON format for ALL responses. This is mandatory for proper system operation.
 
-Response Format:
-1. For regular user messages, use:
+JSON Response Format (REQUIRED):
+1. For regular user messages:
 {
   "action": "message",
   "content": {
@@ -77,38 +77,66 @@ Response Format:
   }
 }
 
-2. For plugin invocations, use:
+2. For plugin invocations:
 {
   "action": "plugin_invoke", 
   "content": {
     "plugin": "plugin_id",
     "input": { "your": "plugin_input" },
-    "reason": "Why you're calling this plugin"
+    "reason": "Clear explanation of why you're calling this plugin"
   }
 }
 
-Available Plugins:"""
+AVAILABLE PLUGINS AND CAPABILITIES:"""
         
         if not available_plugins:
             base_instructions += "\nNo plugins are currently available."
         else:
             for plugin in available_plugins:
-                plugin_info = f"""
-- {plugin.get('name', 'Unknown')} ({plugin.get('id', 'unknown')})
-  Description: {plugin.get('description', 'No description available')}
-  Capabilities: {', '.join(plugin.get('capabilities', []))}"""
-                base_instructions += plugin_info
+                plugin_id = plugin.get('id', 'unknown')
+                plugin_name = plugin.get('name', 'Unknown')
+                description = plugin.get('description', 'No description available')
+                capabilities = plugin.get('capabilities', {})
+                
+                base_instructions += f"""
+
+--- {plugin_name} ({plugin_id}) ---
+Description: {description}"""
+                
+                if capabilities:
+                    base_instructions += "\nCapabilities:"
+                    for category, funcs in capabilities.items():
+                        base_instructions += f"\n  {category.replace('_', ' ').title()}:"
+                        for func_name, func_info in funcs.items():
+                            func_desc = func_info.get('description', 'No description')
+                            example = func_info.get('input_example', {})
+                            use_cases = func_info.get('use_cases', [])
+                            
+                            base_instructions += f"""
+    • {func_name}: {func_desc}
+      Example input: {example}
+      Use cases: {', '.join(use_cases) if use_cases else 'General purpose'}"""
+                else:
+                    base_instructions += "\n  No specific capabilities defined."
         
         base_instructions += """
 
-Plugin Usage Guidelines:
-- Only invoke plugins when the user's request clearly requires external capabilities
-- Always provide a clear reason for plugin invocations
-- After getting plugin results, respond with a message to the user explaining the results
-- Use appropriate plugin input format based on the plugin's capabilities
-- If unsure about plugin capabilities, respond with a message asking for clarification
+PLUGIN USAGE GUIDELINES:
+1. ANALYZE the user's request to determine if any plugin capabilities can enhance your response
+2. USE plugins proactively when they can provide valuable information (e.g., read files for context, search for current information)
+3. ALWAYS provide a clear, specific reason in the "reason" field when invoking plugins
+4. FORMAT plugin inputs exactly as shown in the examples above
+5. RESPOND with a user message after getting plugin results to explain what you found
+6. COMBINE multiple plugin calls if needed to fully address the user's request
 
-Remember: ALWAYS respond in the specified JSON format. Invalid responses will cause errors."""
+CRITICAL REMINDERS:
+- NEVER respond in plain text - always use the JSON format
+- INVALID JSON responses will cause system errors
+- ALWAYS validate that your JSON is properly formatted
+- USE plugins to enhance your responses with real-time data and file access
+- EXPLAIN to users when and why you're using plugins for transparency
+
+Remember: Your responses must be valid JSON following the exact format specified above."""
         
         return base_instructions
     

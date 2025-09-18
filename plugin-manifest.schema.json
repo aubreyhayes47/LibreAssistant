@@ -42,6 +42,35 @@
       "items": { "type": "string" },
       "description": "List of permissions required by the plugin."
     },
+    "capabilities": {
+      "type": "object",
+      "description": "Plugin capabilities organized by category, with detailed information for LLM integration",
+      "additionalProperties": {
+        "type": "object",
+        "description": "Capability category (e.g., 'file_operations', 'web_search')",
+        "additionalProperties": {
+          "type": "object",
+          "description": "Individual capability within the category",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "Description of what this capability does"
+            },
+            "input_example": {
+              "type": "object",
+              "description": "Example input format for this capability"
+            },
+            "use_cases": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "List of common use cases for this capability"
+            }
+          },
+          "required": ["description"],
+          "additionalProperties": false
+        }
+      }
+    },
     "config": {
       "type": "object",
       "description": "User-configurable fields for the plugin.",

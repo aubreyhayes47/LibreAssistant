@@ -12,6 +12,30 @@
     "file:delete",
     "file:list"
   ],
+  "capabilities": {
+    "file_operations": {
+      "read": {
+        "description": "Read content from a file",
+        "input_example": {"path": "example.txt"},
+        "use_cases": ["Reading configuration files", "Loading text documents", "Accessing file content for context"]
+      },
+      "write": {
+        "description": "Write content to a file",
+        "input_example": {"path": "example.txt", "content": "Hello World"},
+        "use_cases": ["Saving generated content", "Creating new files", "Updating existing files"]
+      },
+      "list": {
+        "description": "List files and directories",
+        "input_example": {"path": "."},
+        "use_cases": ["Exploring directory structure", "Finding files", "Browsing available content"]
+      },
+      "delete": {
+        "description": "Delete a file or directory", 
+        "input_example": {"path": "temp.txt"},
+        "use_cases": ["Cleaning up temporary files", "Removing unwanted content"]
+      }
+    }
+  },
   "config": {
     "base_directory": {
       "type": "string",
