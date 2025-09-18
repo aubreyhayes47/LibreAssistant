@@ -1,10 +1,11 @@
 {
   "name": "Brave Search",
-  "id": "brave_search",
+  "id": "brave-search",
   "version": "1.0.0",
   "description": "Search the web using Brave Search API. Returns relevant web results for a given query.",
   "author": "LibreAssistant Team",
-  "entry_point": "server.py",
+  "entrypoint": "python3 server.py",
+  "mcp_port": 5103,
   "permissions": ["network"],
   "config": {
     "api_key": {
@@ -15,16 +16,6 @@
       "secret": true
     }
   },
-  "actions": [
-    {
-      "name": "search_web",
-      "description": "Search the web using Brave Search.",
-      "parameters": {
-        "query": { "type": "string", "description": "Search query" }
-      },
-      "returns": {
-        "results": { "type": "array", "items": { "type": "object" } }
-      }
-    }
-  ]
+  "homepage": "https://github.com/aubreyhayes47/LibreAssistant",
+  "license": "MIT"
 }

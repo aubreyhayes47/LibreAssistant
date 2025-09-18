@@ -145,63 +145,127 @@ A web-based GUI for managing both:
 # --- Plugin API Client ---
 class PluginAPI:
     """Client for interacting with LibreAssistant plugins (MCP servers)"""
-    def __init__(self, base_url: str = "http://localhost:5001"):
-        self.base_url = base_url.rstrip('/')
+    def __init__(self, plugin_loader=None):
+        self.plugin_loader = plugin_loader or plugin_loader
+        
+    def _get_plugin_urls(self) -> List[str]:
+        """Get all plugin server URLs from discovered plugins"""
+        urls = []
+        if self.plugin_loader:
+            for plugin in self.plugin_loader.plugins:
+                if hasattr(plugin, 'mcp_port') and plugin.mcp_port:
+                    urls.append(f"http://localhost:{plugin.mcp_port}")
+        return urls
+    
     def list_plugins(self) -> List[Dict]:
-        try:
-            response = requests.get(f"{self.base_url}/api/plugins", timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            return data.get('plugins', [])
-        except requests.RequestException as e:
-            raise Exception(f"Failed to connect to LibreAssistant plugin server: {e}")
+        """Aggregate plugins from all plugin servers"""
+        all_plugins = []
+        plugin_urls = self._get_plugin_urls()
+        
+        # If no discovered plugins, return empty list
+        if not plugin_urls:
+            return []
+            
+        for base_url in plugin_urls:
+            try:
+                response = requests.get(f"{base_url}/api/plugins", timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                plugins = data.get('plugins', [])
+                # Add server info to each plugin for identification
+                for plugin in plugins:
+                    plugin['server_url'] = base_url
+                all_plugins.extend(plugins)
+            except requests.RequestException as e:
+                # Log error but continue with other servers
+                print(f"Warning: Failed to connect to plugin server {base_url}: {e}")
+                continue
+        
+        # If all servers failed, try the discovered plugins directly
+        if not all_plugins and self.plugin_loader:
+            for plugin in self.plugin_loader.plugins:
+                all_plugins.append({
+                    'name': getattr(plugin, 'name', plugin.id),
+                    'id': getattr(plugin, 'id', 'unknown'),
+                    'version': getattr(plugin, 'version', '1.0.0'),
+                    'type': 'MCP Plugin',
+                    'size': 0,
+                    'modified_at': '',
+                    'server_url': f"http://localhost:{getattr(plugin, 'mcp_port', 5001)}"
+                })
+                
+        return all_plugins
     def install_plugin(self, plugin_name: str) -> bool:
-        try:
-            response = requests.post(
-                f"{self.base_url}/api/install",
-                json={"name": plugin_name},
-                timeout=300
-            )
-            response.raise_for_status()
-            return True
-        except requests.RequestException as e:
-            raise Exception(f"Failed to install plugin: {e}")
+        """Install plugin on the appropriate server"""
+        plugin_urls = self._get_plugin_urls()
+        
+        for base_url in plugin_urls:
+            try:
+                response = requests.post(
+                    f"{base_url}/api/install",
+                    json={"name": plugin_name},
+                    timeout=300
+                )
+                response.raise_for_status()
+                return True
+            except requests.RequestException:
+                continue
+        
+        raise Exception(f"Failed to install plugin {plugin_name} on any available server")
     def delete_plugin(self, plugin_name: str) -> bool:
-        try:
-            response = requests.delete(
-                f"{self.base_url}/api/delete",
-                json={"name": plugin_name},
-                timeout=30
-            )
-            response.raise_for_status()
-            return True
-        except requests.RequestException as e:
-            raise Exception(f"Failed to delete plugin: {e}")
+        """Delete plugin from the appropriate server"""
+        plugin_urls = self._get_plugin_urls()
+        
+        for base_url in plugin_urls:
+            try:
+                response = requests.delete(
+                    f"{base_url}/api/delete",
+                    json={"name": plugin_name},
+                    timeout=30
+                )
+                response.raise_for_status()
+                return True
+            except requests.RequestException:
+                continue
+        
+        raise Exception(f"Failed to delete plugin {plugin_name} from any available server")
     def show_plugin_info(self, plugin_name: str) -> Dict:
-        try:
-            response = requests.post(
-                f"{self.base_url}/api/show",
-                json={"name": plugin_name},
-                timeout=30
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            raise Exception(f"Failed to get plugin info: {e}")
+        """Get plugin info from the appropriate server"""
+        plugin_urls = self._get_plugin_urls()
+        
+        for base_url in plugin_urls:
+            try:
+                response = requests.post(
+                    f"{base_url}/api/show",
+                    json={"name": plugin_name},
+                    timeout=30
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.RequestException:
+                continue
+        
+        raise Exception(f"Failed to get info for plugin {plugin_name} from any available server")
 
     def invoke_plugin(self, plugin: str, input_data) -> Dict:
-        try:
-            response = requests.post(
-                f"{self.base_url}/api/invoke",
-                json={"plugin": plugin, "input": input_data},
-                timeout=60
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            raise Exception(f"Failed to invoke plugin: {e}")
+        """Invoke plugin on the appropriate server"""
+        plugin_urls = self._get_plugin_urls()
+        
+        for base_url in plugin_urls:
+            try:
+                response = requests.post(
+                    f"{base_url}/api/invoke",
+                    json={"plugin": plugin, "input": input_data},
+                    timeout=60
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.RequestException:
+                continue
+        
+        raise Exception(f"Failed to invoke plugin {plugin} on any available server")
 
-plugin_api = PluginAPI()
+plugin_api = PluginAPI(plugin_loader)
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_cors import CORS

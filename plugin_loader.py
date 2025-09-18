@@ -38,7 +38,7 @@ from jsonschema import validate, ValidationError
 
 
 PLUGIN_DIR = os.path.join(os.path.dirname(__file__), "plugins")
-MANIFEST_FILENAME = "plugin.json"
+MANIFEST_FILENAME = "plugin-manifest.json"
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "plugin-manifest.schema.json")
 
 
