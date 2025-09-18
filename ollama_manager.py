@@ -562,6 +562,113 @@ def api_generate():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# API endpoint for frontend request submission with proper format handling
+@app.route('/api/request', methods=['POST'])
+def api_request():
+    """API endpoint for frontend request submission with query format, integrated with Ollama"""
+    try:
+        data = request.get_json(force=True)
+        query = data.get('query')
+        model = data.get('model', 'llama2')  # Default model
+        server_url = data.get('server_url', 'http://localhost:11434')
+        
+        if not query:
+            return jsonify({'success': False, 'error': 'Query is required'}), 400
+        
+        # Try to connect to Ollama and get available models first
+        try:
+            # Create API instance with custom server URL if provided
+            ollama_api = OllamaAPI(server_url)
+            models = ollama_api.list_models()
+            
+            # If no models available, return helpful error
+            if not models:
+                return jsonify({
+                    'success': False, 
+                    'error': 'No models are available in Ollama. Please pull a model first.',
+                    'suggestion': 'Run "ollama pull llama2" to download a model, or visit the Models tab to download one.'
+                })
+            
+            # Use the first available model if the requested one doesn't exist
+            available_model_names = [m.get('name', '').split(':')[0] for m in models]
+            if model not in available_model_names and available_model_names:
+                model = models[0].get('name', 'llama2')
+                
+        except Exception as e:
+            error_msg = str(e)
+            # Provide user-friendly error messages based on the error type
+            if "Unable to connect to Ollama server" in error_msg:
+                return jsonify({
+                    'success': False,
+                    'error': 'Unable to connect to Ollama server.',
+                    'suggestion': 'Please ensure Ollama is running. You can start it by running "ollama serve" in your terminal.'
+                })
+            elif "Connection to Ollama server timed out" in error_msg:
+                return jsonify({
+                    'success': False,
+                    'error': 'Connection to Ollama server timed out.',
+                    'suggestion': 'Please check your network connection and ensure Ollama is responding.'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': f'Failed to connect to Ollama: {error_msg}',
+                    'suggestion': 'Please check that Ollama is installed and running.'
+                })
+        
+        # Now make the actual generation request
+        try:
+            response = requests.post(
+                f"{ollama_api.base_url}/api/generate",
+                json={
+                    "model": model,
+                    "prompt": query,
+                    "stream": False
+                },
+                timeout=60
+            )
+            response.raise_for_status()
+            ollama_data = response.json()
+            llm_response = ollama_data.get('response', '')
+            
+            if not llm_response:
+                return jsonify({
+                    'success': False,
+                    'error': 'Empty response from Ollama.',
+                    'suggestion': 'The model may not be properly loaded. Try again or use a different model.'
+                })
+            
+            return jsonify({
+                'success': True,
+                'response': llm_response,
+                'model_used': model,
+                'query': query,
+                'timestamp': time.time()
+            })
+            
+        except requests.exceptions.ConnectionError:
+            return jsonify({
+                'success': False,
+                'error': 'Lost connection to Ollama server during generation.',
+                'suggestion': 'Please ensure Ollama is still running and try again.'
+            })
+        except requests.exceptions.Timeout:
+            return jsonify({
+                'success': False,
+                'error': 'Request timed out. The model may be taking too long to respond.',
+                'suggestion': 'Try using a smaller model or a simpler query.'
+            })
+        except requests.RequestException as e:
+            return jsonify({
+                'success': False,
+                'error': f'Error generating response: {str(e)}',
+                'suggestion': 'Please check Ollama server status and try again.'
+            })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
+
+
 @app.route('/api/llm/schema', methods=['GET'])
 def api_llm_schema():
     """API endpoint to get the LLM response schema"""
@@ -682,6 +789,12 @@ def api_plugins():
         return jsonify({'success': True, 'plugins': formatted_plugins})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+# Alias for /api/plugins to match frontend expectations
+@app.route('/api/plugins/list')
+def api_plugins_list():
+    """Alias for /api/plugins to match frontend expectations"""
+    return api_plugins()
 
 @app.route('/api/plugin/install', methods=['POST'])
 def api_plugin_install():
