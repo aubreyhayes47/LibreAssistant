@@ -14,6 +14,20 @@ CORS(app)
 # Default API key (LibreAssistant CourtListener Key)
 DEFAULT_API_KEY = "6348098dc6c452a31ec930d5211eba732e1235d5"
 
+@app.route('/api/plugins', methods=['GET'])
+def get_plugins():
+    """Return plugin metadata for discovery"""
+    return jsonify({
+        'plugins': [{
+            'name': 'CourtListener',
+            'id': 'courtlistener',
+            'version': '1.0.0',
+            'description': 'Legal research plugin for US court opinions, dockets, and case search via the CourtListener API.',
+            'type': 'MCP Plugin',
+            'status': 'running'
+        }]
+    })
+
 # Load config (in real use, this would be loaded from plugin config)
 def get_api_key():
     # Try env var, then config file, then default

@@ -17,9 +17,16 @@ from flask_cors import CORS
 from plugin_config import PluginConfigManager
 from plugin_loader import PluginLoader
 from llm_protocol import llm_protocol, LLMProtocolError
+
+# Initialize plugin_loader - this may be replaced by main.py auto-start
 plugin_loader = PluginLoader()
 plugin_loader.discover_plugins()
 config_manager = PluginConfigManager()
+
+def set_plugin_loader(loader):
+    """Allow main.py to set the plugin_loader instance after auto-start"""
+    global plugin_loader
+    plugin_loader = loader
 
 
 
@@ -76,10 +83,12 @@ def api_plugin_status_all():
     plugin_loader.discover_plugins()  # Refresh status
     statuses = {}
     for plugin in plugin_loader.plugins:
+        # Use is_reachable for more reliable status checking
+        is_actually_running = plugin.is_reachable()
         statuses[plugin.id] = {
-            'status': plugin.status,
+            'status': 'running' if is_actually_running else 'stopped',
             'last_error': plugin.last_error,
-            'running': plugin.is_running(),
+            'running': is_actually_running,
         }
     return jsonify({'success': True, 'statuses': statuses})
 
@@ -88,7 +97,13 @@ def api_plugin_status_one(plugin_id):
     plugin = plugin_loader.get_plugin_by_id(plugin_id)
     if not plugin:
         return jsonify({'success': False, 'error': 'Plugin not found'}), 404
-    return jsonify({'success': True, 'status': plugin.status, 'last_error': plugin.last_error, 'running': plugin.is_running()})
+    is_actually_running = plugin.is_reachable()
+    return jsonify({
+        'success': True, 
+        'status': 'running' if is_actually_running else 'stopped', 
+        'last_error': plugin.last_error, 
+        'running': is_actually_running
+    })
 
 
 
@@ -115,6 +130,15 @@ def api_plugin_enable():
     plugin_id = request.json.get('plugin_id')
     if not plugin_id:
         return jsonify({'success': False, 'error': 'plugin_id required'})
+    
+    plugin = plugin_loader.get_plugin_by_id(plugin_id)
+    if not plugin:
+        return jsonify({'success': False, 'error': 'Plugin not found'})
+    
+    # Check if plugin is already reachable
+    if plugin.is_reachable():
+        return jsonify({'success': True, 'message': 'Plugin is already running'})
+    
     ok = plugin_loader.start_plugin(plugin_id)
     if ok:
         return jsonify({'success': True})
@@ -779,12 +803,24 @@ def api_plugins():
         plugins = plugin_api.list_plugins()
         formatted_plugins = []
         for plugin in plugins:
+            plugin_id = plugin.get('id', 'unknown')
+            
+            # Get status information for this plugin
+            plugin_obj = plugin_loader.get_plugin_by_id(plugin_id)
+            is_running = plugin_obj.is_reachable() if plugin_obj else False
+            status = 'running' if is_running else 'stopped'
+            
             formatted_plugins.append({
                 'name': plugin.get('name', 'Unknown'),
+                'id': plugin_id,
+                'description': plugin.get('description', 'No description available'),
+                'version': plugin.get('version', '1.0.0'),
                 'size': format_size(plugin.get('size', 0)),
                 'modified_at': format_datetime(plugin.get('modified_at', '')),
                 'type': plugin.get('type', 'Unknown'),
-                'raw_size': plugin.get('size', 0)
+                'raw_size': plugin.get('size', 0),
+                'status': status,
+                'running': is_running
             })
         return jsonify({'success': True, 'plugins': formatted_plugins})
     except Exception as e:

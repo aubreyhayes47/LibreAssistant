@@ -14,6 +14,20 @@ app = Flask(__name__)
 PLUGIN_ID = "brave_search"
 BRAVE_API_URL = "https://api.search.brave.com/res/v1/web/search"
 
+@app.route('/api/plugins', methods=['GET'])
+def get_plugins():
+    """Return plugin metadata for discovery"""
+    return jsonify({
+        'plugins': [{
+            'name': 'Brave Search',
+            'id': 'brave-search',
+            'version': '1.0.0',
+            'description': 'Search the web using Brave Search API. Returns relevant web results for a given query.',
+            'type': 'MCP Plugin',
+            'status': 'running'
+        }]
+    })
+
 # Helper to get API key from config
 def get_api_key():
     config = get_plugin_config(PLUGIN_ID)
