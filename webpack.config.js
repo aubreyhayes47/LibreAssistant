@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './src/renderer/index.js',
@@ -35,6 +36,9 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './public/index.html',
     }),
+    new webpack.ProvidePlugin({
+      global: 'globalThis',
+    }),
   ],
   devServer: {
     port: 3000,
@@ -43,6 +47,10 @@ module.exports = {
   },
   resolve: {
     extensions: ['.js', '.jsx'],
+    fallback: {
+      "global": false,
+      "process": false
+    },
   },
   target: 'electron-renderer',
 };
