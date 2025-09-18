@@ -17,6 +17,7 @@ LibreAssistant is a new project that builds on the foundation of the original **
 - [Building](#building)
 - [Contributing](#contributing)
 - [Troubleshooting](#troubleshooting)
+- [Roadmap](#roadmap)
 - [License](#license)
 
 ---
