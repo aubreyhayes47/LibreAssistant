@@ -508,7 +508,8 @@ class LibreAssistantApp {
         `;
 
         try {
-            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}`);
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -637,6 +638,7 @@ class LibreAssistantApp {
 
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
+        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
 
         try {
             const response = await fetch(`${backendUrl}/api/download`, {
@@ -646,7 +648,8 @@ class LibreAssistantApp {
                 },
                 body: JSON.stringify({ 
                     model_name: modelName,
-                    server_url: serverUrl
+                    server_url: serverUrl,
+                    timeout: timeout
                 })
             });
 
@@ -677,6 +680,7 @@ class LibreAssistantApp {
 
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
+        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
 
         try {
             const response = await fetch(`${backendUrl}/api/delete`, {
@@ -686,7 +690,8 @@ class LibreAssistantApp {
                 },
                 body: JSON.stringify({ 
                     model_name: modelName,
-                    server_url: serverUrl
+                    server_url: serverUrl,
+                    timeout: timeout
                 })
             });
 
@@ -718,9 +723,10 @@ class LibreAssistantApp {
     async showModelInfo(modelName) {
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
+        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
 
         try {
-            const response = await fetch(`${backendUrl}/api/info/${modelName}?server_url=${encodeURIComponent(serverUrl)}`);
+            const response = await fetch(`${backendUrl}/api/info/${modelName}?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -811,7 +817,8 @@ class LibreAssistantApp {
         modelSelect.disabled = true;
 
         try {
-            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}`);
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -913,7 +920,8 @@ class LibreAssistantApp {
         modelSelect.disabled = true;
 
         try {
-            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}`);
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -995,6 +1003,7 @@ class LibreAssistantApp {
 
         try {
             // Send the full chat history to the backend
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
             const response = await fetch(`${backendUrl}/api/generate`, {
                 method: 'POST',
                 headers: {
@@ -1004,7 +1013,8 @@ class LibreAssistantApp {
                     model: this.selectedChatModel,
                     prompt: prompt,
                     stream: false,
-                    history: this.chatHistory // send the full conversation history
+                    history: this.chatHistory, // send the full conversation history
+                    timeout: timeout
                 })
             });
 
@@ -1269,6 +1279,7 @@ class LibreAssistantApp {
             `;
             
             const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
             
             // Make request to API
             fetch('/api/request', {
@@ -1279,7 +1290,8 @@ class LibreAssistantApp {
                 body: JSON.stringify({ 
                     query: query,
                     model: selectedModel,
-                    server_url: serverUrl
+                    server_url: serverUrl,
+                    timeout: timeout
                 })
             })
             .then(response => response.json())
@@ -1796,7 +1808,7 @@ class SettingsManager {
             const backendUrl = 'http://localhost:5000'; // Use Flask backend
             const serverUrl = this.settings.serverUrl;
 
-            const response = await fetch(`${backendUrl}/api/server/status?server_url=${encodeURIComponent(serverUrl)}`, {
+            const response = await fetch(`${backendUrl}/api/server/status?server_url=${encodeURIComponent(serverUrl)}&timeout=${this.settings.apiTimeout}`, {
                 method: 'GET',
                 signal: controller.signal,
                 headers: {

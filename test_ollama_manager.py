@@ -77,10 +77,14 @@ def test_api_endpoints():
     print("\nTesting API endpoints...")
     
     with app.test_client() as client:
-        # Mock the OllamaAPI to avoid needing actual Ollama running
-        with patch('ollama_manager.api') as mock_api:
+        # Mock the OllamaAPI class instead of just the instance
+        with patch('ollama_manager.OllamaAPI') as mock_ollama_class:
+            # Create a mock instance
+            mock_api_instance = Mock()
+            mock_ollama_class.return_value = mock_api_instance
+            
             # Test successful models list
-            mock_api.list_models.return_value = [
+            mock_api_instance.list_models.return_value = [
                 {
                     'name': 'test-model',
                     'size': 1024,
@@ -92,22 +96,24 @@ def test_api_endpoints():
             response = client.get('/api/models')
             assert response.status_code == 200
             data = response.get_json()
+            print(f"DEBUG: Response data: {data}")  # Debug output
             assert data['success'] == True
             assert len(data['models']) == 1
             assert data['models'][0]['name'] == 'test-model'
             print("✓ /api/models endpoint works correctly")
             
             # Test download endpoint
-            mock_api.pull_model.return_value = True
+            mock_api_instance.pull_model.return_value = True
             response = client.post('/api/download', 
                                  json={'model_name': 'test-model'})
             assert response.status_code == 200
             data = response.get_json()
+            print(f"DEBUG: Download response data: {data}")  # Debug output
             assert data['success'] == True
             print("✓ /api/download endpoint works correctly")
             
             # Test delete endpoint
-            mock_api.delete_model.return_value = True
+            mock_api_instance.delete_model.return_value = True
             response = client.post('/api/delete', 
                                  json={'model_name': 'test-model'})
             assert response.status_code == 200
@@ -116,7 +122,7 @@ def test_api_endpoints():
             print("✓ /api/delete endpoint works correctly")
             
             # Test info endpoint
-            mock_api.show_model_info.return_value = {
+            mock_api_instance.show_model_info.return_value = {
                 'modelfile': 'test modelfile',
                 'parameters': 'test parameters'
             }
