@@ -291,6 +291,10 @@ class OllamaAPI:
             response.raise_for_status()
             data = response.json()
             return data.get('models', [])
+        except requests.exceptions.ConnectionError:
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is running and accessible.")
+        except requests.exceptions.Timeout:
+            raise Exception("Connection to Ollama server timed out. Please check your network connection.")
         except requests.RequestException as e:
             raise Exception(f"Failed to connect to Ollama: {e}")
     
@@ -758,10 +762,14 @@ def api_models():
         for model in models:
             formatted_models.append({
                 'name': model.get('name', 'Unknown'),
-                'size': format_size(model.get('size', 0)),
-                'modified_at': format_datetime(model.get('modified_at', '')),
-                'family': model.get('details', {}).get('family', 'Unknown'),
-                'raw_size': model.get('size', 0)
+                'size': model.get('size', 0),  # Raw bytes for frontend formatBytes function
+                'modified_at': model.get('modified_at', ''),  # ISO format for frontend
+                'details': {
+                    'family': model.get('details', {}).get('family', 'Unknown')
+                },
+                # Keep formatted versions for other uses
+                'size_formatted': format_size(model.get('size', 0)),
+                'modified_formatted': format_datetime(model.get('modified_at', ''))
             })
         return jsonify({'success': True, 'models': formatted_models})
     except Exception as e:
