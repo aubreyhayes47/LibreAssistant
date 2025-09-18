@@ -2,7 +2,7 @@
 
 from collections import deque
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 # Rolling log of recent requests and their accessed plugins
 RECENT_REQUESTS = deque(maxlen=20)  # Each entry: {'timestamp': ..., 'request_id': ..., 'plugins': [plugin_id, ...]}
@@ -305,13 +305,15 @@ import os
 class OllamaAPI:
     """Client for interacting with the Ollama API"""
     
-    def __init__(self, base_url: str = "http://localhost:11434"):
+    def __init__(self, base_url: str = "http://localhost:11434", default_timeout: float = 30):
         self.base_url = base_url.rstrip('/')
+        self.default_timeout = default_timeout
     
-    def list_models(self) -> List[Dict]:
+    def list_models(self, timeout: Optional[float] = None) -> List[Dict]:
         """List all local models"""
+        timeout = timeout if timeout is not None else self.default_timeout
         try:
-            response = requests.get(f"{self.base_url}/api/tags", timeout=10)
+            response = requests.get(f"{self.base_url}/api/tags", timeout=timeout)
             response.raise_for_status()
             data = response.json()
             return data.get('models', [])
@@ -322,13 +324,16 @@ class OllamaAPI:
         except requests.RequestException as e:
             raise Exception(f"Failed to connect to Ollama: {e}")
     
-    def pull_model(self, model_name: str) -> bool:
+    def pull_model(self, model_name: str, timeout: Optional[float] = None) -> bool:
         """Download/pull a model"""
+        # Use longer timeout for downloads if not specified
+        if timeout is None:
+            timeout = max(300, self.default_timeout)  # At least 5 minutes for downloads
         try:
             response = requests.post(
                 f"{self.base_url}/api/pull",
                 json={"name": model_name},
-                timeout=300  # 5 minutes timeout for downloads
+                timeout=timeout
             )
             response.raise_for_status()
             return True
@@ -339,13 +344,14 @@ class OllamaAPI:
         except requests.RequestException as e:
             raise Exception(f"Failed to pull model: {e}")
     
-    def delete_model(self, model_name: str) -> bool:
+    def delete_model(self, model_name: str, timeout: Optional[float] = None) -> bool:
         """Delete a model"""
+        timeout = timeout if timeout is not None else self.default_timeout
         try:
             response = requests.delete(
                 f"{self.base_url}/api/delete",
                 json={"name": model_name},
-                timeout=30
+                timeout=timeout
             )
             response.raise_for_status()
             return True
@@ -356,13 +362,14 @@ class OllamaAPI:
         except requests.RequestException as e:
             raise Exception(f"Failed to delete model: {e}")
     
-    def show_model_info(self, model_name: str) -> Dict:
+    def show_model_info(self, model_name: str, timeout: Optional[float] = None) -> Dict:
         """Get detailed information about a model"""
+        timeout = timeout if timeout is not None else self.default_timeout
         try:
             response = requests.post(
                 f"{self.base_url}/api/show",
                 json={"name": model_name},
-                timeout=30
+                timeout=timeout
             )
             response.raise_for_status()
             return response.json()
@@ -476,6 +483,8 @@ def api_generate():
 
         # Call Ollama API to generate a response
         try:
+            # Get timeout from request data if provided
+            timeout = data.get('timeout', 60)  # Default to 60 seconds for generation
             response = requests.post(
                 f"{api.base_url}/api/generate",
                 json={
@@ -483,7 +492,7 @@ def api_generate():
                     "prompt": full_prompt,
                     "stream": stream
                 },
-                timeout=60
+                timeout=timeout
             )
             response.raise_for_status()
             ollama_data = response.json()
@@ -526,7 +535,7 @@ def api_generate():
                                 "prompt": follow_up_prompt,
                                 "stream": False  # Use non-streaming for plugin result processing
                             },
-                            timeout=60
+                            timeout=timeout  # Use same timeout as original request
                         )
                         follow_up_response.raise_for_status()
                         follow_up_data = follow_up_response.json()
@@ -651,6 +660,8 @@ def api_request():
         
         # Now make the actual generation request
         try:
+            # Get timeout from request data if provided
+            timeout = data.get('timeout', 60)  # Default to 60 seconds for generation
             response = requests.post(
                 f"{ollama_api.base_url}/api/generate",
                 json={
@@ -658,7 +669,7 @@ def api_request():
                     "prompt": query,
                     "stream": False
                 },
-                timeout=60
+                timeout=timeout
             )
             response.raise_for_status()
             ollama_data = response.json()
@@ -938,11 +949,13 @@ def api_models():
     """API endpoint to get models as JSON"""
     # Get server URL from query parameter or use default
     server_url = request.args.get('server_url', 'http://localhost:11434')
+    # Get timeout from query parameter or use default
+    timeout = request.args.get('timeout', type=float)
     
     try:
         # Create API instance with custom server URL
         custom_api = OllamaAPI(server_url)
-        models = custom_api.list_models()
+        models = custom_api.list_models(timeout=timeout)
         formatted_models = []
         for model in models:
             formatted_models.append({
@@ -968,6 +981,7 @@ def api_download():
         data = request.json
         model_name = data.get('model_name')
         server_url = data.get('server_url', 'http://localhost:11434')
+        timeout = data.get('timeout')
         
         if not model_name:
             return jsonify({'success': False, 'error': 'Model name is required'})
@@ -976,7 +990,7 @@ def api_download():
         def download_model():
             try:
                 custom_api = OllamaAPI(server_url)
-                custom_api.pull_model(model_name)
+                custom_api.pull_model(model_name, timeout=timeout)
             except Exception as e:
                 print(f"Download error: {e}")
         
@@ -996,12 +1010,13 @@ def api_delete():
         data = request.json
         model_name = data.get('model_name')
         server_url = data.get('server_url', 'http://localhost:11434')
+        timeout = data.get('timeout')
         
         if not model_name:
             return jsonify({'success': False, 'error': 'Model name is required'})
         
         custom_api = OllamaAPI(server_url)
-        custom_api.delete_model(model_name)
+        custom_api.delete_model(model_name, timeout=timeout)
         return jsonify({'success': True, 'message': f'Model {model_name} deleted successfully'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1012,10 +1027,12 @@ def api_info(model_name):
     """API endpoint to get model information"""
     # Get server URL from query parameter or use default
     server_url = request.args.get('server_url', 'http://localhost:11434')
+    # Get timeout from query parameter or use default
+    timeout = request.args.get('timeout', type=float)
     
     try:
         custom_api = OllamaAPI(server_url)
-        info = custom_api.show_model_info(model_name)
+        info = custom_api.show_model_info(model_name, timeout=timeout)
         return jsonify({'success': True, 'info': info})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1026,11 +1043,14 @@ def api_server_status():
     """API endpoint to get Ollama server status"""
     # Get server URL from query parameter or use default
     server_url = request.args.get('server_url', 'http://localhost:11434')
+    # Get timeout from query parameter or use default
+    timeout = request.args.get('timeout', type=float)
     
     try:
         # Create API instance with custom server URL
         custom_api = OllamaAPI(server_url)
-        response = requests.get(f"{custom_api.base_url}/api/tags", timeout=5)
+        timeout_value = timeout if timeout is not None else 5  # Default 5 seconds for status check
+        response = requests.get(f"{custom_api.base_url}/api/tags", timeout=timeout_value)
         if response.status_code == 200:
             data = response.json()
             return jsonify({
