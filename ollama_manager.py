@@ -308,6 +308,10 @@ class OllamaAPI:
             )
             response.raise_for_status()
             return True
+        except requests.exceptions.ConnectionError:
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is running and accessible.")
+        except requests.exceptions.Timeout:
+            raise Exception("Connection to Ollama server timed out during model download. Please check your network connection.")
         except requests.RequestException as e:
             raise Exception(f"Failed to pull model: {e}")
     
@@ -321,6 +325,10 @@ class OllamaAPI:
             )
             response.raise_for_status()
             return True
+        except requests.exceptions.ConnectionError:
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is running and accessible.")
+        except requests.exceptions.Timeout:
+            raise Exception("Connection to Ollama server timed out. Please check your network connection.")
         except requests.RequestException as e:
             raise Exception(f"Failed to delete model: {e}")
     
@@ -334,6 +342,10 @@ class OllamaAPI:
             )
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.ConnectionError:
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is running and accessible.")
+        except requests.exceptions.Timeout:
+            raise Exception("Connection to Ollama server timed out. Please check your network connection.")
         except requests.RequestException as e:
             raise Exception(f"Failed to get model info: {e}")
 
