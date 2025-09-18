@@ -1,6 +1,25 @@
 # Contributing to LibreAssistant
 
+
 Thank you for your interest in contributing to LibreAssistant! LibreAssistant is a privacy-first, fully local AI assistant and plugin platform. It preserves all legacy Ollama/model management features from my-ollama-wrapper and adds a modern plugin (MCP server) system. All contributions are welcome, whether you are fixing bugs, adding features, improving documentation, or helping with testing.
+
+---
+
+## 📦 Contributing New Plugins (MCP Servers)
+
+LibreAssistant supports a robust plugin system. To contribute a new plugin:
+
+1. **Structure:** Place your plugin in a new subdirectory under `plugins/` (e.g. `plugins/my-plugin/`).
+2. **Manifest:** Include a `plugin-manifest.json` file describing your plugin (see [PLUGIN_API.md](./PLUGIN_API.md)).
+3. **Entrypoint:** Provide a server script (e.g. `server.py`) that implements the MCP server protocol (Flask/FastAPI recommended).
+4. **Testing:** Add tests or a test script for your plugin. Ensure it works independently and with LibreAssistant.
+5. **Documentation:** Document your endpoints, config, and permissions in the manifest and a README if needed.
+6. **Minimal Permissions:** Request only the permissions your plugin needs.
+7. **Security:** Validate all input and sandbox file/network access as appropriate.
+
+For full details, see the [PLUGIN_API.md](./PLUGIN_API.md) file.
+
+---
 ## Project Scope
 
 LibreAssistant provides a user-friendly, local-first interface for managing Ollama models and interacting with them via chat. The project now supports a plugin system (MCP servers) for extensibility, while all legacy model management features remain fully supported.
@@ -536,3 +555,5 @@ If you have questions about contributing:
 4. **Contact maintainers** for urgent matters
 
 Thank you for contributing to LibreAssistant! 🚀
+
+For plugin development, see [PLUGIN_API.md](./PLUGIN_API.md).

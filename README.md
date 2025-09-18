@@ -1,7 +1,32 @@
 
 # LibreAssistant
 
-LibreAssistant is a new project that builds on the foundation of the original **my-ollama-wrapper**. While LibreAssistant introduces a new vision and feature set, it retains and extends the robust Ollama management and chat capabilities from its predecessor.
+
+**LibreAssistant** is a privacy-first, fully local AI assistant and plugin platform. It combines robust Ollama model management and chat features with a modern, extensible plugin system (MCP servers). LibreAssistant is the evolution of **my-ollama-wrapper**—all legacy model management features are preserved, and powerful new plugin capabilities are added.
+
+---
+
+## 🚀 What’s New in LibreAssistant
+
+- **Plugin System (MCP Servers):** Run first- and third-party plugins as secure, isolated microservices. Extend LibreAssistant with new capabilities—search, file I/O, legal research, and more.
+- **Plugin Catalogue & Management UI:** Browse, enable/disable, and configure plugins with a single click. No technical knowledge required.
+- **Real-Time Plugin Activity Bar:** See which plugins are active for each request, with live visualization and clickable plugin pills for logs/details.
+- **Legacy Model Management:** All Ollama model management, chat, and troubleshooting features from my-ollama-wrapper are fully supported.
+- **First-Party Plugins:** Includes Local File I/O, CourtListener, Brave Search, and a test plugin for development.
+
+---
+
+## 📸 Screenshots
+
+> _If you have not yet added screenshots, place them in a `screenshots/` folder and update the links below._
+
+![Plugin Catalogue UI](screenshots/plugin-catalogue.png)
+_Plugin catalogue: browse, enable, and configure plugins._
+
+![Plugin Activity Bar](screenshots/plugin-activity-bar.gif)
+_Real-time plugin activity bar and request visualization._
+
+---
 
 ---
 
@@ -10,6 +35,8 @@ LibreAssistant is a new project that builds on the foundation of the original **
 - [Vision & Philosophy](#libreassistant-vision--philosophy)
 - [User Experience & Workflow](#user-experience--workflow)
 - [Legacy Features from my-ollama-wrapper](#legacy-features-from-my-ollama-wrapper)
+- [Plugin System & Management](#plugin-system--management)
+- [Plugin API & MCP Server Guide](#plugin-api--mcp-server-guide)
 - [Roadmap](#roadmap)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -38,7 +65,7 @@ LibreAssistant is designed from the ground up to put you in control:
 2. LibreAssistant checks if the CourtListener plugin is enabled. If not, it prompts you to enable it (with a single click).
 3. The plugin requests an API key if needed, guiding you through a simple, non-technical setup.
 
-All legacy features are fully supported for backward compatibility and a smooth transition for users of my-ollama-wrapper. LibreAssistant adds a new plugin system for even greater extensibility.
+
 4. As the assistant works, you see a visual indicator showing the CourtListener plugin is active.
 5. The summary is returned, and you can review which plugins were used for full transparency.
 # Legacy Features from my-ollama-wrapper
@@ -46,7 +73,51 @@ All legacy features are fully supported for backward compatibility and a smooth 
 - **Multiple Interfaces**: Access via web browser, Electron desktop app, or Python Flask backend.
 - **Modern UI/UX**: Responsive design, theme support, and a clean, professional interface.
 
+All legacy features are fully supported for backward compatibility and a smooth transition for users of my-ollama-wrapper. LibreAssistant adds a new plugin system for even greater extensibility.
 
+---
+
+# Plugin System & Management
+
+LibreAssistant’s plugin system is built around **MCP servers**—microservice plugins that run as separate processes and communicate with the core assistant. This enables powerful, secure, and extensible automation.
+
+---
+
+## Plugin API & MCP Server Guide
+
+For details on creating your own plugins, see the [PLUGIN_API.md](./PLUGIN_API.md) file. It covers the manifest format, MCP server protocol, example code, and best practices for plugin authors.
+
+## Plugin Catalogue & Real-Time Activity
+
+- **Browse Plugins:** Open the Plugin Catalogue from the main UI to see all available plugins, their status, and descriptions.
+- **Enable/Disable:** Toggle plugins on or off with a single click. Permissions and config are managed through the UI.
+- **Configure Plugins:** Set API keys, preferences, and other options directly from the plugin’s config panel.
+- **Real-Time Activity Bar:** When you send a request, the activity bar shows which plugins are being used, with live updates and color-coded status.
+- **Plugin Pills:** Click any plugin pill in the activity bar to view logs, details, or open a modal with more information.
+
+## How to Enable/Disable Plugins
+
+1. Open the Plugin Catalogue (from the sidebar or main menu).
+2. Find the plugin you want to enable/disable.
+3. Click the toggle switch. If permissions or config are required, you’ll be prompted.
+4. The plugin’s status and activity will update in real time.
+
+## Viewing Plugin Activity
+
+- The activity bar at the top of the requests screen shows all plugins involved in the current or recent requests.
+- Hover or click a plugin pill to see logs, errors, or details.
+- All plugin actions are transparent—see exactly what each plugin accessed or modified.
+
+---
+
+## First-Party Plugins
+
+| Plugin Name         | Purpose                                                      |
+|--------------------|-------------------------------------------------------------|
+| Local File I/O     | Securely read/write files on your device (with consent)      |
+| CourtListener      | Search and retrieve legal opinions/dockets from CourtListener |
+| Brave Search       | Search the web using Brave Search (privacy-respecting)        |
+| Test Plugin        | Minimal plugin for development and testing                    |
 
 ### 🤖 Chat/Interaction Console
 - **Model Selection**: Choose from available Ollama models

@@ -1,0 +1,13 @@
+{
+  "name": "Test Plugin",
+  "id": "test_plugin",
+  "version": "1.0.0",
+  "description": "A dummy plugin for testing enable/disable/config endpoints.",
+  "author": "LibreAssistant Test Suite",
+  "entrypoint": "python3 server.py",
+  "mcp_port": 5199,
+  "permissions": [],
+  "config": {},
+  "homepage": "https://example.com/",
+  "license": "MIT"
+}

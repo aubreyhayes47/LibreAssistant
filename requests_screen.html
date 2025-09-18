@@ -1,0 +1,595 @@
+// Brave Search Plugin Modal (hidden by default)
+const braveModal = document.createElement('div');
+braveModal.id = 'brave-modal';
+braveModal.style.cssText = `
+  display:none; position:fixed; top:10%; left:50%;
+  transform:translateX(-50%); background:#fff; border:1px solid #888;
+  box-shadow:0 2px 16px #0002; z-index:1000; padding:2em;
+  min-width:350px; max-width:90vw; max-height:80vh; overflow:auto;
+  border-radius:8px;
+`;
+braveModal.innerHTML = `
+  <button onclick="document.getElementById('brave-modal').style.display='none'" style="float:right; font-size:1.2em;">&times;</button>
+  <div id="brave-ui">
+    <h3 style="margin-top:0;">Brave Search</h3>
+    <div style="display:flex;gap:1em;flex-wrap:wrap;align-items:center;">
+  <input id="brave-search-query" type="text" placeholder="Search the web..." style="flex:2;min-width:180px;">
+  <button onclick="braveSearch()">Search</button>
+  <a href="https://search.brave.com/help/api" target="_blank" style="margin-left:auto;font-size:0.98em;">API Docs</a>
+    </div>
+    <div id="brave-status" style="margin-top:0.5em;font-size:0.98em;color:#888;"></div>
+  </div>
+`;
+document.body.appendChild(braveModal);
+
+// CourtListener Plugin Modal (hidden by default)
+const courtlistenerModal = document.createElement('div');
+courtlistenerModal.id = 'courtlistener-modal';
+courtlistenerModal.style.cssText = `
+  display:none; position:fixed; top:10%; left:50%;
+  transform:translateX(-50%); background:#fff; border:1px solid #888;
+  box-shadow:0 2px 16px #0002; z-index:1000; padding:2em;
+  min-width:350px; max-width:90vw; max-height:80vh; overflow:auto;
+  border-radius:8px;
+`;
+courtlistenerModal.innerHTML = `
+  <button onclick="document.getElementById('courtlistener-modal').style.display='none'" style="float:right; font-size:1.2em;">&times;</button>
+  <div id="courtlistener-ui">
+    <h3 style="margin-top:0;">CourtListener Actions</h3>
+    <div style="display:flex;gap:1em;flex-wrap:wrap;align-items:center;">
+      <input id="cl-search-query" type="text" placeholder="Search cases (query)..." style="flex:2;min-width:180px;">
+  <button onclick="courtlistenerSearch()">Search</button>
+  <input id="cl-opinion-id" type="text" placeholder="Opinion ID" style="width:120px;">
+  <button onclick="courtlistenerOpinion()">Fetch Opinion</button>
+  <input id="cl-docket-id" type="text" placeholder="Docket ID" style="width:120px;">
+  <button onclick="courtlistenerDocket()">Get Docket</button>
+  <a href="https://www.courtlistener.com/help/api/rest/#overview" target="_blank" style="margin-left:auto;font-size:0.98em;">API Docs</a>
+    </div>
+    <div id="cl-status" style="margin-top:0.5em;font-size:0.98em;color:#888;"></div>
+  </div>
+`;
+document.body.appendChild(courtlistenerModal);
+
+// Add click handler to plugin pills
+function setupPluginPillClicks() {
+  document.querySelectorAll('.plugin-pill').forEach(pill => {
+    if (pill.textContent.includes('CourtListener')) {
+      pill.onclick = function() {
+        document.getElementById('courtlistener-modal').style.display = 'block';
+      };
+    }
+    if (pill.textContent.includes('Brave Search')) {
+      pill.onclick = function() {
+        document.getElementById('brave-modal').style.display = 'block';
+      };
+    }
+<!-- Requests Screen UI for LibreAssistant -->
+<div id="requests-screen" class="requests-view">
+  <div class="requests-bar">
+    <input id="request-input" type="text" placeholder="Ask LibreAssistant..." autocomplete="off" />
+    <button id="request-submit">Send</button>
+    <ul id="autocomplete-list" class="autocomplete-list" style="display:none;"></ul>
+  </div>
+  <div id="response-box" class="response-box"><span style="color:#888;">Responses will appear here.</span></div>
+  <div id="active-plugins-bar" class="active-plugins-bar"></div>
+</div>
+
+<style>
+.requests-view { padding: 2rem; max-width: 700px; margin: 0 auto; }
+.requests-bar { display: flex; align-items: center; gap: 0.5rem; position: relative; }
+#request-input {
+  flex: 1;
+  font-size: 1.1rem;
+  padding: 0.7em 1em;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  outline: none;
+}
+#request-submit {
+  font-size: 1.1rem;
+  padding: 0.7em 1.5em;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}
+.autocomplete-list {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  z-index: 10;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.autocomplete-list li {
+  padding: 0.7em 1em;
+  cursor: pointer;
+}
+.autocomplete-list li.active, .autocomplete-list li:hover {
+  background: #f1f5f9;
+}
+.response-box {
+  margin-top: 2rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  min-height: 120px;
+  padding: 1.5rem;
+  font-size: 1.08rem;
+  color: #222;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  overflow-x: auto;
+  white-space: pre-line;
+}
+.active-plugins-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  min-height: 40px;
+  margin: 1.2rem 0 0.5rem 0;
+  padding: 0.5rem 0.7rem;
+  background: #f1f5f9;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  font-size: 1.05rem;
+  overflow-x: auto;
+}
+.plugin-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  background: #e0e7ef;
+  border-radius: 2em;
+  padding: 0.3em 1em;
+  font-weight: 500;
+  color: #2563eb;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.plugin-pill.active {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+  animation: pluginPulse 0.7s linear;
+}
+@keyframes pluginPulse {
+  0% { box-shadow: 0 0 0 0 #2563eb44; }
+  70% { box-shadow: 0 0 0 8px #2563eb11; }
+  100% { box-shadow: 0 0 0 0 #2563eb00; }
+}
+.plugin-pill .tooltip {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 110%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  font-size: 0.98em;
+  white-space: pre-line;
+  z-index: 20;
+  min-width: 180px;
+  max-width: 320px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+}
+.plugin-pill:hover .tooltip {
+  display: block;
+}
+</style>
+
+<script>
+// Example suggestions (should be replaced with backend fetch)
+const suggestions = [
+  'Search the web',
+  'Summarize this text',
+  'Get latest news',
+  'Run Brave Search',
+  'Query CourtListener',
+  'List enabled plugins',
+  'Show plugin status',
+  'Use model llama2',
+  'Use model mistral',
+];
+
+const input = document.getElementById('request-input');
+const submit = document.getElementById('request-submit');
+const autocomplete = document.getElementById('autocomplete-list');
+let selectedIdx = -1;
+
+input.addEventListener('input', function() {
+  const val = input.value.toLowerCase();
+  autocomplete.innerHTML = '';
+  if (!val) {
+    autocomplete.style.display = 'none';
+    return;
+  }
+  const matches = suggestions.filter(s => s.toLowerCase().includes(val));
+  if (matches.length === 0) {
+    autocomplete.style.display = 'none';
+    return;
+  }
+  matches.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    li.onclick = () => {
+      input.value = s;
+      autocomplete.style.display = 'none';
+      input.focus();
+    };
+    autocomplete.appendChild(li);
+  });
+  autocomplete.style.display = 'block';
+  selectedIdx = -1;
+});
+
+input.addEventListener('keydown', function(e) {
+  const items = autocomplete.querySelectorAll('li');
+  if (autocomplete.style.display === 'block' && items.length > 0) {
+    if (e.key === 'ArrowDown') {
+      selectedIdx = (selectedIdx + 1) % items.length;
+      updateActive();
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      selectedIdx = (selectedIdx - 1 + items.length) % items.length;
+      updateActive();
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (selectedIdx >= 0) {
+        input.value = items[selectedIdx].textContent;
+        autocomplete.style.display = 'none';
+        e.preventDefault();
+      }
+    }
+  }
+});
+
+document.addEventListener('click', function(e) {
+  if (!autocomplete.contains(e.target) && e.target !== input) {
+    autocomplete.style.display = 'none';
+  }
+});
+
+function updateActive() {
+  const items = autocomplete.querySelectorAll('li');
+  items.forEach((li, i) => {
+    li.classList.toggle('active', i === selectedIdx);
+  });
+}
+
+submit.onclick = sendRequest;
+input.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && autocomplete.style.display !== 'block') {
+    sendRequest();
+  }
+});
+
+
+function renderMarkdown(md) {
+  // Simple markdown renderer (headings, bold, italics, code, links, lists, tables)
+  let html = md
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
+    .replace(/\*(.*?)\*/gim, '<i>$1</i>')
+    .replace(/`([^`]+)`/gim, '<code>$1</code>')
+    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank">$1</a>')
+    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+    .replace(/\n\n/g, '<br><br>');
+  // Tables (very basic)
+  if (/\|/.test(md)) {
+    html = html.replace(/((?:^\|.*\|.*\n)+)/gm, function(table) {
+      const rows = table.trim().split('\n');
+      let out = '<table class="resp-table">';
+      rows.forEach((row, i) => {
+        const tag = i === 0 ? 'th' : 'td';
+        out += '<tr>' + row.split('|').filter(Boolean).map(cell => `<${tag}>${cell.trim()}</${tag}>`).join('') + '</tr>';
+      });
+      out += '</table>';
+      return out;
+    });
+  }
+  return html;
+}
+
+function showResponse({text, markdown, error, status}) {
+  const box = document.getElementById('response-box');
+  if (error) {
+    box.innerHTML = `<span style="color:#dc2626;font-weight:bold;">Error:</span> ${error}`;
+    return;
+  }
+  if (status) {
+    box.innerHTML = `<span style="color:#2563eb;">${status}</span>`;
+    return;
+  }
+  if (markdown) {
+    box.innerHTML = renderMarkdown(markdown);
+    return;
+  }
+  if (text) {
+    box.textContent = text;
+    return;
+  }
+  box.innerHTML = '<span style="color:#888;">No response.</span>';
+}
+
+function sendRequest() {
+  const val = input.value.trim();
+  if (!val) return;
+  showResponse({status: 'Processing: ' + val});
+  // TODO: Send request to backend and display formatted response
+  // Example mock:
+  setTimeout(() => {
+    if (val.toLowerCase().includes('table')) {
+      showResponse({markdown: '| Name | Value |\n|---|---|\n| Foo | 123 |\n| Bar | 456 |'});
+    } else if (val.toLowerCase().includes('error')) {
+      showResponse({error: 'Something went wrong.'});
+    } else {
+      showResponse({markdown: '## Response\nThis is a *formatted* response for: `' + val + '`.'});
+    }
+  }, 700);
+}
+
+// --- Plugin Activity Visualization ---
+const activePluginsBar = document.getElementById('active-plugins-bar');
+
+// Fetch active plugin activity from backend
+async function fetchActivePlugins() {
+  try {
+    const res = await fetch('/api/plugins/activity');
+    if (!res.ok) throw new Error('Failed to fetch plugin activity');
+    return await res.json();
+  } catch (e) {
+    return [];
+  }
+}
+
+// --- Enhanced Plugin Activity Visualization ---
+let lastAccessedPlugins = [];
+let lastRequestId = null;
+
+async function fetchAccessedPlugins() {
+  try {
+    const res = await fetch('/api/plugins/accessed');
+    if (!res.ok) throw new Error('Failed to fetch accessed plugins');
+    return await res.json();
+  } catch (e) {
+    return {plugins: []};
+  }
+}
+
+// Render plugin pills in the bar, highlighting those accessed for the current request
+function renderActivePlugins(plugins, accessed) {
+  activePluginsBar.innerHTML = '';
+  if (!plugins.length) {
+    activePluginsBar.innerHTML = '<span style="color:#888">No plugin activity</span>';
+    return;
+  }
+  plugins.forEach(plugin => {
+    const isAccessed = accessed && accessed.includes(plugin.id);
+    const pill = document.createElement('div');
+    // Only animate if just accessed (not if always accessed)
+    let pillClass = 'plugin-pill';
+    if (plugin.active) pillClass += ' active';
+    if (isAccessed) pillClass += ' accessed';
+    pill.className = pillClass;
+    pill.innerHTML = `
+      ${plugin.icon ? `<img src="${plugin.icon}" alt="icon" style="width:1.3em;height:1.3em;vertical-align:middle;border-radius:50%;margin-right:0.4em;">` : ''}
+      <span>${plugin.name}</span>
+      <div class="tooltip">
+        <b>${plugin.name}</b><br>
+        ${plugin.description || ''}<br>
+        <b>Status:</b> ${plugin.active ? 'Active' : 'Idle'}<br>
+        ${plugin.lastAction ? `<b>Last:</b> ${plugin.lastAction}` : ''}
+        ${isAccessed ? '<br><b>Accessed this request</b>' : ''}
+      </div>
+    `;
+    pill.onclick = () => showPluginDetails(plugin);
+    activePluginsBar.appendChild(pill);
+  });
+}
+
+function showPluginDetails(plugin) {
+  alert(`Plugin: ${plugin.name}\n\nDescription: ${plugin.description || ''}\n\n(Logs/details per request coming soon.)`);
+}
+
+// Poll for plugin activity and accessed plugins every 1.5s
+async function pollPluginActivity() {
+  const [plugins, accessedData] = await Promise.all([
+    fetchActivePlugins(),
+    fetchAccessedPlugins()
+  ]);
+  const accessed = accessedData.plugins || [];
+  // If request changed, reset animation state
+  if (lastRequestId !== accessedData.request_id) {
+    lastAccessedPlugins = [];
+    lastRequestId = accessedData.request_id;
+  }
+  renderActivePlugins(plugins, accessed);
+  lastAccessedPlugins = accessed.slice();
+  setTimeout(pollPluginActivity, 1500);
+}
+
+pollPluginActivity();
+
+// Hide the inline CourtListener UI if present
+const clInline = document.getElementById('courtlistener-ui-inline');
+if (clInline) clInline.style.display = 'none';
+
+// Add click handler to plugin pills
+function setupPluginPillClicks() {
+  document.querySelectorAll('.plugin-pill').forEach(pill => {
+    if (pill.textContent.includes('CourtListener')) {
+      pill.onclick = function() {
+        document.getElementById('courtlistener-modal').style.display = 'block';
+      };
+    }
+    if (pill.textContent.includes('Brave Search')) {
+      pill.onclick = function() {
+        document.getElementById('brave-modal').style.display = 'block';
+      };
+    }
+  });
+}
+// Call on load and after activity bar updates
+setupPluginPillClicks();
+// Brave Search logic
+window.braveSearch = async function() {
+  const query = document.getElementById('brave-search-query').value.trim();
+  if (!query) return showResponse({error: 'Enter a search query.'});
+  showResponse({status: 'Searching Brave...'});
+  document.getElementById('brave-status').textContent = '';
+  try {
+    const res = await fetch('http://localhost:5103/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const results = data.results || [];
+  if (!results.length) return showResponse({text: 'No results.'});
+  let html = '<h4>Brave Search Results</h4><table class="resp-table"><tr><th>Title</th><th>URL</th><th>Snippet</th></tr>';
+  for (const r of results) {
+        html += `<tr><td>${r.title || ''}</td><td><a href="${r.url}" target="_blank">${r.url}</a></td><td>${r.description || ''}</td></tr>`;
+      }
+      html += '</table>';
+      showResponse({markdown: html});
+    } else {
+      let err = data.error || 'Unknown error';
+      if (err.includes('401') || err.toLowerCase().includes('unauthorized')) err = 'Invalid or missing API key.';
+      showResponse({error: err});
+    }
+  } catch (e) {
+    showResponse({error: e.message});
+  }
+};
+setupPluginPillClicks();
+// If activity bar is dynamically updated, call setupPluginPillClicks() after update
+
+// CourtListener Plugin Modal (hidden by default)
+const courtlistenerModal = document.createElement('div');
+courtlistenerModal.id = 'courtlistener-modal';
+courtlistenerModal.style.cssText = `
+  display:none; position:fixed; top:10%; left:50%;
+  transform:translateX(-50%); background:#fff; border:1px solid #888;
+  box-shadow:0 2px 16px #0002; z-index:1000; padding:2em;
+  min-width:350px; max-width:90vw; max-height:80vh; overflow:auto;
+  border-radius:8px;
+`;
+courtlistenerModal.innerHTML = `
+  <button onclick="document.getElementById('courtlistener-modal').style.display='none'" style="float:right; font-size:1.2em;">&times;</button>
+  <div id="courtlistener-ui">
+    <h3 style="margin-top:0;">CourtListener Actions</h3>
+    <div style="display:flex;gap:1em;flex-wrap:wrap;align-items:center;">
+      <input id="cl-search-query" type="text" placeholder="Search cases (query)..." style="flex:2;min-width:180px;">
+      <button onclick="courtlistenerSearch()">Search</button>
+      <input id="cl-opinion-id" type="text" placeholder="Opinion ID" style="width:120px;">
+      <button onclick="courtlistenerOpinion()">Fetch Opinion</button>
+      <input id="cl-docket-id" type="text" placeholder="Docket ID" style="width:120px;">
+      <button onclick="courtlistenerDocket()">Get Docket</button>
+      <a href="https://www.courtlistener.com/help/api/rest/#overview" target="_blank" style="margin-left:auto;font-size:0.98em;">API Docs</a>
+    </div>
+    <div id="cl-status" style="margin-top:0.5em;font-size:0.98em;color:#888;"></div>
+  </div>
+`;
+document.body.appendChild(courtlistenerModal);
+
+window.courtlistenerSearch = async function() {
+  const query = document.getElementById('cl-search-query').value.trim();
+  if (!query) return showResponse({error: 'Enter a search query.'});
+  showResponse({status: 'Searching CourtListener...'});
+  document.getElementById('cl-status').textContent = '';
+  try {
+    const res = await fetch('http://localhost:5102/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const results = data.results && data.results.results ? data.results.results : [];
+      if (!results.length) return showResponse({text: 'No results.'});
+      let html = '<h4>Search Results</h4><table class="resp-table"><tr><th>Case Name</th><th>Date Filed</th><th>ID</th><th>Court</th></tr>';
+      for (const r of results) {
+        html += `<tr><td>${r.caseName || r.case_name || 'Case'}</td><td>${r.date_filed || ''}</td><td><code>${r.id}</code></td><td>${r.court || ''}</td></tr>`;
+      }
+      html += '</table>';
+      showResponse({markdown: html});
+    } else {
+      let err = data.error || 'Unknown error';
+      if (err.includes('401') || err.toLowerCase().includes('unauthorized')) err = 'Invalid or missing API key.';
+      showResponse({error: err});
+    }
+  } catch (e) {
+    showResponse({error: e.message});
+  }
+};
+
+window.courtlistenerOpinion = async function() {
+  const id = document.getElementById('cl-opinion-id').value.trim();
+  if (!id) return showResponse({error: 'Enter an opinion ID.'});
+  showResponse({status: 'Fetching opinion...'});
+  document.getElementById('cl-status').textContent = '';
+  try {
+    const res = await fetch('http://localhost:5102/opinion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opinion_id: id })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const op = data.opinion;
+      let html = `<h4>Opinion</h4><b>ID:</b> <code>${op.id}</code><br><b>Case:</b> ${op.case_name || ''}<br><b>Date:</b> ${op.date_filed || ''}<br>`;
+      if (op.plain_text || op.text) {
+        html += `<details><summary>Show Text</summary><pre style='white-space:pre-wrap;'>${(op.plain_text || op.text).replace(/</g,'&lt;')}</pre></details>`;
+      }
+      showResponse({markdown: html});
+    } else {
+      let err = data.error || 'Unknown error';
+      if (err.includes('401') || err.toLowerCase().includes('unauthorized')) err = 'Invalid or missing API key.';
+      showResponse({error: err});
+    }
+  } catch (e) {
+    showResponse({error: e.message});
+  }
+};
+
+window.courtlistenerDocket = async function() {
+  const id = document.getElementById('cl-docket-id').value.trim();
+  if (!id) return showResponse({error: 'Enter a docket ID.'});
+  showResponse({status: 'Fetching docket...'});
+  document.getElementById('cl-status').textContent = '';
+  try {
+    const res = await fetch('http://localhost:5102/docket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docket_id: id })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const d = data.docket;
+      let html = `<h4>Docket</h4><table class='resp-table'><tr><th>ID</th><th>Case</th><th>Court</th><th>Date Filed</th></tr>`;
+      html += `<tr><td><code>${d.id}</code></td><td>${d.case_name || ''}</td><td>${d.court || ''}</td><td>${d.date_filed || ''}</td></tr></table>`;
+      showResponse({markdown: html});
+    } else {
+      let err = data.error || 'Unknown error';
+      if (err.includes('401') || err.toLowerCase().includes('unauthorized')) err = 'Invalid or missing API key.';
+      showResponse({error: err});
+    }
+  } catch (e) {
+    showResponse({error: e.message});
+  }
+};
+</script>

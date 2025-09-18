@@ -1,0 +1,30 @@
+{
+  "name": "Brave Search",
+  "id": "brave_search",
+  "version": "1.0.0",
+  "description": "Search the web using Brave Search API. Returns relevant web results for a given query.",
+  "author": "LibreAssistant Team",
+  "entry_point": "server.py",
+  "permissions": ["network"],
+  "config": {
+    "api_key": {
+      "type": "string",
+      "title": "Brave Search API Key",
+      "description": "Your Brave Search API key. Required to access the Brave Search API.",
+      "required": true,
+      "secret": true
+    }
+  },
+  "actions": [
+    {
+      "name": "search_web",
+      "description": "Search the web using Brave Search.",
+      "parameters": {
+        "query": { "type": "string", "description": "Search query" }
+      },
+      "returns": {
+        "results": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  ]
+}
