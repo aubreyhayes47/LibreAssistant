@@ -78,8 +78,10 @@ if __name__ == "__main__":
     # Create templates
     create_templates()
     
-    # Auto-start plugin servers
-    plugin_loader = auto_start_plugins()
+    # Only start plugins if we're not in the Flask reloader subprocess
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        # Auto-start plugin servers only in main process
+        plugin_loader = auto_start_plugins()
     
     print("[Main] Starting Flask application...")
     try:

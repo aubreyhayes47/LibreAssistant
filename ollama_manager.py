@@ -291,6 +291,10 @@ class OllamaAPI:
             response.raise_for_status()
             data = response.json()
             return data.get('models', [])
+        except requests.exceptions.ConnectionError:
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is running and accessible.")
+        except requests.exceptions.Timeout:
+            raise Exception("Connection to Ollama server timed out. Please check your network connection.")
         except requests.RequestException as e:
             raise Exception(f"Failed to connect to Ollama: {e}")
     
@@ -304,6 +308,10 @@ class OllamaAPI:
             )
             response.raise_for_status()
             return True
+        except requests.exceptions.ConnectionError:
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is running and accessible.")
+        except requests.exceptions.Timeout:
+            raise Exception("Connection to Ollama server timed out during model download. Please check your network connection.")
         except requests.RequestException as e:
             raise Exception(f"Failed to pull model: {e}")
     
@@ -317,6 +325,10 @@ class OllamaAPI:
             )
             response.raise_for_status()
             return True
+        except requests.exceptions.ConnectionError:
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is running and accessible.")
+        except requests.exceptions.Timeout:
+            raise Exception("Connection to Ollama server timed out. Please check your network connection.")
         except requests.RequestException as e:
             raise Exception(f"Failed to delete model: {e}")
     
@@ -330,6 +342,10 @@ class OllamaAPI:
             )
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.ConnectionError:
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is running and accessible.")
+        except requests.exceptions.Timeout:
+            raise Exception("Connection to Ollama server timed out. Please check your network connection.")
         except requests.RequestException as e:
             raise Exception(f"Failed to get model info: {e}")
 
@@ -752,16 +768,25 @@ def api_plugins_accessed():
 @app.route('/api/models')
 def api_models():
     """API endpoint to get models as JSON"""
+    # Get server URL from query parameter or use default
+    server_url = request.args.get('server_url', 'http://localhost:11434')
+    
     try:
-        models = api.list_models()
+        # Create API instance with custom server URL
+        custom_api = OllamaAPI(server_url)
+        models = custom_api.list_models()
         formatted_models = []
         for model in models:
             formatted_models.append({
                 'name': model.get('name', 'Unknown'),
-                'size': format_size(model.get('size', 0)),
-                'modified_at': format_datetime(model.get('modified_at', '')),
-                'family': model.get('details', {}).get('family', 'Unknown'),
-                'raw_size': model.get('size', 0)
+                'size': model.get('size', 0),  # Raw bytes for frontend formatBytes function
+                'modified_at': model.get('modified_at', ''),  # ISO format for frontend
+                'details': {
+                    'family': model.get('details', {}).get('family', 'Unknown')
+                },
+                # Keep formatted versions for other uses
+                'size_formatted': format_size(model.get('size', 0)),
+                'modified_formatted': format_datetime(model.get('modified_at', ''))
             })
         return jsonify({'success': True, 'models': formatted_models})
     except Exception as e:
@@ -772,14 +797,18 @@ def api_models():
 def api_download():
     """API endpoint to download a model"""
     try:
-        model_name = request.json.get('model_name')
+        data = request.json
+        model_name = data.get('model_name')
+        server_url = data.get('server_url', 'http://localhost:11434')
+        
         if not model_name:
             return jsonify({'success': False, 'error': 'Model name is required'})
         
         # Start download in background thread
         def download_model():
             try:
-                api.pull_model(model_name)
+                custom_api = OllamaAPI(server_url)
+                custom_api.pull_model(model_name)
             except Exception as e:
                 print(f"Download error: {e}")
         
@@ -796,11 +825,15 @@ def api_download():
 def api_delete():
     """API endpoint to delete a model"""
     try:
-        model_name = request.json.get('model_name')
+        data = request.json
+        model_name = data.get('model_name')
+        server_url = data.get('server_url', 'http://localhost:11434')
+        
         if not model_name:
             return jsonify({'success': False, 'error': 'Model name is required'})
         
-        api.delete_model(model_name)
+        custom_api = OllamaAPI(server_url)
+        custom_api.delete_model(model_name)
         return jsonify({'success': True, 'message': f'Model {model_name} deleted successfully'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -809,8 +842,12 @@ def api_delete():
 @app.route('/api/info/<model_name>')
 def api_info(model_name):
     """API endpoint to get model information"""
+    # Get server URL from query parameter or use default
+    server_url = request.args.get('server_url', 'http://localhost:11434')
+    
     try:
-        info = api.show_model_info(model_name)
+        custom_api = OllamaAPI(server_url)
+        info = custom_api.show_model_info(model_name)
         return jsonify({'success': True, 'info': info})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -819,8 +856,13 @@ def api_info(model_name):
 @app.route('/api/server/status')
 def api_server_status():
     """API endpoint to get Ollama server status"""
+    # Get server URL from query parameter or use default
+    server_url = request.args.get('server_url', 'http://localhost:11434')
+    
     try:
-        response = requests.get(f"{api.base_url}/api/tags", timeout=5)
+        # Create API instance with custom server URL
+        custom_api = OllamaAPI(server_url)
+        response = requests.get(f"{custom_api.base_url}/api/tags", timeout=5)
         if response.status_code == 200:
             data = response.json()
             return jsonify({

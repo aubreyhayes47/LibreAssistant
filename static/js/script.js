@@ -502,6 +502,7 @@ class LibreAssistantApp {
 
     async loadModels() {
         const modelList = document.getElementById('model-list');
+        const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
         
         if (!modelList) return;
@@ -515,14 +516,18 @@ class LibreAssistantApp {
         `;
 
         try {
-            const response = await fetch(`${serverUrl}/api/tags`);
+            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
-            this.displayModels(data.models || []);
-            this.showStatus('Models loaded successfully', 'success');
+            if (data.success) {
+                this.displayModels(data.models || []);
+                this.showStatus('Models loaded successfully', 'success');
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
         } catch (error) {
             console.error('Error loading models:', error);
             this.displayModelsError(error.message);
@@ -622,24 +627,33 @@ class LibreAssistantApp {
         this.hideDownloadModal();
         this.showStatus(`Downloading model "${modelName}"...`, 'info');
 
+        const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
 
         try {
-            const response = await fetch(`${serverUrl}/api/pull`, {
+            const response = await fetch(`${backendUrl}/api/download`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name: modelName })
+                body: JSON.stringify({ 
+                    model_name: modelName,
+                    server_url: serverUrl
+                })
             });
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            this.showStatus(`Model "${modelName}" downloaded successfully!`, 'success');
-            // Refresh the models list
-            setTimeout(() => this.loadModels(), 1000);
+            const data = await response.json();
+            if (data.success) {
+                this.showStatus(`Model "${modelName}" downloaded successfully!`, 'success');
+                // Refresh the models list
+                setTimeout(() => this.loadModels(), 1000);
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
         } catch (error) {
             console.error('Error downloading model:', error);
             this.showStatus(`Failed to download model "${modelName}": ${error.message}`, 'error');
@@ -653,40 +667,19 @@ class LibreAssistantApp {
 
         this.showStatus(`Deleting model "${modelName}"...`, 'info');
 
+        const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
 
         try {
-            const response = await fetch(`${serverUrl}/api/delete`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name: modelName })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            this.showStatus(`Model "${modelName}" deleted successfully!`, 'success');
-            // Refresh the models list
-            this.loadModels();
-        } catch (error) {
-            console.error('Error deleting model:', error);
-            this.showStatus(`Failed to delete model "${modelName}": ${error.message}`, 'error');
-        }
-    }
-
-    async showModelInfo(modelName) {
-        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
-
-        try {
-            const response = await fetch(`${serverUrl}/api/show`, {
+            const response = await fetch(`${backendUrl}/api/delete`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name: modelName })
+                body: JSON.stringify({ 
+                    model_name: modelName,
+                    server_url: serverUrl
+                })
             });
 
             if (!response.ok) {
@@ -694,9 +687,37 @@ class LibreAssistantApp {
             }
 
             const data = await response.json();
-            const info = JSON.stringify(data, null, 2);
-            
-            alert(`Model Information for "${modelName}":\n\n${info}`);
+            if (data.success) {
+                this.showStatus(`Model "${modelName}" deleted successfully!`, 'success');
+                // Refresh the models list
+                this.loadModels();
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
+        } catch (error) {
+            console.error('Error deleting model:', error);
+            this.showStatus(`Failed to delete model "${modelName}": ${error.message}`, 'error');
+        }
+    }
+
+    async showModelInfo(modelName) {
+        const backendUrl = 'http://localhost:5000'; // Use Flask backend
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
+
+        try {
+            const response = await fetch(`${backendUrl}/api/info/${modelName}?server_url=${encodeURIComponent(serverUrl)}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                const info = JSON.stringify(data.info, null, 2);
+                alert(`Model Information for "${modelName}":\n\n${info}`);
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
         } catch (error) {
             console.error('Error getting model info:', error);
             alert(`Failed to get model information: ${error.message}`);
@@ -785,6 +806,7 @@ class LibreAssistantApp {
 
     async loadChatModels() {
         const modelSelect = document.getElementById('chat-model-select');
+        const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
         
         if (!modelSelect) return;
@@ -794,13 +816,17 @@ class LibreAssistantApp {
         modelSelect.disabled = true;
 
         try {
-            const response = await fetch(`${serverUrl}/api/tags`);
+            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
-            this.displayChatModels(data.models || []);
+            if (data.success) {
+                this.displayChatModels(data.models || []);
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
         } catch (error) {
             console.error('Error loading chat models:', error);
             modelSelect.innerHTML = '<option value="">Error loading models</option>';
@@ -868,11 +894,11 @@ class LibreAssistantApp {
         // Add typing indicator
         const typingId = this.addTypingIndicator();
 
-        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
+        const backendUrl = 'http://localhost:5000'; // Use Flask backend
 
         try {
             // Send the full chat history to the backend
-            const response = await fetch(`${serverUrl}/api/generate`, {
+            const response = await fetch(`${backendUrl}/api/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1422,8 +1448,10 @@ class SettingsManager {
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.settings.apiTimeout * 1000);
+            const backendUrl = 'http://localhost:5000'; // Use Flask backend
+            const serverUrl = this.settings.serverUrl;
 
-            const response = await fetch(`${this.settings.serverUrl}/api/tags`, {
+            const response = await fetch(`${backendUrl}/api/server/status?server_url=${encodeURIComponent(serverUrl)}`, {
                 method: 'GET',
                 signal: controller.signal,
                 headers: {
@@ -1434,9 +1462,16 @@ class SettingsManager {
             clearTimeout(timeoutId);
 
             if (response.ok) {
-                statusText.textContent = 'Connected';
-                statusIndicator.className = 'status-indicator connected';
-                this.showMessage('Successfully connected to Ollama server!', 'success');
+                const data = await response.json();
+                if (data.success && data.status === 'running') {
+                    statusText.textContent = 'Connected';
+                    statusIndicator.className = 'status-indicator connected';
+                    this.showMessage('Successfully connected to Ollama server!', 'success');
+                } else {
+                    statusText.textContent = 'Disconnected';
+                    statusIndicator.className = 'status-indicator disconnected';
+                    this.showMessage(`Ollama server is ${data.status || 'unavailable'}: ${data.error || 'Unknown error'}`, 'error');
+                }
             } else {
                 throw new Error(`Server responded with status: ${response.status}`);
             }
@@ -1448,7 +1483,7 @@ class SettingsManager {
             if (error.name === 'AbortError') {
                 errorMessage += 'Request timed out.';
             } else if (error.message.includes('fetch')) {
-                errorMessage += 'Please check the server URL and ensure Ollama is running.';
+                errorMessage += 'Please check that LibreAssistant backend is running and Ollama is available.';
             } else {
                 errorMessage += error.message;
             }
