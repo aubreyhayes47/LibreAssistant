@@ -562,6 +562,32 @@ def api_generate():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# API endpoint for frontend request submission with proper format handling
+@app.route('/api/request', methods=['POST'])
+def api_request():
+    """API endpoint for frontend request submission with query format"""
+    try:
+        data = request.get_json(force=True)
+        query = data.get('query')
+        
+        if not query:
+            return jsonify({'success': False, 'error': 'Query is required'}), 400
+        
+        # For now, return a simple response since we don't have Ollama running
+        # In a real deployment, this would integrate with the actual LLM
+        response_text = f"Received your query: {query}. This is a placeholder response since no LLM backend is configured."
+        
+        return jsonify({
+            'success': True,
+            'response': response_text,
+            'query': query,
+            'timestamp': time.time()
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/llm/schema', methods=['GET'])
 def api_llm_schema():
     """API endpoint to get the LLM response schema"""
@@ -682,6 +708,12 @@ def api_plugins():
         return jsonify({'success': True, 'plugins': formatted_plugins})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+# Alias for /api/plugins to match frontend expectations
+@app.route('/api/plugins/list')
+def api_plugins_list():
+    """Alias for /api/plugins to match frontend expectations"""
+    return api_plugins()
 
 @app.route('/api/plugin/install', methods=['POST'])
 def api_plugin_install():
