@@ -1760,7 +1760,7 @@ class SettingsManager {
     constructor() {
         this.defaultSettings = {
             serverUrl: 'http://localhost:11434',
-            apiTimeout: 30,
+            apiTimeout: 180,
             maxRetries: 3,
             theme: 'light',
             autoConnect: false,
