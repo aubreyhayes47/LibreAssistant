@@ -896,8 +896,60 @@
             });
         }
 
+        // Utility function to extract main text content from plugin responses
+        function extractMainContent(data) {
+            // If data has a specific text/content field, use that
+            if (data.text) return data.text;
+            if (data.content) return data.content;
+            if (data.response) return data.response;
+            if (data.message) return data.message;
+            
+            // For search results, try to extract meaningful content
+            if (data.results && Array.isArray(data.results)) {
+                let summary = `Found ${data.results.length} results:\n\n`;
+                data.results.slice(0, 5).forEach((result, index) => {
+                    summary += `${index + 1}. ${result.title || result.name || 'Result'}\n`;
+                    if (result.snippet || result.description) {
+                        summary += `   ${result.snippet || result.description}\n`;
+                    }
+                    if (result.url || result.link) {
+                        summary += `   ${result.url || result.link}\n`;
+                    }
+                    summary += '\n';
+                });
+                return summary;
+            }
+            
+            // For other structured data, try to create a readable summary
+            if (typeof data === 'object' && data !== null) {
+                if (data.title || data.name) {
+                    let summary = data.title || data.name;
+                    if (data.description) summary += '\n\n' + data.description;
+                    if (data.url) summary += '\n\nURL: ' + data.url;
+                    return summary;
+                }
+                
+                // If it's a simple object with few fields, create a readable format
+                const keys = Object.keys(data);
+                if (keys.length <= 5) {
+                    return keys.map(key => `${key}: ${data[key]}`).join('\n');
+                }
+            }
+            
+            // Fallback: return null to indicate we should show raw JSON
+            return null;
+        }
+
+        // Function to toggle raw data display
+        function toggleRawData(responseId) {
+            const rawDataElement = document.getElementById(responseId + '-raw');
+            if (rawDataElement) {
+                rawDataElement.style.display = rawDataElement.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
         // Show response in the response box
-        function showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error}) {
+        function showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error, rawData}) {
             const box = document.getElementById('response-box');
             
             if (error) {
@@ -915,11 +967,11 @@
             // Schema status indicator
             if (schema_used) {
                 if (schema_error) {
-                    content += `<div class="schema-warning" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 0.8rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; font-size: 0.9rem;">
+                    content += `<div class="schema-warning" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 0.8rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; color: #856404; font-size: 0.9rem;">
                         <i class="fas fa-exclamation-triangle"></i> <strong>Schema Warning:</strong> ${schema_error}
                     </div>`;
                 } else {
-                    content += `<div class="schema-success" style="background: #d4edda; border-left: 4px solid #28a745; padding: 0.8rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; font-size: 0.9rem;">
+                    content += `<div class="schema-success" style="background: #d4edda; border-left: 4px solid #28a745; padding: 0.8rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; color: #155724; font-size: 0.9rem;">
                         <i class="fas fa-check-circle"></i> <strong>Schema Validation:</strong> Response validated successfully
                     </div>`;
                 }
@@ -927,17 +979,33 @@
             
             // Plugin usage indicator
             if (plugin_used) {
-                content += `<div class="plugin-indicator"><i class="fas fa-plug"></i> <strong>Plugin Used:</strong> ${plugin_used}`;
+                content += `<div class="plugin-indicator" style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 0.8rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; color: #0d47a1; font-size: 0.9rem;"><i class="fas fa-plug"></i> <strong>Plugin Used:</strong> ${plugin_used}`;
                 if (plugin_reason) content += ` - ${plugin_reason}`;
                 content += '</div>';
             }
             
-            // Response content
+            // Response content with toggle for raw data
+            const responseId = 'response-' + Date.now();
+            
             if (markdown) {
                 // Simple markdown rendering (you might want to use a proper markdown library)
-                content += `<div class="response-text">${text}</div>`;
+                content += `<div class="response-text" style="white-space: pre-wrap; line-height: 1.6;" id="${responseId}">${text}</div>`;
             } else {
-                content += `<div class="response-text">${text}</div>`;
+                content += `<div class="response-text" style="white-space: pre-wrap; line-height: 1.6;" id="${responseId}">${text}</div>`;
+            }
+            
+            // Add toggle for raw JSON if rawData is provided
+            if (rawData) {
+                content += `
+                    <div class="response-controls" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+                        <button class="btn btn-link btn-sm" onclick="toggleRawData('${responseId}')" style="color: #6c757d; font-size: 0.8rem; text-decoration: none; padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 4px; background: #f8f9fa;">
+                            <i class="fas fa-code"></i> View Raw JSON
+                        </button>
+                        <div id="${responseId}-raw" class="raw-data" style="display: none; margin-top: 0.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.8rem; white-space: pre; max-height: 400px; overflow-y: auto; color: #495057;">
+                            ${JSON.stringify(rawData, null, 2)}
+                        </div>
+                    </div>
+                `;
             }
             
             box.innerHTML = content;
@@ -960,7 +1028,17 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    showResponse({text: JSON.stringify(data, null, 2), markdown: false});
+                    // Extract main content for user-friendly display
+                    const mainContent = extractMainContent(data);
+                    const displayText = mainContent || 'Search completed successfully. View raw data for details.';
+                    
+                    showResponse({
+                        text: displayText, 
+                        markdown: false, 
+                        plugin_used: 'Brave Search',
+                        plugin_reason: `Search query: "${query}"`,
+                        rawData: data
+                    });
                     document.getElementById('brave-modal').style.display = 'none';
                 } else {
                     document.getElementById('brave-status').textContent = 'Error: ' + (data.error || 'Search failed');
@@ -986,7 +1064,17 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    showResponse({text: JSON.stringify(data, null, 2), markdown: false});
+                    // Extract main content for user-friendly display
+                    const mainContent = extractMainContent(data);
+                    const displayText = mainContent || 'Search completed successfully. View raw data for details.';
+                    
+                    showResponse({
+                        text: displayText, 
+                        markdown: false, 
+                        plugin_used: 'CourtListener',
+                        plugin_reason: `Search query: "${query}"`,
+                        rawData: data
+                    });
                     document.getElementById('courtlistener-modal').style.display = 'none';
                 } else {
                     document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Search failed');
@@ -1012,7 +1100,17 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    showResponse({text: JSON.stringify(data, null, 2), markdown: false});
+                    // Extract main content for user-friendly display
+                    const mainContent = extractMainContent(data);
+                    const displayText = mainContent || 'Opinion fetched successfully. View raw data for details.';
+                    
+                    showResponse({
+                        text: displayText, 
+                        markdown: false, 
+                        plugin_used: 'CourtListener',
+                        plugin_reason: `Opinion ID: ${id}`,
+                        rawData: data
+                    });
                     document.getElementById('courtlistener-modal').style.display = 'none';
                 } else {
                     document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Fetch failed');
@@ -1038,7 +1136,17 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    showResponse({text: JSON.stringify(data, null, 2), markdown: false});
+                    // Extract main content for user-friendly display
+                    const mainContent = extractMainContent(data);
+                    const displayText = mainContent || 'Docket fetched successfully. View raw data for details.';
+                    
+                    showResponse({
+                        text: displayText, 
+                        markdown: false, 
+                        plugin_used: 'CourtListener',
+                        plugin_reason: `Docket ID: ${id}`,
+                        rawData: data
+                    });
                     document.getElementById('courtlistener-modal').style.display = 'none';
                 } else {
                     document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Fetch failed');
