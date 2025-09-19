@@ -551,6 +551,7 @@
         }
     </style>
 
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
         // Initialize the requests screen
         document.addEventListener('DOMContentLoaded', function() {
@@ -828,6 +829,7 @@
                 responseBox.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Processing your request...</div>';
                 
                 // Use the /api/generate endpoint with proper schema support
+                const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
                 fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -835,7 +837,8 @@
                         model: selectedModel,
                         prompt: prompt,
                         use_schema: useSchema,
-                        stream: false
+                        stream: false,
+                        timeout: timeout
                     })
                 })
                 .then(res => res.json())
