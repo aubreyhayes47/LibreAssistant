@@ -126,8 +126,66 @@ PLUGIN USAGE GUIDELINES:
 2. USE plugins proactively when they can provide valuable information (e.g., read files for context, search for current information)
 3. ALWAYS provide a clear, specific reason in the "reason" field when invoking plugins
 4. FORMAT plugin inputs exactly as shown in the examples above
-5. RESPOND with a user message after getting plugin results to explain what you found
-6. COMBINE multiple plugin calls if needed to fully address the user's request
+5. You can invoke MULTIPLE plugins sequentially - after each plugin call, you'll receive the results and can decide to call more plugins or respond to the user
+6. RESPOND with a user message ONLY when you have all the information needed to fully address the user's request
+
+DETAILED PLUGIN EXAMPLES:
+
+For Brave Search (brave-search):
+{
+  "action": "plugin_invoke",
+  "content": {
+    "plugin": "brave-search",
+    "input": {"query": "latest developments in artificial intelligence 2024"},
+    "reason": "User is asking about recent AI developments, need current web search results"
+  }
+}
+
+For CourtListener (courtlistener):
+{
+  "action": "plugin_invoke", 
+  "content": {
+    "plugin": "courtlistener",
+    "input": {"query": "copyright fair use", "court": "supreme"},
+    "reason": "User needs legal precedent research on copyright fair use doctrine"
+  }
+}
+
+For Local File I/O (local-fileio):
+- Reading a file:
+{
+  "action": "plugin_invoke",
+  "content": {
+    "plugin": "local-fileio", 
+    "input": {"operation": "read", "path": "project_notes.txt"},
+    "reason": "User wants me to read their project notes file for context"
+  }
+}
+
+- Writing to a file:
+{
+  "action": "plugin_invoke",
+  "content": {
+    "plugin": "local-fileio",
+    "input": {"operation": "write", "path": "summary.md", "content": "# Project Summary\\n\\nThis is the project summary..."},
+    "reason": "User requested to save the generated summary to a markdown file"
+  }
+}
+
+- Listing files:
+{
+  "action": "plugin_invoke", 
+  "content": {
+    "plugin": "local-fileio",
+    "input": {"operation": "list", "path": "."},
+    "reason": "User wants to see what files are available in their directory"
+  }
+}
+
+MULTI-PLUGIN WORKFLOW EXAMPLE:
+1. First, search for information: invoke brave-search with query
+2. Then read related files: invoke local-fileio to read relevant files 
+3. Finally respond with message action combining all information
 
 CRITICAL REMINDERS:
 - NEVER respond in plain text - always use the JSON format
@@ -135,6 +193,8 @@ CRITICAL REMINDERS:
 - ALWAYS validate that your JSON is properly formatted
 - USE plugins to enhance your responses with real-time data and file access
 - EXPLAIN to users when and why you're using plugins for transparency
+- You can chain multiple plugin calls to gather comprehensive information
+- Only provide final user message when you have sufficient information
 
 Remember: Your responses must be valid JSON following the exact format specified above."""
         
@@ -183,7 +243,11 @@ Remember: Your responses must be valid JSON following the exact format specified
 I invoked the {plugin_id} plugin and received this result:
 {json.dumps(plugin_result, indent=2)}
 
-Please provide a helpful response to the user based on this plugin result. Remember to respond in the required JSON format with action "message"."""
+Based on this plugin result and the user's original request, you can now:
+1. Call additional plugins if you need more information to fully address the request
+2. Provide a comprehensive response to the user using the "message" action
+
+Remember to respond in the required JSON format. If you need more information, invoke another plugin. If you have sufficient information, respond to the user with action "message"."""
 
 # Global instance for use throughout the application
 llm_protocol = LLMProtocol()
