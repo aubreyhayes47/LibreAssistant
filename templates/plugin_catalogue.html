@@ -417,6 +417,237 @@
             border-radius: 4px;
             font-size: 0.8rem;
         }
+
+        .permission-tag.required {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .permission-tag.granted {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .permission-tag.missing {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .plugin-section {
+            margin: 1.5rem 0;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .plugin-section:last-child {
+            border-bottom: none;
+        }
+
+        .plugin-section h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .info-item strong {
+            color: #34495e;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .info-item p {
+            margin: 0;
+            color: #7f8c8d;
+            line-height: 1.4;
+        }
+
+        .info-item.error {
+            background: #ffebee;
+            padding: 0.5rem;
+            border-radius: 4px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .status-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-running {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status-stopped {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .capability-category {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .capability-category h4 {
+            margin: 0 0 0.8rem 0;
+            color: #495057;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .capability-item {
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .capability-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .capability-item strong {
+            color: #6c757d;
+            text-transform: capitalize;
+        }
+
+        .use-cases {
+            margin-top: 0.4rem;
+            font-style: italic;
+            color: #6c757d;
+        }
+
+        .permissions-status {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .permission-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .permission-group strong {
+            color: #495057;
+        }
+
+        .config-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .config-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .config-item strong {
+            min-width: 150px;
+            color: #495057;
+            text-transform: capitalize;
+        }
+
+        .config-value {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #6c757d;
+            word-break: break-all;
+        }
+
+        .plugin-actions-section {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: #e74c3c;
+        }
+
+        .error-message i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        /* Responsive design for modal */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+                max-height: 90vh;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+            
+            .capabilities-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .config-item {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
     </style>
 
     <script>
@@ -562,7 +793,7 @@
                                 <i class="fas fa-play"></i> Enable
                             </button>`
                         }
-                        <button class="action-btn btn-secondary" onclick="showPluginDetails('${plugin.name}')">
+                        <button class="action-btn btn-secondary" onclick="showPluginDetails('${plugin.id}')">
                             <i class="fas fa-info"></i> Details
                         </button>
                         <button class="action-btn btn-primary" onclick="configurePlugin('${plugin.name}')">
@@ -595,45 +826,203 @@
             }
         }
 
-        function showPluginDetails(pluginName) {
-            const plugin = window.pluginsData.find(p => p.name === pluginName);
-            if (!plugin) return;
-            
+        async function showPluginDetails(pluginId) {
             const modal = document.getElementById('plugin-details-modal');
             const content = document.getElementById('plugin-details-content');
             
+            // Show loading state
             content.innerHTML = `
-                <h2><i class="fas fa-puzzle-piece"></i> ${plugin.name}</h2>
-                <div style="margin: 1rem 0;">
-                    <p><strong>Description:</strong> ${plugin.description || 'No description available'}</p>
-                    <p><strong>Type:</strong> ${plugin.type || 'Unknown'}</p>
-                    <p><strong>Size:</strong> ${plugin.size || 'Unknown'}</p>
-                    <p><strong>Modified:</strong> ${plugin.modified_at || 'Unknown'}</p>
-                    <p><strong>Status:</strong> ${plugin.status && plugin.status.running ? 'Running' : 'Stopped'}</p>
-                    <p><strong>Enabled:</strong> ${plugin.status && plugin.status.enabled ? 'Yes' : 'No'}</p>
-                    
-                    ${plugin.permissions && plugin.permissions.length > 0 ? `
-                        <p><strong>Permissions:</strong></p>
-                        <div class="permissions-list">
-                            ${plugin.permissions.map(perm => `<span class="permission-tag">${perm}</span>`).join('')}
-                        </div>
-                    ` : ''}
-                    
-                    ${plugin.homepage ? `
-                        <p><strong>Homepage:</strong> <a href="${plugin.homepage}" target="_blank">${plugin.homepage}</a></p>
-                    ` : ''}
-                    
-                    ${plugin.author ? `
-                        <p><strong>Author:</strong> ${plugin.author}</p>
-                    ` : ''}
-                    
-                    ${plugin.version ? `
-                        <p><strong>Version:</strong> ${plugin.version}</p>
-                    ` : ''}
+                <h2><i class="fas fa-puzzle-piece"></i> Loading Plugin Details...</h2>
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #3498db;"></i>
+                    <p style="margin-top: 1rem;">Fetching plugin information...</p>
                 </div>
             `;
-            
             modal.style.display = 'block';
+            
+            try {
+                // Get detailed plugin information from the API
+                const response = await fetch(`/api/plugin/details/${encodeURIComponent(pluginId)}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load plugin details');
+                }
+                
+                const plugin = data.details;
+                
+                // Build capabilities section
+                let capabilitiesHtml = '';
+                if (plugin.capabilities && Object.keys(plugin.capabilities).length > 0) {
+                    capabilitiesHtml = `
+                        <div class="plugin-section">
+                            <h3><i class="fas fa-cogs"></i> Capabilities</h3>
+                            <div class="capabilities-grid">
+                                ${Object.entries(plugin.capabilities).map(([category, caps]) => `
+                                    <div class="capability-category">
+                                        <h4>${category.replace(/_/g, ' ').toUpperCase()}</h4>
+                                        ${Object.entries(caps).map(([name, info]) => `
+                                            <div class="capability-item">
+                                                <strong>${name}:</strong> ${info.description || 'No description'}
+                                                ${info.use_cases ? `
+                                                    <div class="use-cases">
+                                                        <small><strong>Use cases:</strong> ${info.use_cases.join(', ')}</small>
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Build permissions section
+                let permissionsHtml = '';
+                if (plugin.permissions && plugin.permissions.required.length > 0) {
+                    permissionsHtml = `
+                        <div class="plugin-section">
+                            <h3><i class="fas fa-shield-alt"></i> Permissions</h3>
+                            <div class="permissions-status">
+                                <div class="permission-group">
+                                    <strong>Required:</strong>
+                                    <div class="permissions-list">
+                                        ${plugin.permissions.required.map(perm => `<span class="permission-tag required">${perm}</span>`).join('')}
+                                    </div>
+                                </div>
+                                ${plugin.permissions.granted.length > 0 ? `
+                                    <div class="permission-group">
+                                        <strong>Granted:</strong>
+                                        <div class="permissions-list">
+                                            ${plugin.permissions.granted.map(perm => `<span class="permission-tag granted">${perm}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                ${plugin.permissions.missing.length > 0 ? `
+                                    <div class="permission-group">
+                                        <strong>Missing:</strong>
+                                        <div class="permissions-list">
+                                            ${plugin.permissions.missing.map(perm => `<span class="permission-tag missing">${perm}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                <p><strong>User Approved:</strong> ${plugin.permissions.user_approved ? 'Yes' : 'No'}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Build configuration section
+                let configHtml = '';
+                if (plugin.config && Object.keys(plugin.config).length > 0) {
+                    configHtml = `
+                        <div class="plugin-section">
+                            <h3><i class="fas fa-cog"></i> Configuration</h3>
+                            <div class="config-items">
+                                ${Object.entries(plugin.config).map(([key, value]) => `
+                                    <div class="config-item">
+                                        <strong>${key.replace(/_/g, ' ')}:</strong>
+                                        <span class="config-value">${typeof value === 'object' ? JSON.stringify(value, null, 2) : value}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <button class="btn btn-primary" onclick="configurePlugin('${plugin.name}')">
+                                    <i class="fas fa-edit"></i> Configure Plugin
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                content.innerHTML = `
+                    <h2><i class="fas fa-puzzle-piece"></i> ${plugin.name}</h2>
+                    
+                    <div class="plugin-section">
+                        <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Description:</strong>
+                                <p>${plugin.description || 'No description available'}</p>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-item">
+                                    <strong>Version:</strong> ${plugin.version || 'Unknown'}
+                                </div>
+                                <div class="info-item">
+                                    <strong>Status:</strong> 
+                                    <span class="status-badge ${plugin.running ? 'status-running' : 'status-stopped'}">
+                                        ${plugin.running ? 'Running' : 'Stopped'}
+                                    </span>
+                                </div>
+                            </div>
+                            ${plugin.author ? `
+                                <div class="info-item">
+                                    <strong>Author:</strong> ${plugin.author}
+                                </div>
+                            ` : ''}
+                            ${plugin.license ? `
+                                <div class="info-item">
+                                    <strong>License:</strong> ${plugin.license}
+                                </div>
+                            ` : ''}
+                            ${plugin.homepage ? `
+                                <div class="info-item">
+                                    <strong>Homepage:</strong> <a href="${plugin.homepage}" target="_blank" rel="noopener noreferrer">${plugin.homepage}</a>
+                                </div>
+                            ` : ''}
+                            <div class="info-item">
+                                <strong>Plugin ID:</strong> ${plugin.id}
+                            </div>
+                            <div class="info-item">
+                                <strong>MCP Port:</strong> ${plugin.mcp_port || 'Not specified'}
+                            </div>
+                            ${plugin.last_error ? `
+                                <div class="info-item error">
+                                    <strong>Last Error:</strong> ${plugin.last_error}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    ${capabilitiesHtml}
+                    ${permissionsHtml}
+                    ${configHtml}
+                    
+                    <div class="plugin-actions-section">
+                        <h3><i class="fas fa-tools"></i> Actions</h3>
+                        <div class="action-buttons">
+                            <button class="btn ${plugin.running ? 'btn-danger' : 'btn-success'}" 
+                                    onclick="togglePlugin('${plugin.name}', ${!plugin.running}); setTimeout(() => showPluginDetails('${plugin.id}'), 500);">
+                                <i class="fas ${plugin.running ? 'fa-stop' : 'fa-play'}"></i>
+                                ${plugin.running ? 'Disable' : 'Enable'} Plugin
+                            </button>
+                            <button class="btn btn-primary" onclick="configurePlugin('${plugin.name}')">
+                                <i class="fas fa-cog"></i> Configure
+                            </button>
+                            ${plugin.running ? `
+                                <button class="btn btn-secondary" onclick="showPluginLogs('${plugin.id}')">
+                                    <i class="fas fa-file-alt"></i> View Logs
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading plugin details:', error);
+                content.innerHTML = `
+                    <h2><i class="fas fa-puzzle-piece"></i> Error Loading Plugin Details</h2>
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Failed to load plugin details: ${error.message}</p>
+                        <button class="btn btn-secondary" onclick="document.getElementById('plugin-details-modal').style.display='none'">
+                            Close
+                        </button>
+                    </div>
+                `;
+            }
         }
 
         async function configurePlugin(pluginName) {
@@ -683,6 +1072,18 @@ ${JSON.stringify(data.config, null, 2)}
                 configModal.style.display = 'none';
             }
         });
+
+        // Function to show plugin logs
+        async function showPluginLogs(pluginId) {
+            try {
+                // This would require a new API endpoint to get plugin logs
+                // For now, show a placeholder message
+                alert(`Plugin logs for ${pluginId} - This feature will be implemented soon!`);
+            } catch (error) {
+                console.error('Error loading plugin logs:', error);
+                alert('Error loading plugin logs: ' + error.message);
+            }
+        }
     </script>
 </body>
 </html>

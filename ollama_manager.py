@@ -125,6 +125,50 @@ def api_plugin_permissions_post(plugin_id):
     plugin.approve_permissions(grant)
     return jsonify({'success': True})
 
+@app.route('/api/plugin/details/<plugin_id>', methods=['GET'])
+def api_plugin_details(plugin_id):
+    """Get detailed information about a plugin including manifest data"""
+    plugin = plugin_loader.get_plugin_by_id(plugin_id)
+    if not plugin:
+        return jsonify({'success': False, 'error': 'Plugin not found'}), 404
+    
+    # Get basic status information
+    is_running = plugin.is_reachable()
+    status = 'running' if is_running else 'stopped'
+    
+    # Get permissions information
+    required_perms = plugin.permissions_required()
+    granted_perms = plugin.permissions_granted()
+    missing_perms = required_perms - granted_perms
+    
+    # Build detailed plugin information from manifest and runtime data
+    details = {
+        'id': plugin.id,
+        'name': plugin.name,
+        'version': plugin.version,
+        'description': plugin.description,
+        'author': plugin.author,
+        'homepage': plugin.homepage,
+        'license': plugin.license,
+        'entrypoint': plugin.entrypoint,
+        'mcp_port': plugin.mcp_port,
+        'path': plugin.path,
+        'status': status,
+        'running': is_running,
+        'last_error': plugin.last_error,
+        'permissions': {
+            'required': list(required_perms),
+            'granted': list(granted_perms),
+            'missing': list(missing_perms),
+            'user_approved': plugin.user_approved
+        },
+        'config': plugin.config,
+        'capabilities': plugin.manifest.get('capabilities', {}),
+        'manifest': plugin.manifest  # Include full manifest for any additional fields
+    }
+    
+    return jsonify({'success': True, 'details': details})
+
 @app.route('/api/plugin/enable', methods=['POST'])
 def api_plugin_enable():
     plugin_id = request.json.get('plugin_id')
