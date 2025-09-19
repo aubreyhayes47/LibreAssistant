@@ -1520,7 +1520,7 @@ class LibreAssistantApp {
         this.setupPluginRefresh();
     }
 
-    // Load and display plugins
+    // Load and display plugins with enhanced information
     loadPlugins() {
         const catalogueList = document.getElementById('catalogue-list');
         if (!catalogueList) return;
@@ -1532,41 +1532,52 @@ class LibreAssistantApp {
             </div>
         `;
         
-        fetch('/api/plugins/list')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.plugins) {
-                    this.displayPlugins(data.plugins);
-                } else {
-                    catalogueList.innerHTML = `
-                        <div class="loading-plugins">
-                            <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
-                            <span>Failed to load plugins</span>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading plugins:', error);
+        // Load plugins from multiple sources for comprehensive information
+        Promise.all([
+            fetch('/api/plugins').then(r => r.json()),
+            fetch('/api/plugin/status').then(r => r.json()).catch(() => ({ statuses: {} }))
+        ])
+        .then(([pluginsData, statusData]) => {
+            if (pluginsData.success && pluginsData.plugins) {
+                // Enhance plugins with status information
+                const enhancedPlugins = pluginsData.plugins.map(plugin => ({
+                    ...plugin,
+                    status: statusData.statuses?.[plugin.id] || { running: false, enabled: false }
+                }));
+                this.displayPlugins(enhancedPlugins);
+            } else {
                 catalogueList.innerHTML = `
-                    <div class="loading-plugins">
-                        <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
-                        <span>Error loading plugins: ${error.message}</span>
+                    <div class="empty-catalogue">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Failed to Load Plugins</h3>
+                        <p>Unable to retrieve plugin information. Please check your connection and try again.</p>
                     </div>
                 `;
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading plugins:', error);
+            catalogueList.innerHTML = `
+                <div class="empty-catalogue">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error Loading Plugins</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        });
     }
 
-    // Display plugins in the catalogue
+    // Display plugins in the catalogue with enhanced UI
     displayPlugins(plugins) {
         const catalogueList = document.getElementById('catalogue-list');
         if (!catalogueList) return;
         
         if (plugins.length === 0) {
             catalogueList.innerHTML = `
-                <div class="loading-plugins">
-                    <i class="fas fa-puzzle-piece" style="color: #7f8c8d;"></i>
-                    <span>No plugins found</span>
+                <div class="empty-catalogue">
+                    <i class="fas fa-puzzle-piece"></i>
+                    <h3>No Plugins Found</h3>
+                    <p>No plugins are currently available or match your search criteria.</p>
                 </div>
             `;
             return;
@@ -1575,38 +1586,112 @@ class LibreAssistantApp {
         catalogueList.innerHTML = '';
         
         plugins.forEach(plugin => {
-            const pluginCard = document.createElement('div');
-            pluginCard.className = `plugin-card ${plugin.running ? 'enabled' : 'disabled'}`;
-            
-            pluginCard.innerHTML = `
-                <div class="plugin-header">
-                    <div class="plugin-info">
-                        <h3>${plugin.name}</h3>
-                        <p>${plugin.description || 'No description available'}</p>
-                    </div>
-                    <div class="plugin-status">
-                        <span class="status-badge ${plugin.running ? 'enabled' : 'disabled'}">
-                            ${plugin.running ? 'Enabled' : 'Disabled'}
-                        </span>
-                    </div>
-                </div>
-                <div class="plugin-details">
-                    <p><strong>Type:</strong> ${plugin.type || 'Unknown'}</p>
-                    <p><strong>Status:</strong> ${plugin.running ? 'Running' : 'Stopped'}</p>
-                </div>
-                <div class="plugin-actions">
-                    <button class="btn btn-primary" onclick="window.ollamaApp.showPluginDetails('${plugin.id}')">
-                        Details
-                    </button>
-                    <button class="btn ${plugin.running ? 'btn-danger' : 'btn-success'}" 
-                            onclick="window.ollamaApp.togglePlugin('${plugin.id}', ${!plugin.running})">
-                        ${plugin.running ? 'Disable' : 'Enable'}
-                    </button>
-                </div>
-            `;
-            
+            const pluginCard = this.createEnhancedPluginCard(plugin);
             catalogueList.appendChild(pluginCard);
         });
+    }
+
+    // Create enhanced plugin card with rich information
+    createEnhancedPluginCard(plugin) {
+        const isRunning = plugin.status?.running || plugin.running || false;
+        const isEnabled = plugin.status?.enabled || plugin.enabled || false;
+        
+        const pluginCard = document.createElement('div');
+        pluginCard.className = `plugin-card ${isRunning ? 'enabled' : 'disabled'}`;
+        
+        // Extract capabilities for display
+        const capabilities = plugin.capabilities || {};
+        const capabilityList = [];
+        
+        Object.entries(capabilities).forEach(([category, funcs]) => {
+            Object.keys(funcs).forEach(funcName => {
+                capabilityList.push(funcName.replace(/_/g, ' '));
+            });
+        });
+
+        // Extract usage examples
+        const usageExamples = [];
+        Object.entries(capabilities).forEach(([category, funcs]) => {
+            Object.entries(funcs).forEach(([funcName, funcInfo]) => {
+                if (funcInfo.use_cases && Array.isArray(funcInfo.use_cases)) {
+                    usageExamples.push(...funcInfo.use_cases.slice(0, 2)); // Limit to 2 per function
+                }
+            });
+        });
+
+        pluginCard.innerHTML = `
+            <div class="plugin-header">
+                <div class="plugin-info">
+                    <h3 class="plugin-title">${plugin.name || 'Unknown Plugin'}</h3>
+                    <p class="plugin-author">${plugin.author || 'Unknown Author'}</p>
+                </div>
+                <div class="plugin-status-badge ${isRunning ? 'running' : 'stopped'}">
+                    <span class="status-indicator"></span>
+                    ${isRunning ? 'Running' : 'Stopped'}
+                </div>
+            </div>
+            
+            <p class="plugin-description">${plugin.description || 'No description available'}</p>
+            
+            ${capabilityList.length > 0 ? `
+                <div class="plugin-capabilities">
+                    <h4 class="capabilities-title">Capabilities</h4>
+                    <div class="capability-tags">
+                        ${capabilityList.slice(0, 4).map(cap => `<span class="capability-tag">${cap}</span>`).join('')}
+                        ${capabilityList.length > 4 ? `<span class="capability-tag">+${capabilityList.length - 4} more</span>` : ''}
+                    </div>
+                </div>
+            ` : ''}
+            
+            <div class="plugin-meta">
+                <span class="meta-item">
+                    <i class="fas fa-tag"></i>
+                    <span>v${plugin.version || '1.0.0'}</span>
+                </span>
+                <span class="meta-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>${plugin.permissions?.length || 0} permissions</span>
+                </span>
+                <span class="meta-item">
+                    <i class="fas fa-network-wired"></i>
+                    <span>Port ${plugin.mcp_port || 'Unknown'}</span>
+                </span>
+                ${plugin.license ? `
+                    <span class="meta-item">
+                        <i class="fas fa-certificate"></i>
+                        <span>${plugin.license}</span>
+                    </span>
+                ` : ''}
+            </div>
+            
+            ${usageExamples.length > 0 ? `
+                <div class="plugin-usage-examples">
+                    <h4 class="usage-title">
+                        <i class="fas fa-lightbulb"></i>
+                        Usage Examples
+                    </h4>
+                    <div class="usage-examples">
+                        ${usageExamples.slice(0, 3).map(example => `
+                            <div class="usage-example">${example}</div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            <div class="plugin-actions">
+                <button class="plugin-btn plugin-btn-details" onclick="window.ollamaApp.showPluginDetails('${plugin.id}')">
+                    <i class="fas fa-info-circle"></i>
+                    Details
+                </button>
+                <button class="plugin-btn ${isRunning ? 'plugin-btn-disable' : 'plugin-btn-enable'}" 
+                        onclick="window.ollamaApp.togglePlugin('${plugin.id}', ${!isRunning})">
+                    <i class="fas ${isRunning ? 'fa-stop' : 'fa-play'}"></i>
+                    ${isRunning ? 'Disable' : 'Enable'}
+                </button>
+            </div>
+        `;
+        
+        return pluginCard;
     }
 
     // Setup plugin search functionality
@@ -1625,7 +1710,7 @@ class LibreAssistantApp {
 
     // Setup plugin refresh functionality
     setupPluginRefresh() {
-        const refreshButton = document.getElementById('refresh-plugins');
+        const refreshButton = document.getElementById('refresh-plugins-catalogue');
         if (refreshButton) {
             refreshButton.addEventListener('click', () => this.loadPlugins());
         }

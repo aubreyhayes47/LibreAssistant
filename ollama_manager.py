@@ -17,6 +17,8 @@ from flask_cors import CORS
 from plugin_config import PluginConfigManager
 from plugin_loader import PluginLoader
 from llm_protocol import llm_protocol, LLMProtocolError
+import os
+import json
 
 # Initialize plugin_loader - this may be replaced by main.py auto-start
 plugin_loader = PluginLoader()
@@ -550,88 +552,111 @@ def api_generate():
                     'request_id': req_id
                 })
             
-            # Parse and route the structured response
+            # Parse and route the structured response with iterative plugin processing
             try:
-                parsed_response = llm_protocol.parse_response(llm_response)
+                current_response = llm_response
+                plugins_used = []
+                max_plugin_iterations = 5  # Prevent infinite loops
+                iteration_count = 0
                 
-                if llm_protocol.is_plugin_invocation(parsed_response):
-                    # Handle plugin invocation
-                    plugin_id, plugin_input, reason = llm_protocol.extract_plugin_call(parsed_response)
+                while iteration_count < max_plugin_iterations:
+                    parsed_response = llm_protocol.parse_response(current_response)
                     
-                    # Track plugin access
-                    if plugin_id not in CURRENT_REQUEST['plugins']:
-                        CURRENT_REQUEST['plugins'].append(plugin_id)
-                    
-                    # Invoke the plugin
-                    try:
-                        plugin_result = plugin_api.invoke_plugin(plugin_id, plugin_input)
+                    if llm_protocol.is_plugin_invocation(parsed_response):
+                        # Handle plugin invocation
+                        plugin_id, plugin_input, reason = llm_protocol.extract_plugin_call(parsed_response)
                         
-                        # Generate follow-up prompt for LLM to process plugin result
-                        follow_up_prompt = llm_protocol.create_plugin_result_prompt(
-                            plugin_id, plugin_result, prompt
-                        )
+                        # Track plugin access
+                        if plugin_id not in CURRENT_REQUEST['plugins']:
+                            CURRENT_REQUEST['plugins'].append(plugin_id)
                         
-                        # Call LLM again to process plugin result
-                        follow_up_response = requests.post(
-                            f"{api.base_url}/api/generate",
-                            json={
-                                "model": model,
-                                "prompt": follow_up_prompt,
-                                "stream": False  # Use non-streaming for plugin result processing
-                            },
-                            timeout=timeout  # Use same timeout as original request
-                        )
-                        follow_up_response.raise_for_status()
-                        follow_up_data = follow_up_response.json()
-                        final_response = follow_up_data.get('response', '')
-                        
-                        # Parse the final response
-                        final_parsed = llm_protocol.parse_response(final_response)
-                        if llm_protocol.is_user_message(final_parsed):
-                            text, markdown = llm_protocol.extract_user_message(final_parsed)
-                            return jsonify({
-                                'success': True,
-                                'response': text,
-                                'plugin_used': plugin_id,
-                                'plugin_reason': reason,
-                                'markdown': markdown,
-                                'request_id': req_id
-                            })
-                        else:
-                            # Fallback if LLM doesn't return a proper message
-                            return jsonify({
-                                'success': True,
-                                'response': f"Plugin {plugin_id} executed successfully. Result: {plugin_result.get('response', plugin_result)}",
-                                'plugin_used': plugin_id,
-                                'plugin_reason': reason,
-                                'request_id': req_id
-                            })
-                    
-                    except Exception as plugin_error:
-                        return jsonify({
-                            'success': False,
-                            'error': f'Plugin {plugin_id} execution failed: {str(plugin_error)}',
-                            'request_id': req_id
+                        plugins_used.append({
+                            'id': plugin_id,
+                            'reason': reason,
+                            'input': plugin_input
                         })
+                        
+                        # Invoke the plugin
+                        try:
+                            plugin_result = plugin_api.invoke_plugin(plugin_id, plugin_input)
+                            
+                            # Generate follow-up prompt for LLM to process plugin result
+                            follow_up_prompt = llm_protocol.create_plugin_result_prompt(
+                                plugin_id, plugin_result, prompt
+                            )
+                            
+                            # Call LLM again to process plugin result
+                            follow_up_response = requests.post(
+                                f"{api.base_url}/api/generate",
+                                json={
+                                    "model": model,
+                                    "prompt": follow_up_prompt,
+                                    "stream": False  # Use non-streaming for plugin result processing
+                                },
+                                timeout=timeout  # Use same timeout as original request
+                            )
+                            follow_up_response.raise_for_status()
+                            follow_up_data = follow_up_response.json()
+                            current_response = follow_up_data.get('response', '')
+                            iteration_count += 1
+                            
+                        except Exception as plugin_error:
+                            return jsonify({
+                                'success': False,
+                                'error': f'Plugin {plugin_id} execution failed: {str(plugin_error)}',
+                                'plugins_used': plugins_used,
+                                'request_id': req_id
+                            })
+                    
+                    elif llm_protocol.is_user_message(parsed_response):
+                        # Handle user-facing message - this is the final response
+                        text, markdown = llm_protocol.extract_user_message(parsed_response)
+                        response_data = {
+                            'success': True,
+                            'response': text,
+                            'markdown': markdown,
+                            'request_id': req_id
+                        }
+                        
+                        # Add plugin information if any were used
+                        if plugins_used:
+                            response_data['plugins_used'] = plugins_used
+                            response_data['plugin_count'] = len(plugins_used)
+                        
+                        return jsonify(response_data)
+                    
+                    else:
+                        # Fallback for unexpected response format
+                        response_data = {
+                            'success': True,
+                            'response': current_response,
+                            'schema_error': 'Unexpected response format',
+                            'request_id': req_id
+                        }
+                        
+                        # Add plugin information if any were used
+                        if plugins_used:
+                            response_data['plugins_used'] = plugins_used
+                            response_data['plugin_count'] = len(plugins_used)
+                        
+                        return jsonify(response_data)
                 
-                elif llm_protocol.is_user_message(parsed_response):
-                    # Handle user-facing message
+                # If we hit max iterations, return with warning
+                parsed_response = llm_protocol.parse_response(current_response)
+                if llm_protocol.is_user_message(parsed_response):
                     text, markdown = llm_protocol.extract_user_message(parsed_response)
-                    return jsonify({
-                        'success': True,
-                        'response': text,
-                        'markdown': markdown,
-                        'request_id': req_id
-                    })
-                
+                    final_response = text
                 else:
-                    # Fallback for unexpected response format
-                    return jsonify({
-                        'success': True,
-                        'response': llm_response,
-                        'schema_error': 'Unexpected response format',
-                        'request_id': req_id
-                    })
+                    final_response = current_response
+                
+                return jsonify({
+                    'success': True,
+                    'response': final_response,
+                    'warning': f'Reached maximum plugin iterations ({max_plugin_iterations})',
+                    'plugins_used': plugins_used,
+                    'plugin_count': len(plugins_used),
+                    'request_id': req_id
+                })
                     
             except LLMProtocolError as e:
                 # Schema validation failed, return raw response with warning
@@ -884,18 +909,41 @@ def api_plugins():
             is_running = plugin_obj.is_reachable() if plugin_obj else False
             status = 'running' if is_running else 'stopped'
             
-            formatted_plugins.append({
-                'name': plugin.get('name', 'Unknown'),
+            # Load manifest data for enhanced information
+            manifest_data = {}
+            if plugin_obj:
+                try:
+                    manifest_path = os.path.join(plugin_obj.path, 'plugin-manifest.json')
+                    if os.path.exists(manifest_path):
+                        with open(manifest_path, 'r') as f:
+                            manifest_data = json.load(f)
+                except Exception as e:
+                    print(f"Warning: Could not load manifest for {plugin_id}: {e}")
+            
+            # Combine plugin data with manifest data
+            plugin_info = {
+                'name': plugin.get('name') or manifest_data.get('name', 'Unknown'),
                 'id': plugin_id,
-                'description': plugin.get('description', 'No description available'),
-                'version': plugin.get('version', '1.0.0'),
+                'description': plugin.get('description') or manifest_data.get('description', 'No description available'),
+                'version': plugin.get('version') or manifest_data.get('version', '1.0.0'),
+                'author': manifest_data.get('author', 'Unknown Author'),
+                'license': manifest_data.get('license', 'Unknown'),
+                'homepage': manifest_data.get('homepage', ''),
+                'mcp_port': manifest_data.get('mcp_port', plugin_obj.mcp_port if plugin_obj else 'Unknown'),
+                'permissions': manifest_data.get('permissions', []),
+                'capabilities': manifest_data.get('capabilities', {}),
+                'config': manifest_data.get('config', {}),
                 'size': format_size(plugin.get('size', 0)),
                 'modified_at': format_datetime(plugin.get('modified_at', '')),
-                'type': plugin.get('type', 'Unknown'),
+                'type': plugin.get('type') or manifest_data.get('type', 'MCP Plugin'),
                 'raw_size': plugin.get('size', 0),
                 'status': status,
-                'running': is_running
-            })
+                'running': is_running,
+                'enabled': is_running  # For compatibility
+            }
+            
+            formatted_plugins.append(plugin_info)
+            
         return jsonify({'success': True, 'plugins': formatted_plugins})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
