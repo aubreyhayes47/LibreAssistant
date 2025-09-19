@@ -704,10 +704,22 @@ def api_generate():
                 })
                     
             except LLMProtocolError as e:
-                # Schema validation failed, return raw response with warning
+                # Schema validation failed, try to extract user-friendly text if possible
+                try:
+                    # Attempt to parse as JSON and extract user message
+                    parsed_response = llm_protocol.parse_response(llm_response)
+                    if llm_protocol.is_user_message(parsed_response):
+                        text, markdown = llm_protocol.extract_user_message(parsed_response)
+                        display_response = text
+                    else:
+                        display_response = llm_response
+                except:
+                    # If extraction fails, fall back to raw response
+                    display_response = llm_response
+                
                 return jsonify({
                     'success': True,
-                    'response': llm_response,
+                    'response': display_response,
                     'schema_error': str(e),
                     'request_id': req_id
                 })
