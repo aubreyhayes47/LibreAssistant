@@ -209,6 +209,10 @@ class LibreAssistantApp {
         this.setupAutoComplete();
         this.setupRequestSubmission();
         this.loadRequestModels();
+        
+        // Setup new schema controls
+        this.setupSchemaControls();
+        this.setupSystemInstructions();
     }
 
     initCatalogueView() {
@@ -1159,34 +1163,182 @@ class LibreAssistantApp {
 
     // Plugin pills functionality for requests view
     setupPluginPills() {
-        fetch('/api/plugins/accessed')
-            .then(res => res.json())
-            .then(data => {
-                const pillsContainer = document.getElementById('plugin-pills');
-                if (!pillsContainer) return;
+        const refreshButton = document.getElementById('refresh-plugins');
+        const pluginStatus = document.getElementById('plugin-status');
+        
+        const loadPlugins = () => {
+            fetch('/api/plugins/list')
+                .then(res => res.json())
+                .then(data => {
+                    const pillsContainer = document.getElementById('plugin-pills');
+                    if (!pillsContainer) return;
+                    
+                    if (data.success && data.plugins && data.plugins.length > 0) {
+                        pillsContainer.innerHTML = '';
+                        const runningPlugins = data.plugins.filter(p => p.running);
+                        
+                        runningPlugins.forEach(plugin => {
+                            const pill = document.createElement('span');
+                            pill.className = 'plugin-pill';
+                            pill.innerHTML = `<i class="fas fa-plug"></i> ${plugin.name}`;
+                            pill.title = plugin.description;
+                            pill.onclick = function() {
+                                this.showPluginInfo(plugin);
+                            }.bind(this);
+                            pillsContainer.appendChild(pill);
+                        });
+                        
+                        if (pluginStatus) {
+                            pluginStatus.textContent = `${runningPlugins.length} active plugin(s)`;
+                        }
+                    } else {
+                        pillsContainer.innerHTML = '<span style="color: #7f8c8d;">No active plugins</span>';
+                        if (pluginStatus) {
+                            pluginStatus.textContent = 'No plugins running';
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Could not load plugin pills:', err);
+                    const pillsContainer = document.getElementById('plugin-pills');
+                    if (pillsContainer) {
+                        pillsContainer.innerHTML = '<span style="color: #e74c3c;">Error loading plugins</span>';
+                    }
+                    if (pluginStatus) {
+                        pluginStatus.textContent = 'Error loading plugins';
+                    }
+                });
+        };
+        
+        // Setup refresh button
+        if (refreshButton) {
+            refreshButton.addEventListener('click', loadPlugins);
+        }
+        
+        // Load plugins initially
+        loadPlugins();
+    }
+    
+    showPluginInfo(plugin) {
+        alert(`Plugin: ${plugin.name}\nID: ${plugin.id}\nDescription: ${plugin.description}\nStatus: ${plugin.status}\nVersion: ${plugin.version}`);
+    }
+
+    // Setup schema controls functionality
+    setupSchemaControls() {
+        const viewSchemaButton = document.getElementById('view-schema');
+        const schemaModal = document.getElementById('schema-modal');
+        const schemaContent = document.getElementById('schema-content');
+        const validateButton = document.getElementById('validate-response');
+        const downloadButton = document.getElementById('download-schema');
+        
+        if (!viewSchemaButton) return;
+        
+        viewSchemaButton.addEventListener('click', () => {
+            schemaContent.textContent = 'Loading schema...';
+            schemaModal.style.display = 'block';
+            
+            fetch('/api/llm/schema')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        schemaContent.textContent = JSON.stringify(data.schema, null, 2);
+                    } else {
+                        schemaContent.textContent = 'Error loading schema: ' + (data.error || 'Unknown error');
+                    }
+                })
+                .catch(err => {
+                    schemaContent.textContent = 'Network error: ' + err.message;
+                });
+        });
+        
+        if (validateButton) {
+            validateButton.addEventListener('click', () => {
+                // Test validation with a sample response
+                const sampleResponse = {
+                    "action": "message",
+                    "content": {
+                        "text": "This is a test message",
+                        "markdown": false
+                    }
+                };
                 
-                if (data.plugins && data.plugins.length > 0) {
-                    data.plugins.forEach(plugin => {
-                        const pill = document.createElement('span');
-                        pill.className = 'plugin-pill';
-                        pill.textContent = plugin;
-                        pill.onclick = function() {
-                            console.log(`Plugin ${plugin} clicked`);
-                            // Future: Add plugin-specific actions
-                        };
-                        pillsContainer.appendChild(pill);
-                    });
-                } else {
-                    pillsContainer.innerHTML = '<span style="color: #7f8c8d;">No plugins accessed yet</span>';
-                }
-            })
-            .catch(err => {
-                console.log('Could not load plugin pills:', err);
-                const pillsContainer = document.getElementById('plugin-pills');
-                if (pillsContainer) {
-                    pillsContainer.innerHTML = '<span style="color: #e74c3c;">Failed to load plugins</span>';
-                }
+                fetch('/api/llm/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ response: sampleResponse })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.success && data.valid ? 'Sample validation passed!' : 'Validation failed: ' + (data.error || 'Unknown error'));
+                })
+                .catch(err => {
+                    alert('Validation test failed: ' + err.message);
+                });
             });
+        }
+        
+        if (downloadButton) {
+            downloadButton.addEventListener('click', () => {
+                fetch('/api/llm/schema')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            const blob = new Blob([JSON.stringify(data.schema, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'llm-response-schema.json';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                        }
+                    })
+                    .catch(err => {
+                        alert('Failed to download schema: ' + err.message);
+                    });
+            });
+        }
+    }
+
+    // Setup system instructions functionality
+    setupSystemInstructions() {
+        const viewInstructionsButton = document.getElementById('view-system-instructions');
+        const instructionsModal = document.getElementById('instructions-modal');
+        const instructionsContent = document.getElementById('instructions-content');
+        const refreshInstructionsButton = document.getElementById('refresh-instructions');
+        const pluginCountSpan = document.getElementById('plugin-count');
+        
+        if (!viewInstructionsButton) return;
+        
+        const loadSystemInstructions = () => {
+            instructionsContent.textContent = 'Loading system instructions...';
+            
+            fetch('/api/llm/system_instructions')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        instructionsContent.textContent = data.instructions;
+                        if (pluginCountSpan) {
+                            pluginCountSpan.textContent = `Available plugins: ${data.plugins ? data.plugins.length : 0}`;
+                        }
+                    } else {
+                        instructionsContent.textContent = 'Error loading instructions: ' + (data.error || 'Unknown error');
+                    }
+                })
+                .catch(err => {
+                    instructionsContent.textContent = 'Network error: ' + err.message;
+                });
+        };
+        
+        viewInstructionsButton.addEventListener('click', () => {
+            instructionsModal.style.display = 'block';
+            loadSystemInstructions();
+        });
+        
+        if (refreshInstructionsButton) {
+            refreshInstructionsButton.addEventListener('click', loadSystemInstructions);
+        }
     }
 
     // Setup autocomplete functionality for requests
@@ -1246,6 +1398,7 @@ class LibreAssistantApp {
         const responseBox = document.getElementById('response-box');
         const modelSelect = document.getElementById('request-model-select');
         const refreshButton = document.getElementById('refresh-request-models');
+        const useSchemaCheckbox = document.getElementById('use-schema');
         
         if (!input || !button || !responseBox) return;
 
@@ -1257,14 +1410,15 @@ class LibreAssistantApp {
         const submitRequest = () => {
             const query = input.value.trim();
             const selectedModel = modelSelect ? modelSelect.value : '';
+            const useSchema = useSchemaCheckbox ? useSchemaCheckbox.checked : true;
             
             if (!query) return;
             
             if (!selectedModel) {
                 responseBox.innerHTML = `
-                    <div style="color: #e74c3c; padding: 1rem;">
-                        <h4>Error:</h4>
-                        <p>Please select a model before sending your request.</p>
+                    <div class="error-response">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Error:</strong> Please select a model before sending your request.
                     </div>
                 `;
                 return;
@@ -1272,54 +1426,42 @@ class LibreAssistantApp {
             
             // Show loading state
             responseBox.innerHTML = `
-                <div style="text-align: center; padding: 2rem;">
-                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #3498db;"></i>
-                    <p>Processing your request with ${selectedModel}...</p>
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Processing your request with ${selectedModel}...
                 </div>
             `;
             
-            const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
-            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
-            
-            // Make request to API
-            fetch('/api/request', {
+            // Use the /api/generate endpoint with schema support instead of /api/request
+            fetch('/api/generate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    query: query,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                     model: selectedModel,
-                    server_url: serverUrl,
-                    timeout: timeout
+                    prompt: query,
+                    use_schema: useSchema,
+                    stream: false
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    responseBox.innerHTML = `
-                        <div class="response-content">
-                            <h4>Response from ${selectedModel}:</h4>
-                            <div class="response-text">${data.response || 'No response received'}</div>
-                        </div>
-                    `;
+                    this.showResponse({
+                        text: data.response,
+                        markdown: data.markdown,
+                        plugin_used: data.plugin_used,
+                        plugin_reason: data.plugin_reason,
+                        schema_used: useSchema,
+                        schema_error: data.schema_error
+                    });
+                    // Refresh plugin pills to show any newly accessed plugins
+                    this.setupPluginPills();
                 } else {
-                    responseBox.innerHTML = `
-                        <div style="color: #e74c3c; padding: 1rem;">
-                            <h4>Error:</h4>
-                            <p>${data.error || 'Request failed'}</p>
-                            ${data.suggestion ? `<p style="color: #7f8c8d; font-style: italic; margin-top: 0.5rem;"><strong>Suggestion:</strong> ${data.suggestion}</p>` : ''}
-                        </div>
-                    `;
+                    this.showResponse({error: data.error || 'Request failed'});
                 }
             })
             .catch(error => {
-                responseBox.innerHTML = `
-                    <div style="color: #e74c3c; padding: 1rem;">
-                        <h4>Error:</h4>
-                        <p>Failed to process request: ${error.message}</p>
-                    </div>
-                `;
+                this.showResponse({error: 'Network error: ' + error.message});
             });
             
             input.value = '';
@@ -1331,6 +1473,44 @@ class LibreAssistantApp {
                 submitRequest();
             }
         });
+    }
+
+    // Show response in the response box with enhanced formatting
+    showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error}) {
+        const responseBox = document.getElementById('response-box');
+        if (!responseBox) return;
+        
+        if (error) {
+            responseBox.innerHTML = `<div class="error-response"><i class="fas fa-exclamation-triangle"></i> <strong>Error:</strong> ${error}</div>`;
+            return;
+        }
+        
+        let content = '';
+        
+        // Schema status indicator
+        if (schema_used) {
+            if (schema_error) {
+                content += `<div class="schema-warning">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Schema Warning:</strong> ${schema_error}
+                </div>`;
+            } else {
+                content += `<div class="schema-success">
+                    <i class="fas fa-check-circle"></i> <strong>Schema Validation:</strong> Response validated successfully
+                </div>`;
+            }
+        }
+        
+        // Plugin usage indicator
+        if (plugin_used) {
+            content += `<div class="plugin-indicator"><i class="fas fa-plug"></i> <strong>Plugin Used:</strong> ${plugin_used}`;
+            if (plugin_reason) content += ` - ${plugin_reason}`;
+            content += '</div>';
+        }
+        
+        // Response content
+        content += `<div class="response-text">${text || 'No response received'}</div>`;
+        
+        responseBox.innerHTML = content;
     }
 
     // Setup plugin catalogue functionality

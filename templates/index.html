@@ -108,7 +108,6 @@
                     </div>
                 </div>
 
-                <!-- Requests View -->
                 <div id="requests-view" class="view">
                     <header class="view-header">
                         <h1>Make Requests</h1>
@@ -123,6 +122,15 @@
                                 </select>
                                 <button id="refresh-request-models" class="btn btn-secondary btn-small">
                                     <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="schema-controls">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="use-schema" checked>
+                                    <span>Use JSON Schema</span>
+                                </label>
+                                <button id="view-schema" class="btn btn-secondary btn-small" title="View JSON schema">
+                                    <i class="fas fa-code"></i> Schema
                                 </button>
                             </div>
                         </div>
@@ -145,8 +153,19 @@
                         </div>
                         
                         <div id="active-plugins-bar" class="active-plugins-bar">
-                            <h4><i class="fas fa-plug"></i> Active Plugins</h4>
+                            <div class="plugins-header">
+                                <h4><i class="fas fa-plug"></i> Active Plugins</h4>
+                                <div class="plugin-actions">
+                                    <button id="refresh-plugins" class="btn btn-secondary btn-small" title="Refresh plugins">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                    <button id="view-system-instructions" class="btn btn-secondary btn-small" title="View system instructions">
+                                        <i class="fas fa-info-circle"></i> Instructions
+                                    </button>
+                                </div>
+                            </div>
                             <div id="plugin-pills"></div>
+                            <div id="plugin-status" class="plugin-status"></div>
                         </div>
                     </div>
                 </div>
@@ -495,6 +514,35 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Plugin and Schema Modals -->
+    <div id="schema-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('schema-modal').style.display='none'">&times;</span>
+            <div>
+                <h3><i class="fas fa-code"></i> JSON Schema</h3>
+                <div class="form-row">
+                    <button id="validate-response" class="btn btn-secondary">Test Validation</button>
+                    <button id="download-schema" class="btn btn-secondary">Download Schema</button>
+                </div>
+                <pre id="schema-content" class="schema-display"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="instructions-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('instructions-modal').style.display='none'">&times;</span>
+            <div>
+                <h3><i class="fas fa-info-circle"></i> System Instructions</h3>
+                <div class="form-row">
+                    <button id="refresh-instructions" class="btn btn-secondary">Refresh</button>
+                    <span id="plugin-count" class="status-message"></span>
+                </div>
+                <pre id="instructions-content" class="instructions-display"></pre>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
