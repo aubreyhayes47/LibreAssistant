@@ -829,7 +829,7 @@
                 responseBox.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Processing your request...</div>';
                 
                 // Use the /api/generate endpoint with proper schema support
-                const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+                const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
                 fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -855,7 +855,30 @@
                         // Refresh plugin pills to show any newly accessed plugins
                         setupPluginPills();
                     } else {
-                        showResponse({error: data.error || 'Request failed'});
+                        // Enhanced error handling with specific messages for different error types
+                        let errorMessage = data.error || 'Request failed';
+                        let suggestion = data.suggestion || '';
+                        let errorClass = 'error-response';
+                        
+                        // Add specific styling and suggestions for timeout errors
+                        if (data.timeout_used !== undefined) {
+                            errorClass = 'timeout-error';
+                            errorMessage = `⏱️ ${errorMessage}`;
+                        } else if (data.connection_error) {
+                            errorClass = 'connection-error';
+                            errorMessage = `🔌 ${errorMessage}`;
+                        }
+                        
+                        let errorHtml = `<div class="${errorClass}">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            <strong>Error:</strong> ${errorMessage}`;
+                        
+                        if (suggestion) {
+                            errorHtml += `<br><small><i class="fas fa-lightbulb"></i> <strong>Suggestion:</strong> ${suggestion}</small>`;
+                        }
+                        
+                        errorHtml += '</div>';
+                        showResponse({error: errorHtml});
                     }
                 })
                 .catch(err => {
@@ -878,7 +901,12 @@
             const box = document.getElementById('response-box');
             
             if (error) {
-                box.innerHTML = `<div class="error-response"><i class="fas fa-exclamation-triangle"></i> <strong>Error:</strong> ${error}</div>`;
+                // Check if error already contains HTML formatting
+                if (error.includes('<div')) {
+                    box.innerHTML = error;
+                } else {
+                    box.innerHTML = `<div class="error-response"><i class="fas fa-exclamation-triangle"></i> <strong>Error:</strong> ${error}</div>`;
+                }
                 return;
             }
             

@@ -2027,6 +2027,22 @@ code {
     border-left: 4px solid var(--error-color);
 }
 
+.timeout-error {
+    color: #e67e22;
+    padding: 1rem;
+    background: color-mix(in srgb, #e67e22 10%, transparent);
+    border-radius: 4px;
+    border-left: 4px solid #e67e22;
+}
+
+.connection-error {
+    color: #e74c3c;
+    padding: 1rem;
+    background: color-mix(in srgb, #e74c3c 10%, transparent);
+    border-radius: 4px;
+    border-left: 4px solid #e74c3c;
+}
+
 .plugin-indicator {
     background: color-mix(in srgb, var(--success-color) 10%, transparent);
     border-left: 4px solid var(--success-color);

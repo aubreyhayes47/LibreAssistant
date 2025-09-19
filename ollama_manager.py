@@ -600,6 +600,24 @@ def api_generate():
                             current_response = follow_up_data.get('response', '')
                             iteration_count += 1
                             
+                        except requests.exceptions.Timeout as timeout_error:
+                            return jsonify({
+                                'success': False,
+                                'error': f'Plugin {plugin_id} processing timed out after {timeout} seconds.',
+                                'suggestion': 'Try using a smaller model, a simpler query, or increase the timeout in Settings.',
+                                'plugins_used': plugins_used,
+                                'request_id': req_id,
+                                'timeout_used': timeout
+                            })
+                        except requests.exceptions.ConnectionError as conn_error:
+                            return jsonify({
+                                'success': False,
+                                'error': f'Lost connection to Ollama server while processing plugin {plugin_id}.',
+                                'suggestion': 'Please ensure Ollama is still running and try again.',
+                                'plugins_used': plugins_used,
+                                'request_id': req_id,
+                                'connection_error': True
+                            })
                         except Exception as plugin_error:
                             return jsonify({
                                 'success': False,
@@ -667,6 +685,20 @@ def api_generate():
                     'request_id': req_id
                 })
                 
+        except requests.exceptions.Timeout as e:
+            return jsonify({
+                'success': False, 
+                'error': f'Request timed out after {timeout} seconds. The model may be taking too long to respond.',
+                'suggestion': 'Try using a smaller model, a simpler query, or increase the timeout in Settings.',
+                'timeout_used': timeout
+            }), 500
+        except requests.exceptions.ConnectionError as e:
+            return jsonify({
+                'success': False,
+                'error': 'Unable to connect to Ollama server.',
+                'suggestion': 'Please ensure Ollama is running. You can start it by running "ollama serve" in your terminal.',
+                'connection_error': True
+            }), 500
         except requests.RequestException as e:
             return jsonify({'success': False, 'error': f'Failed to generate response: {e}'}), 500
     except Exception as e:
