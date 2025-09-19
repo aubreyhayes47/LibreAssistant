@@ -318,7 +318,7 @@ class PluginAPI:
         
         raise Exception(f"Failed to get info for plugin {plugin_name} from any available server")
 
-    def invoke_plugin(self, plugin: str, input_data) -> Dict:
+    def invoke_plugin(self, plugin: str, input_data, timeout: float = 180) -> Dict:
         """Invoke plugin on the appropriate server"""
         plugin_urls = self._get_plugin_urls()
         
@@ -327,7 +327,7 @@ class PluginAPI:
                 response = requests.post(
                     f"{base_url}/api/invoke",
                     json={"plugin": plugin, "input": input_data},
-                    timeout=180  # Use consistent timeout with other operations
+                    timeout=timeout  # Use provided timeout, defaults to user setting
                 )
                 response.raise_for_status()
                 return response.json()
@@ -605,7 +605,7 @@ def api_generate():
                         
                         # Invoke the plugin
                         try:
-                            plugin_result = plugin_api.invoke_plugin(plugin_id, plugin_input)
+                            plugin_result = plugin_api.invoke_plugin(plugin_id, plugin_input, timeout)
                             
                             # Generate follow-up prompt for LLM to process plugin result
                             follow_up_prompt = llm_protocol.create_plugin_result_prompt(
@@ -1074,7 +1074,9 @@ def api_plugin_invoke():
         if plugin not in CURRENT_REQUEST['plugins']:
             CURRENT_REQUEST['plugins'].append(plugin)
 
-        result = plugin_api.invoke_plugin(plugin, input_data)
+        # Get timeout from request data if provided, use default user setting
+        timeout = data.get('timeout', 180)
+        result = plugin_api.invoke_plugin(plugin, input_data, timeout)
         return jsonify({'success': True, 'response': result.get('response', ''), 'request_id': req_id})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
