@@ -512,7 +512,7 @@ class LibreAssistantApp {
         `;
 
         try {
-            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
             const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -642,7 +642,7 @@ class LibreAssistantApp {
 
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
-        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
 
         try {
             const response = await fetch(`${backendUrl}/api/download`, {
@@ -684,7 +684,7 @@ class LibreAssistantApp {
 
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
-        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
 
         try {
             const response = await fetch(`${backendUrl}/api/delete`, {
@@ -727,7 +727,7 @@ class LibreAssistantApp {
     async showModelInfo(modelName) {
         const backendUrl = 'http://localhost:5000'; // Use Flask backend
         const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
-        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
 
         try {
             const response = await fetch(`${backendUrl}/api/info/${modelName}?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
@@ -821,7 +821,7 @@ class LibreAssistantApp {
         modelSelect.disabled = true;
 
         try {
-            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
             const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -924,7 +924,7 @@ class LibreAssistantApp {
         modelSelect.disabled = true;
 
         try {
-            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
             const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -1007,7 +1007,7 @@ class LibreAssistantApp {
 
         try {
             // Send the full chat history to the backend
-            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 30;
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
             const response = await fetch(`${backendUrl}/api/generate`, {
                 method: 'POST',
                 headers: {
