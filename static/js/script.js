@@ -1476,7 +1476,7 @@ class LibreAssistantApp {
     }
 
     // Show response in the response box with enhanced formatting
-    showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error}) {
+    showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error, rawData}) {
         const responseBox = document.getElementById('response-box');
         if (!responseBox) return;
         
@@ -1507,8 +1507,23 @@ class LibreAssistantApp {
             content += '</div>';
         }
         
-        // Response content
-        content += `<div class="response-text">${text || 'No response received'}</div>`;
+        // Response content with unique ID for potential raw data toggle
+        const responseId = 'response-' + Date.now();
+        content += `<div class="response-text" id="${responseId}" style="white-space: pre-wrap; line-height: 1.6;">${text || 'No response received'}</div>`;
+        
+        // Add toggle for raw JSON if rawData is provided
+        if (rawData) {
+            content += `
+                <div class="response-controls" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+                    <button class="btn btn-link btn-sm" onclick="toggleRawData('${responseId}')" style="color: #6c757d; font-size: 0.8rem; text-decoration: none; padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 4px; background: #f8f9fa;">
+                        <i class="fas fa-code"></i> View Raw JSON
+                    </button>
+                    <div id="${responseId}-raw" class="raw-data" style="display: none; margin-top: 0.5rem; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.8rem; white-space: pre; max-height: 400px; overflow-y: auto; color: #495057;">
+                        ${JSON.stringify(rawData, null, 2)}
+                    </div>
+                </div>
+            `;
+        }
         
         responseBox.innerHTML = content;
     }
@@ -2315,6 +2330,14 @@ function formatLogLevel(level) {
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
     return date.toISOString().replace('T', ' ').substring(0, 19);
+}
+
+// Global function to toggle raw data display
+function toggleRawData(responseId) {
+    const rawDataElement = document.getElementById(responseId + '-raw');
+    if (rawDataElement) {
+        rawDataElement.style.display = rawDataElement.style.display === 'none' ? 'block' : 'none';
+    }
 }
 
 // Initialize the application when DOM is ready
