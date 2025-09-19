@@ -174,12 +174,12 @@
                 <div id="catalogue-view" class="view">
                     <header class="view-header">
                         <h1><i class="fas fa-puzzle-piece"></i> Plugin Catalogue</h1>
-                        <p>Manage, enable, and configure LibreAssistant plugins</p>
+                        <p>Discover and manage LibreAssistant plugins that enhance your AI assistant with powerful capabilities</p>
                     </header>
                     <div class="view-content">
                         <div class="catalogue-controls">
                             <div class="search-filter-row">
-                                <input id="plugin-search" type="text" placeholder="Search plugins..." class="search-input">
+                                <input id="plugin-search" type="text" placeholder="Search plugins by name or capability..." class="search-input">
                                 <select id="plugin-filter" class="filter-select">
                                     <option value="all">All Plugins</option>
                                     <option value="enabled">Enabled Only</option>
@@ -187,13 +187,13 @@
                                     <option value="running">Running</option>
                                     <option value="stopped">Stopped</option>
                                 </select>
-                                <button id="refresh-plugins" class="btn btn-primary">
+                                <button id="refresh-plugins-catalogue" class="btn btn-primary">
                                     <i class="fas fa-sync-alt"></i> Refresh
                                 </button>
                             </div>
                         </div>
                         
-                        <div class="catalogue-list" id="catalogue-list">
+                        <div class="catalogue-grid" id="catalogue-list">
                             <div class="loading-plugins">
                                 <i class="fas fa-spinner fa-spin"></i>
                                 <span>Loading plugins...</span>
@@ -549,5 +549,331 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
     <script src="{{ url_for('static', filename='js/markdown-utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <!-- Enhanced Plugin Catalogue Styles -->
+    <style>
+        .catalogue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .plugin-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plugin-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .plugin-card.enabled {
+            border-color: #27ae60;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fff9 100%);
+        }
+
+        .plugin-card.disabled {
+            border-color: #e74c3c;
+            background: linear-gradient(145deg, #ffffff 0%, #fff8f8 100%);
+            opacity: 0.9;
+        }
+
+        .plugin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #9b59b6, #e74c3c, #f39c12);
+            opacity: 0.8;
+        }
+
+        .plugin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .plugin-title {
+            margin: 0 0 0.5rem 0;
+            color: #2c3e50;
+            font-size: 1.3rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .plugin-author {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin: 0;
+        }
+
+        .plugin-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .plugin-status-badge.running {
+            background: #e8f5e8;
+            color: #27ae60;
+            border: 1px solid #c3e6c3;
+        }
+
+        .plugin-status-badge.stopped {
+            background: #ffebee;
+            color: #e74c3c;
+            border: 1px solid #ffcdd2;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .plugin-description {
+            color: #34495e;
+            line-height: 1.5;
+            margin: 0 0 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        .plugin-capabilities {
+            margin: 1rem 0;
+        }
+
+        .capabilities-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #5d6d7e;
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .capability-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .capability-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.3rem 0.7rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: capitalize;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .plugin-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin: 1rem 0;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #6c757d;
+        }
+
+        .meta-item i {
+            color: #95a5a6;
+        }
+
+        .plugin-usage-examples {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .usage-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .usage-examples {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .usage-example {
+            font-size: 0.8rem;
+            color: #5d6d7e;
+            padding: 0.2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .usage-example::before {
+            content: '→';
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .plugin-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .plugin-btn {
+            padding: 0.7rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .plugin-btn-enable {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .plugin-btn-enable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .plugin-btn-disable {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .plugin-btn-disable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .plugin-btn-details {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .plugin-btn-details:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .plugin-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .empty-catalogue {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            color: #7f8c8d;
+        }
+
+        .empty-catalogue i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #bdc3c7;
+        }
+
+        .empty-catalogue h3 {
+            margin: 1rem 0 0.5rem 0;
+            color: #5d6d7e;
+        }
+
+        .loading-plugins {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            color: #7f8c8d;
+        }
+
+        .loading-plugins i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #3498db;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .catalogue-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .plugin-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .plugin-actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .capability-tags {
+                justify-content: flex-start;
+            }
+            
+            .plugin-meta {
+                flex-direction: column;
+                gap: 0.4rem;
+            }
+        }
+    </style>
 </body>
 </html>

@@ -17,6 +17,8 @@ from flask_cors import CORS
 from plugin_config import PluginConfigManager
 from plugin_loader import PluginLoader
 from llm_protocol import llm_protocol, LLMProtocolError
+import os
+import json
 
 # Initialize plugin_loader - this may be replaced by main.py auto-start
 plugin_loader = PluginLoader()
@@ -907,18 +909,41 @@ def api_plugins():
             is_running = plugin_obj.is_reachable() if plugin_obj else False
             status = 'running' if is_running else 'stopped'
             
-            formatted_plugins.append({
-                'name': plugin.get('name', 'Unknown'),
+            # Load manifest data for enhanced information
+            manifest_data = {}
+            if plugin_obj:
+                try:
+                    manifest_path = os.path.join(plugin_obj.path, 'plugin-manifest.json')
+                    if os.path.exists(manifest_path):
+                        with open(manifest_path, 'r') as f:
+                            manifest_data = json.load(f)
+                except Exception as e:
+                    print(f"Warning: Could not load manifest for {plugin_id}: {e}")
+            
+            # Combine plugin data with manifest data
+            plugin_info = {
+                'name': plugin.get('name') or manifest_data.get('name', 'Unknown'),
                 'id': plugin_id,
-                'description': plugin.get('description', 'No description available'),
-                'version': plugin.get('version', '1.0.0'),
+                'description': plugin.get('description') or manifest_data.get('description', 'No description available'),
+                'version': plugin.get('version') or manifest_data.get('version', '1.0.0'),
+                'author': manifest_data.get('author', 'Unknown Author'),
+                'license': manifest_data.get('license', 'Unknown'),
+                'homepage': manifest_data.get('homepage', ''),
+                'mcp_port': manifest_data.get('mcp_port', plugin_obj.mcp_port if plugin_obj else 'Unknown'),
+                'permissions': manifest_data.get('permissions', []),
+                'capabilities': manifest_data.get('capabilities', {}),
+                'config': manifest_data.get('config', {}),
                 'size': format_size(plugin.get('size', 0)),
                 'modified_at': format_datetime(plugin.get('modified_at', '')),
-                'type': plugin.get('type', 'Unknown'),
+                'type': plugin.get('type') or manifest_data.get('type', 'MCP Plugin'),
                 'raw_size': plugin.get('size', 0),
                 'status': status,
-                'running': is_running
-            })
+                'running': is_running,
+                'enabled': is_running  # For compatibility
+            }
+            
+            formatted_plugins.append(plugin_info)
+            
         return jsonify({'success': True, 'plugins': formatted_plugins})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
