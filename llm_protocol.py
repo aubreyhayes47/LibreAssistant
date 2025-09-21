@@ -115,33 +115,59 @@ class LLMProtocol:
         Parse LLM response with fallback behavior for invalid JSON/schema.
         Returns (parsed_response, error_info) where error_info is None if successful.
         """
+        original_response = response_text.strip()
+        
+        # First, try to parse as JSON to check for unknown actions
+        try:
+            response_data = json.loads(original_response)
+        except json.JSONDecodeError as e:
+            # JSON parse error - use fallback
+            self.logger.error(f"LLM protocol error: Invalid JSON: {e.msg}")
+            
+            fallback_response = {
+                "action": "message",
+                "content": {
+                    "text": response_text.strip()
+                }
+            }
+            
+            json_error = LLMProtocolError(
+                f"LLM produced invalid JSON: {e.msg} at line {e.lineno}, column {e.colno}",
+                error_type="json_parse", 
+                invalid_output=original_response
+            )
+            
+            try:
+                self.validate_response(fallback_response)
+                return fallback_response, json_error
+            except LLMProtocolError:
+                # Even fallback failed, return minimal response
+                minimal_response = {
+                    "action": "message", 
+                    "content": {
+                        "text": "I apologize, but I produced an invalid response format. Please try rephrasing your request."
+                    }
+                }
+                return minimal_response, json_error
+        
+        # JSON parsed successfully, check if it has an unknown action before schema validation
+        if isinstance(response_data, dict) and self.has_unknown_action(response_data):
+            # Return the parsed data with unknown action info - don't try to validate against schema
+            # This allows us to handle it gracefully in the caller
+            unknown_action_error = LLMProtocolError(
+                f"LLM produced unknown action '{response_data.get('action', 'unknown')}'",
+                error_type="unknown_action",
+                invalid_output=original_response,
+                details={"unknown_action": response_data.get("action", "unknown")}
+            )
+            return response_data, unknown_action_error
+        
+        # Now try full validation for known actions
         try:
             return self.parse_response(response_text), None
         except LLMProtocolError as e:
             # Log the error for debugging
             self.logger.error(f"LLM protocol error: {e.message}")
-            
-            # For JSON parse errors, try to fall back to treating as plain message
-            if e.error_type == "json_parse":
-                fallback_response = {
-                    "action": "message",
-                    "content": {
-                        "text": response_text.strip()
-                    }
-                }
-                # Validate the fallback response
-                try:
-                    self.validate_response(fallback_response)
-                    return fallback_response, e
-                except LLMProtocolError:
-                    # Even fallback failed, return minimal response
-                    minimal_response = {
-                        "action": "message", 
-                        "content": {
-                            "text": "I apologize, but I produced an invalid response format. Please try rephrasing your request."
-                        }
-                    }
-                    return minimal_response, e
             
             # For schema validation errors, return the original error without fallback
             return None, e
@@ -338,6 +364,20 @@ Remember: Your responses must be valid JSON following the exact format specified
     def is_user_message(self, parsed_response: Dict) -> bool:
         """Check if a parsed response is a user-facing message"""
         return parsed_response.get("action") == "message"
+    
+    def has_unknown_action(self, parsed_response: Dict) -> bool:
+        """Check if a parsed response has an unknown/unexpected action"""
+        action = parsed_response.get("action")
+        return action is not None and action not in ["plugin_invoke", "message"]
+    
+    def create_unknown_action_error_message(self, parsed_response: Dict) -> str:
+        """Create a user-friendly error message for unknown actions"""
+        action = parsed_response.get("action", "unknown")
+        return (
+            f"The AI model attempted to perform an unknown action '{action}'. "
+            "This suggests the model may be confused or the request was too complex. "
+            "Please try rephrasing your request more clearly, or break it into smaller, more specific tasks."
+        )
     
     def extract_plugin_call(self, parsed_response: Dict) -> Tuple[str, Any, Optional[str]]:
         """Extract plugin call details from a parsed response"""
