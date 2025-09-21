@@ -358,5 +358,20 @@ Based on this plugin result and the user's original request, you can now:
 
 Remember to respond in the required JSON format. If you need more information, invoke another plugin. If you have sufficient information, respond to the user with action "message"."""
 
+    def create_plugin_error_prompt(self, plugin_id: str, error_details: Dict, original_user_prompt: str) -> str:
+        """Create a follow-up prompt for the LLM after plugin execution fails"""
+        return f"""The user asked: "{original_user_prompt}"
+
+I attempted to invoke the {plugin_id} plugin, but it encountered an error:
+{json.dumps(error_details, indent=2)}
+
+You now have several options to handle this error gracefully:
+1. Try a different plugin that might fulfill the same purpose
+2. Provide a helpful response without the plugin data
+3. Explain to the user what went wrong and suggest alternatives
+4. If this was a temporary issue (like network timeout), you could suggest they try again
+
+Please respond using the "message" action to provide a user-friendly response that handles this error situation gracefully. Avoid showing technical error details directly to the user unless necessary."""
+
 # Global instance for use throughout the application
 llm_protocol = LLMProtocol()

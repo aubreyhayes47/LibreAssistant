@@ -739,30 +739,130 @@ def api_generate():
                             iteration_count += 1
                             
                         except requests.exceptions.Timeout as timeout_error:
-                            return jsonify({
-                                'success': False,
-                                'error': f'Plugin {plugin_id} processing timed out after {timeout} seconds.',
-                                'suggestion': 'Try using a smaller model, a simpler query, or increase the timeout in Settings.',
-                                'plugins_used': plugins_used,
-                                'request_id': req_id,
-                                'timeout_used': timeout
-                            })
+                            # Create error details for LLM to handle
+                            error_details = {
+                                'error_type': 'timeout',
+                                'plugin_id': plugin_id,
+                                'message': f'Plugin {plugin_id} processing timed out after {timeout} seconds.',
+                                'timeout_duration': timeout,
+                                'suggestion': 'This was likely due to the plugin taking too long to respond. You could try a different approach or suggest the user try again.'
+                            }
+                            
+                            # Generate follow-up prompt for LLM to handle the error
+                            error_prompt = llm_protocol.create_plugin_error_prompt(
+                                plugin_id, error_details, prompt
+                            )
+                            
+                            try:
+                                # Call LLM again to handle the error gracefully
+                                error_response = requests.post(
+                                    f"{api.base_url}/api/generate",
+                                    json={
+                                        "model": model,
+                                        "prompt": error_prompt,
+                                        "stream": False
+                                    },
+                                    timeout=timeout
+                                )
+                                error_response.raise_for_status()
+                                error_data = error_response.json()
+                                current_response = error_data.get('response', '')
+                                iteration_count += 1
+                                continue  # Continue the loop to process LLM's error handling response
+                            except Exception as llm_error:
+                                # If LLM fails to handle the error, return the original error
+                                return jsonify({
+                                    'success': False,
+                                    'error': f'Plugin {plugin_id} processing timed out after {timeout} seconds.',
+                                    'suggestion': 'Try using a smaller model, a simpler query, or increase the timeout in Settings.',
+                                    'plugins_used': plugins_used,
+                                    'request_id': req_id,
+                                    'timeout_used': timeout,
+                                    'llm_error_recovery_failed': True
+                                })
+                        
                         except requests.exceptions.ConnectionError as conn_error:
-                            return jsonify({
-                                'success': False,
-                                'error': f'Lost connection to Ollama server while processing plugin {plugin_id}.',
-                                'suggestion': 'Please ensure Ollama is still running and try again.',
-                                'plugins_used': plugins_used,
-                                'request_id': req_id,
-                                'connection_error': True
-                            })
+                            # Create error details for LLM to handle
+                            error_details = {
+                                'error_type': 'connection_error',
+                                'plugin_id': plugin_id,
+                                'message': f'Lost connection to Ollama server while processing plugin {plugin_id}.',
+                                'suggestion': 'This appears to be a connection issue. You could suggest alternatives or ask the user to try again.'
+                            }
+                            
+                            # Generate follow-up prompt for LLM to handle the error
+                            error_prompt = llm_protocol.create_plugin_error_prompt(
+                                plugin_id, error_details, prompt
+                            )
+                            
+                            try:
+                                # Call LLM again to handle the error gracefully
+                                error_response = requests.post(
+                                    f"{api.base_url}/api/generate",
+                                    json={
+                                        "model": model,
+                                        "prompt": error_prompt,
+                                        "stream": False
+                                    },
+                                    timeout=timeout
+                                )
+                                error_response.raise_for_status()
+                                error_data = error_response.json()
+                                current_response = error_data.get('response', '')
+                                iteration_count += 1
+                                continue  # Continue the loop to process LLM's error handling response
+                            except Exception as llm_error:
+                                # If LLM fails to handle the error, return the original error
+                                return jsonify({
+                                    'success': False,
+                                    'error': f'Lost connection to Ollama server while processing plugin {plugin_id}.',
+                                    'suggestion': 'Please ensure Ollama is still running and try again.',
+                                    'plugins_used': plugins_used,
+                                    'request_id': req_id,
+                                    'connection_error': True,
+                                    'llm_error_recovery_failed': True
+                                })
+                        
                         except Exception as plugin_error:
-                            return jsonify({
-                                'success': False,
-                                'error': f'Plugin {plugin_id} execution failed: {str(plugin_error)}',
-                                'plugins_used': plugins_used,
-                                'request_id': req_id
-                            })
+                            # Create error details for LLM to handle
+                            error_details = {
+                                'error_type': 'plugin_error',
+                                'plugin_id': plugin_id,
+                                'message': f'Plugin {plugin_id} execution failed: {str(plugin_error)}',
+                                'error_details': str(plugin_error),
+                                'suggestion': 'This plugin encountered an unexpected error. You could try alternative approaches or inform the user about the limitation.'
+                            }
+                            
+                            # Generate follow-up prompt for LLM to handle the error
+                            error_prompt = llm_protocol.create_plugin_error_prompt(
+                                plugin_id, error_details, prompt
+                            )
+                            
+                            try:
+                                # Call LLM again to handle the error gracefully
+                                error_response = requests.post(
+                                    f"{api.base_url}/api/generate",
+                                    json={
+                                        "model": model,
+                                        "prompt": error_prompt,
+                                        "stream": False
+                                    },
+                                    timeout=timeout
+                                )
+                                error_response.raise_for_status()
+                                error_data = error_response.json()
+                                current_response = error_data.get('response', '')
+                                iteration_count += 1
+                                continue  # Continue the loop to process LLM's error handling response
+                            except Exception as llm_error:
+                                # If LLM fails to handle the error, return the original error
+                                return jsonify({
+                                    'success': False,
+                                    'error': f'Plugin {plugin_id} execution failed: {str(plugin_error)}',
+                                    'plugins_used': plugins_used,
+                                    'request_id': req_id,
+                                    'llm_error_recovery_failed': True
+                                })
                     
                     elif llm_protocol.is_user_message(parsed_response):
                         # Handle user-facing message - this is the final response
