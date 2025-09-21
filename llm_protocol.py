@@ -196,7 +196,7 @@ CRITICAL REMINDERS:
 - You can chain multiple plugin calls to gather comprehensive information
 - Only provide final user message when you have sufficient information
 
-Remember: Your responses must be valid JSON following the exact format specified above."""
+Remember: Your responses must be valid JSON following the exact format specified above. The user message content should only include text and markdown fields. No nested schemas within the final user message payload."""
         
         return base_instructions
     
