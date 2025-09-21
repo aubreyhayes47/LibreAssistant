@@ -1008,6 +1008,7 @@ class LibreAssistantApp {
         try {
             // Send the full chat history to the backend
             const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
+            const pluginRetries = window.settingsManager ? window.settingsManager.getSetting('pluginRetries') : 2;
             const response = await fetch(`${backendUrl}/api/generate`, {
                 method: 'POST',
                 headers: {
@@ -1018,7 +1019,8 @@ class LibreAssistantApp {
                     prompt: prompt,
                     stream: false,
                     history: this.chatHistory, // send the full conversation history
-                    timeout: timeout
+                    timeout: timeout,
+                    pluginRetries: pluginRetries
                 })
             });
 
@@ -2154,6 +2156,7 @@ class SettingsManager {
             serverUrl: 'http://localhost:11434',
             apiTimeout: 180,
             maxRetries: 3,
+            pluginRetries: 2,
             theme: 'light',
             autoConnect: false,
             saveLogs: false,
@@ -2348,6 +2351,10 @@ class SettingsManager {
                 isValid = value >= 0 && value <= 10;
                 errorMessage = isValid ? '' : 'Retries must be between 0 and 10';
                 break;
+            case 'pluginRetries':
+                isValid = value >= 0 && value <= 5;
+                errorMessage = isValid ? '' : 'Plugin retries must be between 0 and 5';
+                break;
             case 'modelCacheSize':
                 isValid = !value || (value >= 100 && value <= 10000);
                 errorMessage = isValid ? '' : 'Cache size must be between 100 and 10000 MB';
@@ -2410,7 +2417,7 @@ class SettingsManager {
             const camelKey = this.kebabToCamel(key);
             if (key === 'autoConnect' || key === 'saveLogs') {
                 newSettings[camelKey] = true; // Checkbox is only in FormData if checked
-            } else if (key === 'apiTimeout' || key === 'maxRetries' || key === 'modelCacheSize') {
+            } else if (key === 'apiTimeout' || key === 'maxRetries' || key === 'pluginRetries' || key === 'modelCacheSize') {
                 newSettings[camelKey] = parseInt(value, 10);
             } else {
                 newSettings[camelKey] = value;

@@ -735,90 +735,122 @@ def api_generate():
                         if plugin_id not in CURRENT_REQUEST['plugins']:
                             CURRENT_REQUEST['plugins'].append(plugin_id)
                         
-                        # Invoke the plugin
+                        # Invoke the plugin with retry logic  
+                        plugin_retries = data.get('pluginRetries', 2)  # Default to 2 retries
+                        retry_count = 0
+                        plugin_success = False
+                        plugin_result = None
+                        execution_time_ms = None
+                        last_error = None
+                        
                         try:
-                            start_time = time.time()
-                            plugin_result = plugin_api.invoke_plugin(plugin_id, plugin_input, timeout)
-                            execution_time_ms = (time.time() - start_time) * 1000
-                            
-                            # Update invocation result in tracker
-                            plugin_tracker.update_invocation_result(
-                                req_id, invocation.invocation_index, True, 
-                                plugin_result, None, execution_time_ms
-                            )
-                            
-                            # Generate follow-up prompt for LLM to process plugin result
-                            follow_up_prompt = llm_protocol.create_plugin_result_prompt(
-                                plugin_id, plugin_result, prompt
-                            )
-                            
-                            # Call LLM again to process plugin result
-                            follow_up_response = requests.post(
-                                f"{api.base_url}/api/generate",
-                                json={
-                                    "model": model,
-                                    "prompt": follow_up_prompt,
-                                    "stream": False  # Use non-streaming for plugin result processing
-                                },
-                                timeout=timeout  # Use same timeout as original request
-                            )
-                            follow_up_response.raise_for_status()
-                            follow_up_data = follow_up_response.json()
-                            current_response = follow_up_data.get('response', '')
-                            iteration_count += 1
-                            
-                        except requests.exceptions.Timeout as timeout_error:
-                            # Record the timeout failure
-                            plugin_tracker.update_invocation_result(
-                                req_id, invocation.invocation_index, False, 
-                                None, f"Plugin timeout after {timeout} seconds", None
-                            )
-                            
-                            # Create error details for LLM to handle
-                            error_details = {
-                                'error_type': 'timeout',
-                                'plugin_id': plugin_id,
-                                'message': f'Plugin {plugin_id} processing timed out after {timeout} seconds.',
-                                'timeout_duration': timeout,
-                                'suggestion': 'This was likely due to the plugin taking too long to respond. You could try a different approach or suggest the user try again.'
-                            }
-                            
-                            # Get current plugins used for error response
-                            plugins_used = plugin_tracker.get_plugins_used_list(req_id)
-                            
-                            # Generate follow-up prompt for LLM to handle the error
-                            error_prompt = llm_protocol.create_plugin_error_prompt(
-                                plugin_id, error_details, prompt
-                            )
-                            
-                            try:
-                                # Call LLM again to handle the error gracefully
-                                error_response = requests.post(
-                                    f"{api.base_url}/api/generate",
-                                    json={
-                                        "model": model,
-                                        "prompt": error_prompt,
-                                        "stream": False
-                                    },
-                                    timeout=timeout
+                            while retry_count <= plugin_retries and not plugin_success:
+                                try:
+                                    start_time = time.time()
+                                    plugin_result = plugin_api.invoke_plugin(plugin_id, plugin_input, timeout)
+                                    execution_time_ms = (time.time() - start_time) * 1000
+                                    plugin_success = True
+                                    
+                                    # Update invocation result in tracker
+                                    plugin_tracker.update_invocation_result(
+                                        req_id, invocation.invocation_index, True, 
+                                        plugin_result, None, execution_time_ms
+                                    )
+                                    
+                                    # Generate follow-up prompt for LLM to process plugin result
+                                    follow_up_prompt = llm_protocol.create_plugin_result_prompt(
+                                        plugin_id, plugin_result, prompt
+                                    )
+                                    
+                                    # Call LLM again to process plugin result
+                                    follow_up_response = requests.post(
+                                        f"{api.base_url}/api/generate",
+                                        json={
+                                            "model": model,
+                                            "prompt": follow_up_prompt,
+                                            "stream": False  # Use non-streaming for plugin result processing
+                                        },
+                                        timeout=timeout  # Use same timeout as original request
+                                    )
+                                    follow_up_response.raise_for_status()
+                                    follow_up_data = follow_up_response.json()
+                                    current_response = follow_up_data.get('response', '')
+                                    iteration_count += 1
+                                    break  # Success, exit retry loop
+                                    
+                                except requests.exceptions.Timeout as timeout_error:
+                                    retry_count += 1
+                                    last_error = timeout_error
+                                    error_msg = f"Plugin timeout after {timeout} seconds (attempt {retry_count}/{plugin_retries + 1})"
+                                    
+                                    if retry_count <= plugin_retries:
+                                        # Still have retries left, wait with exponential backoff
+                                        import time
+                                        backoff_delay = min(2 ** (retry_count - 1), 8)  # Max 8 seconds
+                                        time.sleep(backoff_delay)
+                                        continue
+                                    else:
+                                        # Final timeout failure after all retries, break out of retry loop
+                                        break
+                                        
+                            # Handle final timeout failure if all retries exhausted
+                            if not plugin_success:
+                                # Record the timeout failure
+                                plugin_tracker.update_invocation_result(
+                                    req_id, invocation.invocation_index, False, 
+                                    None, f"Plugin timeout after {timeout} seconds (all {plugin_retries + 1} attempts failed)", None
                                 )
-                                error_response.raise_for_status()
-                                error_data = error_response.json()
-                                current_response = error_data.get('response', '')
-                                iteration_count += 1
-                                continue  # Continue the loop to process LLM's error handling response
-                            except Exception as llm_error:
-                                # If LLM fails to handle the error, return the original error
-                                return jsonify({
-                                    'success': False,
-                                    'error': f'Plugin {plugin_id} processing timed out after {timeout} seconds.',
-                                    'suggestion': 'Try using a smaller model, a simpler query, or increase the timeout in Settings.',
-                                    'plugins_used': plugins_used,
-                                    'plugin_count': len(plugins_used),
-                                    'request_id': req_id,
-                                    'timeout_used': timeout,
-                                    'llm_error_recovery_failed': True
-                                })
+                                
+                                # Get partial results from successful plugins so far
+                                plugins_used = plugin_tracker.get_plugins_used_list(req_id)
+                                successful_plugins = [p for p in plugins_used if p.get('success', False)]
+                                
+                                # Create error details for LLM to handle
+                                error_details = {
+                                    'error_type': 'timeout',
+                                    'plugin_id': plugin_id,
+                                    'message': f'Plugin {plugin_id} processing timed out after {plugin_retries + 1} attempts.',
+                                    'timeout_duration': timeout,
+                                    'retry_count': plugin_retries + 1,
+                                    'suggestion': 'This was likely due to the plugin taking too long to respond. You could try a different approach or suggest the user try again.'
+                                }
+                                
+                                # Generate follow-up prompt for LLM to handle the error
+                                error_prompt = llm_protocol.create_plugin_error_prompt(
+                                    plugin_id, error_details, prompt
+                                )
+                                
+                                try:
+                                    # Call LLM again to handle the error gracefully
+                                    error_response = requests.post(
+                                        f"{api.base_url}/api/generate",
+                                        json={
+                                            "model": model,
+                                            "prompt": error_prompt,
+                                            "stream": False
+                                        },
+                                        timeout=timeout
+                                    )
+                                    error_response.raise_for_status()
+                                    error_data = error_response.json()
+                                    current_response = error_data.get('response', '')
+                                    iteration_count += 1
+                                    continue  # Continue the loop to process LLM's error handling response
+                                except Exception as llm_error:
+                                    # If LLM fails to handle the error, return the original error with partial results
+                                    return jsonify({
+                                        'success': False,
+                                        'error': f'Plugin {plugin_id} processing timed out after {plugin_retries + 1} attempts ({timeout} seconds each).',
+                                        'suggestion': 'Try using a smaller model, a simpler query, or increase the timeout in Settings.',
+                                        'plugins_used': plugins_used,
+                                        'plugin_count': len(plugins_used),
+                                        'successful_plugins': successful_plugins,
+                                        'partial_results_available': len(successful_plugins) > 0,
+                                        'request_id': req_id,
+                                        'timeout_used': timeout,
+                                        'retry_count': plugin_retries + 1,
+                                        'llm_error_recovery_failed': True
+                                    })
                         
                         except requests.exceptions.ConnectionError as conn_error:
                             # Record the connection failure
@@ -826,6 +858,10 @@ def api_generate():
                                 req_id, invocation.invocation_index, False, 
                                 None, "Connection error to Ollama server", None
                             )
+                            
+                            # Get partial results from successful plugins so far
+                            plugins_used = plugin_tracker.get_plugins_used_list(req_id)
+                            successful_plugins = [p for p in plugins_used if p.get('success', False)]
                             
                             # Create error details for LLM to handle
                             error_details = {
@@ -835,9 +871,6 @@ def api_generate():
                                 'suggestion': 'This appears to be a connection issue. You could suggest alternatives or ask the user to try again.'
                             }
                             
-                            # Get current plugins used for error response
-                            plugins_used = plugin_tracker.get_plugins_used_list(req_id)
-                            
                             # Generate follow-up prompt for LLM to handle the error
                             error_prompt = llm_protocol.create_plugin_error_prompt(
                                 plugin_id, error_details, prompt
@@ -860,16 +893,17 @@ def api_generate():
                                 iteration_count += 1
                                 continue  # Continue the loop to process LLM's error handling response
                             except Exception as llm_error:
-                                # If LLM fails to handle the error, return the original error
+                                # If LLM fails to handle the error, return the original error with partial results
                                 return jsonify({
                                     'success': False,
                                     'error': f'Lost connection to Ollama server while processing plugin {plugin_id}.',
                                     'suggestion': 'Please ensure Ollama is still running and try again.',
                                     'plugins_used': plugins_used,
                                     'plugin_count': len(plugins_used),
+                                    'successful_plugins': successful_plugins,
+                                    'partial_results_available': len(successful_plugins) > 0,
                                     'request_id': req_id,
-                                    'connection_error': True,
-                                    'llm_error_recovery_failed': True
+                                    'connection_error': True
                                 })
                         
                         except Exception as plugin_error:
