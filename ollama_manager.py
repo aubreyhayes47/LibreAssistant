@@ -649,6 +649,30 @@ def api_generate():
                     # If there was a parse error but we have a fallback response, log it for debugging
                     if parse_error:
                         logger.warning(f"LLM response parsing issue (using fallback): {parse_error.message}")
+                        
+                        # Handle unknown action error specifically
+                        if parse_error.error_type == "unknown_action":
+                            # Log the unknown action for developer troubleshooting
+                            unknown_action = parse_error.details.get("unknown_action", "unknown")
+                            logger.warning(f"LLM produced unknown action '{unknown_action}' for request {req_id}. Full response: {parsed_response}")
+                            
+                            # Create user-friendly error message
+                            error_message = llm_protocol.create_unknown_action_error_message(parsed_response)
+                            
+                            return jsonify({
+                                'success': False,
+                                'error': error_message,
+                                'technical_details': {
+                                    'error_type': 'unknown_action',
+                                    'unknown_action': unknown_action,
+                                    'full_response': parsed_response
+                                },
+                                'suggestion': 'Try rephrasing your request or breaking it into smaller, more specific tasks.',
+                                'plugins_used': plugins_used,
+                                'plugin_count': len(plugins_used),
+                                'request_id': req_id
+                            }), 400
+                        
                         # If this was the initial response and we have a parse error, return early with the fallback
                         if iteration_count == 0 and parse_error.error_type == "json_parse":
                             text, markdown = llm_protocol.extract_user_message(parsed_response)
@@ -918,21 +942,24 @@ def api_generate():
                         return jsonify(response_data)
                     
                     else:
-                        # Fallback for unexpected response format
+                        # Fallback for other unexpected response formats
                         plugins_used = plugin_tracker.get_plugins_used_list(req_id)
+                        logger.warning(f"LLM produced unexpected response format for request {req_id}. Response: {parsed_response}")
+                        
                         response_data = {
-                            'success': True,
-                            'response': current_response,
-                            'schema_error': 'Unexpected response format',
+                            'success': False,
+                            'error': 'The AI model produced an unexpected response format. This usually indicates the model is confused or the request was too complex.',
+                            'technical_details': {
+                                'error_type': 'unexpected_format',
+                                'full_response': parsed_response
+                            },
+                            'suggestion': 'Try rephrasing your request more clearly or using a different model.',
+                            'plugins_used': plugins_used,
+                            'plugin_count': len(plugins_used),
                             'request_id': req_id
                         }
                         
-                        # Add plugin information if any were used
-                        if plugins_used:
-                            response_data['plugins_used'] = plugins_used
-                            response_data['plugin_count'] = len(plugins_used)
-                        
-                        return jsonify(response_data)
+                        return jsonify(response_data), 400
                 
                 # If we hit max iterations, return with warning
                 plugins_used = plugin_tracker.get_plugins_used_list(req_id)
