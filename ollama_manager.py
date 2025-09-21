@@ -12,6 +12,7 @@ import uuid
 import time
 import logging
 from datetime import datetime
+import hashlib
 
 
 from flask import Flask, request, jsonify
@@ -38,6 +39,40 @@ def set_plugin_loader(loader):
     """Allow main.py to set the plugin_loader instance after auto-start"""
     global plugin_loader
     plugin_loader = loader
+
+
+def create_plugin_call_hash(plugin_id: str, plugin_input: dict) -> str:
+    """Create a hash to identify unique plugin calls based on plugin ID and input parameters"""
+    call_data = {
+        'plugin_id': plugin_id,
+        'input': plugin_input
+    }
+    # Create deterministic hash of the plugin call
+    call_str = json.dumps(call_data, sort_keys=True)
+    return hashlib.md5(call_str.encode()).hexdigest()
+
+
+def is_duplicate_plugin_call(plugins_used: list, plugin_id: str, plugin_input: dict) -> bool:
+    """
+    Check if this plugin call is a consecutive duplicate of the previous call.
+    Returns True if this exact plugin call (ID + input) was the last one invoked.
+    """
+    if not plugins_used:
+        return False
+    
+    # Get the last plugin call
+    last_call = plugins_used[-1]
+    last_plugin_id = last_call.get('id')
+    last_plugin_input = last_call.get('input')
+    
+    # Check if this is the exact same call as the previous one
+    if last_plugin_id == plugin_id:
+        # Create hashes to compare input parameters deterministically
+        current_hash = create_plugin_call_hash(plugin_id, plugin_input)
+        last_hash = create_plugin_call_hash(last_plugin_id, last_plugin_input)
+        return current_hash == last_hash
+    
+    return False
 
 
 
@@ -636,6 +671,38 @@ def api_generate():
                     if llm_protocol.is_plugin_invocation(parsed_response):
                         # Handle plugin invocation
                         plugin_id, plugin_input, reason = llm_protocol.extract_plugin_call(parsed_response)
+                        
+                        # Check for consecutive duplicate plugin calls
+                        if is_duplicate_plugin_call(plugins_used, plugin_id, plugin_input):
+                            logger.warning(f"Detected consecutive duplicate plugin call: {plugin_id} with same input parameters in request {req_id}")
+                            
+                            # Create user-friendly error message about the duplicate call
+                            duplicate_error_msg = (
+                                f"The assistant attempted to call the same plugin ('{plugin_id}') with identical "
+                                "parameters consecutively, which suggests it may be stuck in a loop. "
+                                "This has been prevented to avoid wasting resources."
+                            )
+                            
+                            # Include suggestion based on plugins used so far
+                            suggestion = "Try rephrasing your request or breaking it into smaller, more specific tasks."
+                            if len(plugins_used) > 0:
+                                plugin_names = [p['id'] for p in plugins_used]
+                                suggestion = f"The assistant was able to use {len(plugins_used)} plugin(s): {', '.join(plugin_names)}. " + suggestion
+                            
+                            return jsonify({
+                                'success': False,
+                                'error': duplicate_error_msg,
+                                'suggestion': suggestion,
+                                'plugins_used': plugins_used,
+                                'plugin_count': len(plugins_used),
+                                'request_id': req_id,
+                                'error_type': 'duplicate_plugin_call',
+                                'duplicate_plugin': {
+                                    'id': plugin_id,
+                                    'input': plugin_input,
+                                    'reason': reason
+                                }
+                            })
                         
                         # Track plugin access
                         if plugin_id not in CURRENT_REQUEST['plugins']:
