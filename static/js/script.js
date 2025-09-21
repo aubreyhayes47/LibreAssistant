@@ -1449,6 +1449,15 @@ class LibreAssistantApp {
                     // Extract user-friendly content from the response
                     let displayText = data.response;
                     let responseRawData = null;
+                    let pluginInfo = null;
+                    
+                    // Handle enhanced plugin tracking from refactored prompts
+                    if (data.plugins_used && Array.isArray(data.plugins_used)) {
+                        pluginInfo = {
+                            plugins: data.plugins_used,
+                            count: data.plugin_count || data.plugins_used.length
+                        };
+                    }
                     
                     // If the response looks like JSON, try to parse it for better content
                     if (typeof displayText === 'string' && 
@@ -1476,15 +1485,35 @@ class LibreAssistantApp {
                         }
                     }
                     
+                    // Prepare plugin display information
+                    let pluginDisplay = null;
+                    let pluginReason = null;
+                    
+                    if (pluginInfo && pluginInfo.plugins.length > 0) {
+                        if (pluginInfo.plugins.length === 1) {
+                            const plugin = pluginInfo.plugins[0];
+                            pluginDisplay = plugin.id || plugin;
+                            pluginReason = plugin.reason || 'Plugin execution';
+                        } else {
+                            pluginDisplay = `${pluginInfo.count} plugins`;
+                            pluginReason = `Used: ${pluginInfo.plugins.map(p => p.id || p).join(', ')}`;
+                        }
+                    } else if (data.plugin_used) {
+                        // Fallback to legacy plugin info
+                        pluginDisplay = data.plugin_used;
+                        pluginReason = data.plugin_reason;
+                    }
+                    
                     this.showResponse({
                         text: displayText,
                         markdown: data.markdown,
-                        plugin_used: data.plugin_used,
-                        plugin_reason: data.plugin_reason,
+                        plugin_used: pluginDisplay,
+                        plugin_reason: pluginReason,
                         schema_used: useSchema,
                         schema_error: data.schema_error,
                         warning: data.warning,
-                        rawData: responseRawData
+                        rawData: responseRawData,
+                        pluginInfo: pluginInfo
                     });
                     // Refresh plugin pills to show any newly accessed plugins
                     this.setupPluginPills();
@@ -1508,7 +1537,7 @@ class LibreAssistantApp {
     }
 
     // Enhanced extractMainContent function for robust response parsing
-    // Handles nested JSON structures and various response patterns
+    // Handles nested JSON structures, structured prompts, and various response patterns
     extractMainContent(data) {
         // Handle null/undefined
         if (data == null) return null;
@@ -1531,11 +1560,15 @@ class LibreAssistantApp {
             return data.map(item => this.extractMainContent(item)).filter(Boolean).join('\n');
         }
         
+        // Handle improved structured responses from refactored prompts
+        const structuredContent = this.extractFromStructuredResponse(data);
+        if (structuredContent) return structuredContent;
+        
         // Recursive search for common text fields at all depths
         const textContent = this.findTextContentRecursively(data);
         if (textContent) return textContent;
         
-        // Handle known patterns
+        // Handle known patterns (including JSON schema response patterns)
         const knownPattern = this.handleKnownPatterns(data);
         if (knownPattern) return knownPattern;
         
@@ -1560,14 +1593,72 @@ class LibreAssistantApp {
         return null;
     }
 
-    // Helper function to recursively search for text content
+    // Extract content from structured responses that use section markers
+    // This handles responses from the refactored prompt construction
+    extractFromStructuredResponse(data) {
+        // Check for structured plugin response with section markers
+        if (typeof data === 'string' && data.includes('[USER REQUEST]') && data.includes('[PLUGIN OUTPUT]')) {
+            // This looks like a structured prompt - extract the meaningful parts
+            const sections = this.parseStructuredSections(data);
+            if (sections.userRequest && sections.pluginOutput) {
+                return `User asked: ${sections.userRequest}\n\nPlugin result: ${sections.pluginOutput}`;
+            }
+        }
+        
+        // Check for enhanced plugin tracking data
+        if (data.plugins_used && Array.isArray(data.plugins_used) && data.response) {
+            let content = data.response;
+            if (data.plugins_used.length > 0) {
+                content += `\n\nPlugins used: ${data.plugins_used.map(p => p.id || p).join(', ')}`;
+            }
+            return content;
+        }
+        
+        // Check for plugin result summaries
+        if (data.plugin_summary && data.raw_data) {
+            return data.plugin_summary;
+        }
+        
+        return null;
+    }
+    
+    // Parse structured sections from prompt responses
+    parseStructuredSections(text) {
+        const sections = {};
+        
+        // Extract user request
+        const userMatch = text.match(/\[USER REQUEST\]\s*=+\s*(.*?)\s*=+\s*\[/s);
+        if (userMatch) {
+            sections.userRequest = userMatch[1].trim();
+        }
+        
+        // Extract plugin output summary (before raw data)
+        const outputMatch = text.match(/\[PLUGIN OUTPUT\]\s*=+\s*(.*?)\s*---\s*Raw Data/s);
+        if (outputMatch) {
+            sections.pluginOutput = outputMatch[1].trim();
+        }
+        
+        // Extract error details if present
+        const errorMatch = text.match(/\[ERROR DETAILS\]\s*=+\s*(.*?)\s*---\s*Technical Details/s);
+        if (errorMatch) {
+            sections.errorDetails = errorMatch[1].trim();
+        }
+        
+        return sections;
+    }
+
+    // Helper function to recursively search for text content (enhanced for plugin responses)
     findTextContentRecursively(obj, visited = new WeakSet()) {
         // Prevent infinite recursion
         if (visited.has(obj)) return null;
         visited.add(obj);
         
         // Common text field names to search for (in order of preference)
-        const textFields = ['text', 'content', 'message', 'response', 'description', 'body', 'value'];
+        // Enhanced to include plugin-related fields from refactored prompts
+        const textFields = [
+            'text', 'content', 'message', 'response', 'description', 'body', 'value',
+            'plugin_summary', 'user_message', 'assistant_response', 'summary'
+        ];
         
         // First, check direct properties
         for (const field of textFields) {
@@ -1589,9 +1680,9 @@ class LibreAssistantApp {
         return null;
     }
 
-    // Handle known response patterns
+    // Handle known response patterns (enhanced for improved LLM responses)
     handleKnownPatterns(data) {
-        // Pattern: { action: 'message', content: { text: ... } }
+        // Pattern: { action: 'message', content: { text: ... } } - Standard JSON schema response
         if (data.action === 'message' && data.content && data.content.text) {
             return data.content.text;
         }
@@ -1599,6 +1690,15 @@ class LibreAssistantApp {
         // Pattern: { action: 'message', content: 'direct text' }
         if (data.action === 'message' && typeof data.content === 'string') {
             return data.content;
+        }
+        
+        // Pattern: Enhanced plugin response with metadata
+        if (data.action === 'message' && data.content && data.plugin_metadata) {
+            let response = data.content.text || data.content;
+            if (data.plugin_metadata.plugins_used) {
+                response += `\n\nPlugins used: ${data.plugin_metadata.plugins_used.join(', ')}`;
+            }
+            return response;
         }
         
         // Pattern: { type: 'response', data: { content: { text: ... } } }
@@ -1610,6 +1710,23 @@ class LibreAssistantApp {
         if (data.success && data.data && typeof data.data === 'object') {
             const nested = this.findTextContentRecursively(data.data);
             if (nested) return nested;
+        }
+        
+        // Pattern: Response with plugin tracking information
+        if (data.response && data.plugins_used) {
+            let content = data.response;
+            if (data.plugins_used && data.plugins_used.length > 0) {
+                content += `\n\n🔌 Plugins used: ${data.plugins_used.map(p => p.id || p).join(', ')}`;
+                if (data.plugin_count) {
+                    content += ` (${data.plugin_count} total)`;
+                }
+            }
+            return content;
+        }
+        
+        // Pattern: Error response with helpful context
+        if (data.error && data.llm_error_recovery_failed) {
+            return `Error: ${data.error}\n\nThe AI assistant attempted to handle this error but was unable to provide a recovery response.`;
         }
         
         return null;
@@ -1704,7 +1821,7 @@ class LibreAssistantApp {
     }
 
     // Show response in the response box with enhanced formatting
-    showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error, warning, rawData}) {
+    showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error, warning, rawData, pluginInfo}) {
         const responseBox = document.getElementById('response-box');
         if (!responseBox) return;
         
@@ -1735,16 +1852,41 @@ class LibreAssistantApp {
             </div>`;
         }
         
-        // Plugin usage indicator
+        // Enhanced plugin usage indicator
         if (plugin_used) {
-            content += `<div class="plugin-indicator"><i class="fas fa-plug"></i> <strong>Plugin Used:</strong> ${plugin_used}`;
-            if (plugin_reason) content += ` - ${plugin_reason}`;
-            content += '</div>';
+            if (pluginInfo && pluginInfo.plugins.length > 1) {
+                // Multiple plugins used
+                content += `<div class="plugin-indicator">
+                    <i class="fas fa-plug"></i> <strong>Plugins Used:</strong> ${plugin_used}`;
+                if (plugin_reason) content += ` - ${plugin_reason}`;
+                content += `
+                    <div class="plugin-details" style="margin-top: 0.5rem; font-size: 0.9em; color: #6c757d;">
+                        ${pluginInfo.plugins.map(p => {
+                            const name = p.id || p;
+                            const reason = p.reason ? ` (${p.reason})` : '';
+                            return `• ${name}${reason}`;
+                        }).join('<br>')}
+                    </div>
+                </div>`;
+            } else {
+                // Single plugin used (legacy format)
+                content += `<div class="plugin-indicator"><i class="fas fa-plug"></i> <strong>Plugin Used:</strong> ${plugin_used}`;
+                if (plugin_reason) content += ` - ${plugin_reason}`;
+                content += '</div>';
+            }
         }
         
         // Response content with unique ID for potential raw data toggle
         const responseId = 'response-' + Date.now();
-        content += `<div class="response-text" id="${responseId}" style="white-space: pre-wrap; line-height: 1.6;">${text || 'No response received'}</div>`;
+        
+        // Use markdown rendering if specified
+        let displayText = text || 'No response received';
+        if (markdown && window.renderMarkdown) {
+            displayText = window.renderMarkdown(displayText);
+            content += `<div class="response-text markdown-content" id="${responseId}" style="line-height: 1.6;">${displayText}</div>`;
+        } else {
+            content += `<div class="response-text" id="${responseId}" style="white-space: pre-wrap; line-height: 1.6;">${displayText}</div>`;
+        }
         
         // Add toggle for raw JSON if rawData is provided
         if (rawData) {
