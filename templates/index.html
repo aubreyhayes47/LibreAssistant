@@ -444,6 +444,13 @@
                                     <input type="number" id="max-retries" name="maxRetries" min="0" max="10" value="3" required>
                                     <span class="error-message" id="max-retries-error"></span>
                                 </div>
+
+                                <div class="form-group">
+                                    <label for="plugin-retries">Plugin Timeout Retries:</label>
+                                    <input type="number" id="plugin-retries" name="pluginRetries" min="0" max="5" value="2" required>
+                                    <span class="error-message" id="plugin-retries-error"></span>
+                                    <small class="help-text">Number of retry attempts when a plugin times out</small>
+                                </div>
                             </section>
 
                             <!-- App Preferences -->
