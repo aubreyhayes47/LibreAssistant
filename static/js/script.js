@@ -2567,6 +2567,186 @@ function toggleRawData(responseId) {
     }
 }
 
+// Plugin-specific functions for Brave Search
+async function braveSearch() {
+    const query = document.getElementById('brave-search-query').value.trim();
+    if (!query) return;
+
+    document.getElementById('brave-status').textContent = 'Searching...';
+    
+    try {
+        // Call Brave Search plugin directly
+        const res = await fetch('http://localhost:5103/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            // Extract main content for user-friendly display
+            const mainContent = extractMainContent(data);
+            const displayText = mainContent || 'Search completed successfully. View raw data for details.';
+            
+            if (window.ollamaApp && window.ollamaApp.showResponse) {
+                window.ollamaApp.showResponse({
+                    text: displayText, 
+                    markdown: false, 
+                    plugin_used: 'Brave Search',
+                    plugin_reason: `Search query: "${query}"`,
+                    rawData: data
+                });
+            }
+            document.getElementById('brave-modal').style.display = 'none';
+        } else {
+            document.getElementById('brave-status').textContent = 'Error: ' + (data.error || 'Search failed');
+        }
+    } catch (e) {
+        document.getElementById('brave-status').textContent = 'Error: ' + e.message;
+    }
+}
+
+// Plugin-specific functions for CourtListener
+async function courtlistenerSearch() {
+    const query = document.getElementById('cl-search-query').value.trim();
+    if (!query) return;
+
+    document.getElementById('cl-status').textContent = 'Searching...';
+    
+    try {
+        // Call CourtListener search endpoint directly
+        const res = await fetch('http://localhost:5102/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            // Extract main content for user-friendly display
+            const mainContent = extractMainContent(data);
+            const displayText = mainContent || 'Search completed successfully. View raw data for details.';
+            
+            if (window.ollamaApp && window.ollamaApp.showResponse) {
+                window.ollamaApp.showResponse({
+                    text: displayText, 
+                    markdown: false, 
+                    plugin_used: 'CourtListener',
+                    plugin_reason: `Search query: "${query}"`,
+                    rawData: data
+                });
+            }
+            document.getElementById('courtlistener-modal').style.display = 'none';
+        } else {
+            document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Search failed');
+        }
+    } catch (e) {
+        document.getElementById('cl-status').textContent = 'Error: ' + e.message;
+    }
+}
+
+async function courtlistenerOpinion() {
+    const id = document.getElementById('cl-opinion-id').value.trim();
+    if (!id) return;
+
+    document.getElementById('cl-status').textContent = 'Fetching opinion...';
+    
+    try {
+        // Call CourtListener opinion endpoint directly
+        const res = await fetch('http://localhost:5102/opinion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ opinion_id: id })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            // Extract main content for user-friendly display
+            const mainContent = extractMainContent(data);
+            const displayText = mainContent || 'Opinion fetched successfully. View raw data for details.';
+            
+            if (window.ollamaApp && window.ollamaApp.showResponse) {
+                window.ollamaApp.showResponse({
+                    text: displayText, 
+                    markdown: false, 
+                    plugin_used: 'CourtListener',
+                    plugin_reason: `Opinion ID: ${id}`,
+                    rawData: data
+                });
+            }
+            document.getElementById('courtlistener-modal').style.display = 'none';
+        } else {
+            document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Fetch failed');
+        }
+    } catch (e) {
+        document.getElementById('cl-status').textContent = 'Error: ' + e.message;
+    }
+}
+
+async function courtlistenerDocket() {
+    const id = document.getElementById('cl-docket-id').value.trim();
+    if (!id) return;
+
+    document.getElementById('cl-status').textContent = 'Fetching docket...';
+    
+    try {
+        // Call CourtListener docket endpoint directly
+        const res = await fetch('http://localhost:5102/docket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ docket_id: id })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            // Extract main content for user-friendly display
+            const mainContent = extractMainContent(data);
+            const displayText = mainContent || 'Docket fetched successfully. View raw data for details.';
+            
+            if (window.ollamaApp && window.ollamaApp.showResponse) {
+                window.ollamaApp.showResponse({
+                    text: displayText, 
+                    markdown: false, 
+                    plugin_used: 'CourtListener',
+                    plugin_reason: `Docket ID: ${id}`,
+                    rawData: data
+                });
+            }
+            document.getElementById('courtlistener-modal').style.display = 'none';
+        } else {
+            document.getElementById('cl-status').textContent = 'Error: ' + (data.error || 'Fetch failed');
+        }
+    } catch (e) {
+        document.getElementById('cl-status').textContent = 'Error: ' + e.message;
+    }
+}
+
+// Helper function to extract main content from plugin responses
+function extractMainContent(data) {
+    if (!data || !data.content) return null;
+    
+    // Try to extract meaningful content based on plugin response structure
+    if (Array.isArray(data.content)) {
+        return data.content.map(item => {
+            if (typeof item === 'string') return item;
+            if (item.title || item.name) return `${item.title || item.name}: ${item.description || item.summary || ''}`;
+            return JSON.stringify(item);
+        }).join('\n\n');
+    }
+    
+    if (typeof data.content === 'object') {
+        if (data.content.text) return data.content.text;
+        if (data.content.summary) return data.content.summary;
+        if (data.content.description) return data.content.description;
+    }
+    
+    if (typeof data.content === 'string') {
+        return data.content;
+    }
+    
+    return null;
+}
+
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.ollamaApp = new LibreAssistantApp();

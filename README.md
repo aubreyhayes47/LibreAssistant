@@ -285,11 +285,10 @@ LibreAssistant/
 │       ├── demo.js        # Demo functionality
 │       └── markdown-utils.js # Markdown utilities
 ├── templates/             # Flask templates
-│   ├── index.html         # Main web interface
+│   ├── index.html         # Main web interface (includes all requests functionality)
 │   ├── chat.html          # Standalone chat interface
 │   ├── demo.html          # Demo interface
-│   ├── plugin_catalogue.html # Plugin catalogue
-│   └── requests_screen.html # Requests screen
+│   └── plugin_catalogue.html # Plugin catalogue
 ├── plugins/               # Plugin directory
 ├── main.py                # Flask application entry point
 ├── ollama_manager.py      # Flask app and Ollama API management
