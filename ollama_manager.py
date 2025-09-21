@@ -596,7 +596,42 @@ def api_generate():
                 iteration_count = 0
                 
                 while iteration_count < max_plugin_iterations:
-                    parsed_response = llm_protocol.parse_response(current_response)
+                    # Parse response with enhanced error handling
+                    parsed_response, parse_error = llm_protocol.parse_response_with_fallback(current_response)
+                    
+                    # If parsing failed completely, return error response
+                    if parsed_response is None:
+                        error_message = llm_protocol.create_user_friendly_error_message(parse_error)
+                        return jsonify({
+                            'success': False,
+                            'error': error_message,
+                            'technical_details': {
+                                'error_type': parse_error.error_type,
+                                'error_message': parse_error.message,
+                                'invalid_output_preview': parse_error.details.get('raw_output_preview') if parse_error.details else None
+                            },
+                            'suggestion': 'Try rephrasing your request or using a different model.',
+                            'plugins_used': plugins_used,
+                            'request_id': req_id
+                        }), 400
+                    
+                    # If there was a parse error but we have a fallback response, log it for debugging
+                    if parse_error:
+                        logger.warning(f"LLM response parsing issue (using fallback): {parse_error.message}")
+                        # If this was the initial response and we have a parse error, return early with the fallback
+                        if iteration_count == 0 and parse_error.error_type == "json_parse":
+                            text, markdown = llm_protocol.extract_user_message(parsed_response)
+                            return jsonify({
+                                'success': True,
+                                'response': text,
+                                'markdown': markdown,
+                                'warning': llm_protocol.create_user_friendly_error_message(parse_error),
+                                'technical_details': {
+                                    'error_type': parse_error.error_type,
+                                    'error_message': parse_error.message
+                                },
+                                'request_id': req_id
+                            })
                     
                     if llm_protocol.is_plugin_invocation(parsed_response):
                         # Handle plugin invocation
@@ -698,9 +733,11 @@ def api_generate():
                 # If we hit max iterations, return with warning
                 logger.warning(f"Plugin iteration limit reached: {max_plugin_iterations} iterations for request {req_id}. Plugins used: {[p['id'] for p in plugins_used]}")
                 
-                parsed_response = llm_protocol.parse_response(current_response)
-                if llm_protocol.is_user_message(parsed_response):
-                    text, markdown = llm_protocol.extract_user_message(parsed_response)
+                # Try to parse the final response with error handling
+                final_parsed_response, final_parse_error = llm_protocol.parse_response_with_fallback(current_response)
+                
+                if final_parsed_response and llm_protocol.is_user_message(final_parsed_response):
+                    text, markdown = llm_protocol.extract_user_message(final_parsed_response)
                     final_response = text
                 else:
                     final_response = current_response
@@ -724,25 +761,21 @@ def api_generate():
                 })
                     
             except LLMProtocolError as e:
-                # Schema validation failed, try to extract user-friendly text if possible
-                try:
-                    # Attempt to parse as JSON and extract user message
-                    parsed_response = llm_protocol.parse_response(llm_response)
-                    if llm_protocol.is_user_message(parsed_response):
-                        text, markdown = llm_protocol.extract_user_message(parsed_response)
-                        display_response = text
-                    else:
-                        display_response = llm_response
-                except:
-                    # If extraction fails, fall back to raw response
-                    display_response = llm_response
+                # This catch block is now less likely to be reached due to enhanced error handling above,
+                # but kept as a safety net for any remaining edge cases
+                user_friendly_message = llm_protocol.create_user_friendly_error_message(e)
                 
                 return jsonify({
-                    'success': True,
-                    'response': display_response,
-                    'schema_error': str(e),
+                    'success': False,
+                    'error': user_friendly_message,
+                    'technical_details': {
+                        'error_type': e.error_type,
+                        'error_message': e.message,
+                        'invalid_output_preview': e.details.get('raw_output_preview') if e.details else None
+                    },
+                    'suggestion': 'Please try rephrasing your request or using a different model.',
                     'request_id': req_id
-                })
+                }), 400
                 
         except requests.exceptions.Timeout as e:
             return jsonify({
