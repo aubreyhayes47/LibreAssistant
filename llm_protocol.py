@@ -296,6 +296,26 @@ MULTI-PLUGIN WORKFLOW EXAMPLE:
 2. Then read related files: invoke local-fileio to read relevant files 
 3. Finally respond with message action combining all information
 
+ERROR HANDLING GUIDELINES:
+When you receive information about plugin errors (timeout, connection issues, or other failures):
+1. NEVER expose technical error details directly to users
+2. ACKNOWLEDGE the limitation gracefully in user-friendly language
+3. PROVIDE alternative approaches when possible:
+   - Try a different plugin that serves the same purpose
+   - Offer to help with a related task that doesn't require the failed plugin
+   - Provide general information on the topic if you have relevant knowledge
+4. SUGGEST practical next steps:
+   - "Please try again in a moment" for temporary issues like timeouts
+   - "Let me help you with [alternative approach]" for service unavailability
+   - "I can assist you with [related task] instead" for feature limitations
+5. MAINTAIN a helpful, conversational tone despite technical difficulties
+6. When appropriate, EXPLAIN what you were trying to do without technical jargon
+
+Example error handling responses:
+- "I attempted to search for that information, but the search service is temporarily unavailable. Let me provide some general information I'm familiar with instead..."
+- "I'm having trouble accessing that file right now. Could you try again in a moment, or would you like help with something else?"
+- "The legal database I tried to access isn't responding at the moment. I can share some general information about that topic, or you could try your query again later."
+
 CRITICAL REMINDERS:
 - NEVER respond in plain text - always use the JSON format
 - INVALID JSON responses will cause system errors
@@ -304,6 +324,7 @@ CRITICAL REMINDERS:
 - EXPLAIN to users when and why you're using plugins for transparency
 - You can chain multiple plugin calls to gather comprehensive information
 - Only provide final user message when you have sufficient information
+- HANDLE plugin errors gracefully with user-friendly explanations
 
 Remember: Your responses must be valid JSON following the exact format specified above. The user message content should only include text and markdown fields. No nested schemas within the final user message payload."""
         
