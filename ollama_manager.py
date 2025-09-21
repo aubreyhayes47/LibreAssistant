@@ -4,7 +4,10 @@ from collections import deque
 
 from typing import List, Dict, Optional
 
-# Rolling log of recent requests and their accessed plugins
+# Import the enhanced plugin usage tracker
+from plugin_usage_tracker import plugin_tracker
+
+# Keep legacy tracking for backward compatibility during transition
 RECENT_REQUESTS = deque(maxlen=20)  # Each entry: {'timestamp': ..., 'request_id': ..., 'plugins': [plugin_id, ...]}
 CURRENT_REQUEST = {'request_id': None, 'plugins': []}
 
@@ -52,27 +55,12 @@ def create_plugin_call_hash(plugin_id: str, plugin_input: dict) -> str:
     return hashlib.md5(call_str.encode()).hexdigest()
 
 
-def is_duplicate_plugin_call(plugins_used: list, plugin_id: str, plugin_input: dict) -> bool:
+def is_duplicate_plugin_call(request_id: str, plugin_id: str, plugin_input: dict) -> bool:
     """
     Check if this plugin call is a consecutive duplicate of the previous call.
     Returns True if this exact plugin call (ID + input) was the last one invoked.
     """
-    if not plugins_used:
-        return False
-    
-    # Get the last plugin call
-    last_call = plugins_used[-1]
-    last_plugin_id = last_call.get('id')
-    last_plugin_input = last_call.get('input')
-    
-    # Check if this is the exact same call as the previous one
-    if last_plugin_id == plugin_id:
-        # Create hashes to compare input parameters deterministically
-        current_hash = create_plugin_call_hash(plugin_id, plugin_input)
-        last_hash = create_plugin_call_hash(last_plugin_id, last_plugin_input)
-        return current_hash == last_hash
-    
-    return False
+    return plugin_tracker.check_consecutive_duplicate(request_id, plugin_id, plugin_input)
 
 
 
@@ -587,6 +575,11 @@ def api_generate():
 
         # Track request for plugin access monitoring
         req_id = data.get('request_id') or str(uuid.uuid4())
+        
+        # Initialize enhanced plugin tracking for this request
+        plugin_tracker.start_request_session(req_id)
+        
+        # Legacy tracking for backward compatibility
         if CURRENT_REQUEST.get('request_id') != req_id:
             # New request, archive previous
             if CURRENT_REQUEST.get('request_id') is not None:
@@ -626,13 +619,15 @@ def api_generate():
             # Parse and route the structured response with iterative plugin processing
             try:
                 current_response = llm_response
-                plugins_used = []
                 max_plugin_iterations = 5  # Prevent infinite loops
                 iteration_count = 0
                 
                 while iteration_count < max_plugin_iterations:
                     # Parse response with enhanced error handling
                     parsed_response, parse_error = llm_protocol.parse_response_with_fallback(current_response)
+                    
+                    # Get current plugins used for response formatting
+                    plugins_used = plugin_tracker.get_plugins_used_list(req_id)
                     
                     # If parsing failed completely, return error response
                     if parsed_response is None:
@@ -647,6 +642,7 @@ def api_generate():
                             },
                             'suggestion': 'Try rephrasing your request or using a different model.',
                             'plugins_used': plugins_used,
+                            'plugin_count': len(plugins_used),
                             'request_id': req_id
                         }), 400
                     
@@ -665,6 +661,8 @@ def api_generate():
                                     'error_type': parse_error.error_type,
                                     'error_message': parse_error.message
                                 },
+                                'plugins_used': plugins_used,
+                                'plugin_count': len(plugins_used),
                                 'request_id': req_id
                             })
                     
@@ -672,8 +670,8 @@ def api_generate():
                         # Handle plugin invocation
                         plugin_id, plugin_input, reason = llm_protocol.extract_plugin_call(parsed_response)
                         
-                        # Check for consecutive duplicate plugin calls
-                        if is_duplicate_plugin_call(plugins_used, plugin_id, plugin_input):
+                        # Check for consecutive duplicate plugin calls using enhanced tracker
+                        if is_duplicate_plugin_call(req_id, plugin_id, plugin_input):
                             logger.warning(f"Detected consecutive duplicate plugin call: {plugin_id} with same input parameters in request {req_id}")
                             
                             # Create user-friendly error message about the duplicate call
@@ -704,19 +702,26 @@ def api_generate():
                                 }
                             })
                         
-                        # Track plugin access
+                        # Record plugin invocation in enhanced tracker
+                        invocation = plugin_tracker.record_plugin_invocation(
+                            req_id, plugin_id, plugin_input, reason
+                        )
+                        
+                        # Legacy tracking for backward compatibility
                         if plugin_id not in CURRENT_REQUEST['plugins']:
                             CURRENT_REQUEST['plugins'].append(plugin_id)
                         
-                        plugins_used.append({
-                            'id': plugin_id,
-                            'reason': reason,
-                            'input': plugin_input
-                        })
-                        
                         # Invoke the plugin
                         try:
+                            start_time = time.time()
                             plugin_result = plugin_api.invoke_plugin(plugin_id, plugin_input, timeout)
+                            execution_time_ms = (time.time() - start_time) * 1000
+                            
+                            # Update invocation result in tracker
+                            plugin_tracker.update_invocation_result(
+                                req_id, invocation.invocation_index, True, 
+                                plugin_result, None, execution_time_ms
+                            )
                             
                             # Generate follow-up prompt for LLM to process plugin result
                             follow_up_prompt = llm_protocol.create_plugin_result_prompt(
@@ -739,6 +744,12 @@ def api_generate():
                             iteration_count += 1
                             
                         except requests.exceptions.Timeout as timeout_error:
+                            # Record the timeout failure
+                            plugin_tracker.update_invocation_result(
+                                req_id, invocation.invocation_index, False, 
+                                None, f"Plugin timeout after {timeout} seconds", None
+                            )
+                            
                             # Create error details for LLM to handle
                             error_details = {
                                 'error_type': 'timeout',
@@ -747,6 +758,9 @@ def api_generate():
                                 'timeout_duration': timeout,
                                 'suggestion': 'This was likely due to the plugin taking too long to respond. You could try a different approach or suggest the user try again.'
                             }
+                            
+                            # Get current plugins used for error response
+                            plugins_used = plugin_tracker.get_plugins_used_list(req_id)
                             
                             # Generate follow-up prompt for LLM to handle the error
                             error_prompt = llm_protocol.create_plugin_error_prompt(
@@ -776,12 +790,19 @@ def api_generate():
                                     'error': f'Plugin {plugin_id} processing timed out after {timeout} seconds.',
                                     'suggestion': 'Try using a smaller model, a simpler query, or increase the timeout in Settings.',
                                     'plugins_used': plugins_used,
+                                    'plugin_count': len(plugins_used),
                                     'request_id': req_id,
                                     'timeout_used': timeout,
                                     'llm_error_recovery_failed': True
                                 })
                         
                         except requests.exceptions.ConnectionError as conn_error:
+                            # Record the connection failure
+                            plugin_tracker.update_invocation_result(
+                                req_id, invocation.invocation_index, False, 
+                                None, "Connection error to Ollama server", None
+                            )
+                            
                             # Create error details for LLM to handle
                             error_details = {
                                 'error_type': 'connection_error',
@@ -789,6 +810,9 @@ def api_generate():
                                 'message': f'Lost connection to Ollama server while processing plugin {plugin_id}.',
                                 'suggestion': 'This appears to be a connection issue. You could suggest alternatives or ask the user to try again.'
                             }
+                            
+                            # Get current plugins used for error response
+                            plugins_used = plugin_tracker.get_plugins_used_list(req_id)
                             
                             # Generate follow-up prompt for LLM to handle the error
                             error_prompt = llm_protocol.create_plugin_error_prompt(
@@ -818,12 +842,19 @@ def api_generate():
                                     'error': f'Lost connection to Ollama server while processing plugin {plugin_id}.',
                                     'suggestion': 'Please ensure Ollama is still running and try again.',
                                     'plugins_used': plugins_used,
+                                    'plugin_count': len(plugins_used),
                                     'request_id': req_id,
                                     'connection_error': True,
                                     'llm_error_recovery_failed': True
                                 })
                         
                         except Exception as plugin_error:
+                            # Record the plugin execution failure
+                            plugin_tracker.update_invocation_result(
+                                req_id, invocation.invocation_index, False, 
+                                None, str(plugin_error), None
+                            )
+                            
                             # Create error details for LLM to handle
                             error_details = {
                                 'error_type': 'plugin_error',
@@ -832,6 +863,9 @@ def api_generate():
                                 'error_details': str(plugin_error),
                                 'suggestion': 'This plugin encountered an unexpected error. You could try alternative approaches or inform the user about the limitation.'
                             }
+                            
+                            # Get current plugins used for error response
+                            plugins_used = plugin_tracker.get_plugins_used_list(req_id)
                             
                             # Generate follow-up prompt for LLM to handle the error
                             error_prompt = llm_protocol.create_plugin_error_prompt(
@@ -860,6 +894,7 @@ def api_generate():
                                     'success': False,
                                     'error': f'Plugin {plugin_id} execution failed: {str(plugin_error)}',
                                     'plugins_used': plugins_used,
+                                    'plugin_count': len(plugins_used),
                                     'request_id': req_id,
                                     'llm_error_recovery_failed': True
                                 })
@@ -867,6 +902,7 @@ def api_generate():
                     elif llm_protocol.is_user_message(parsed_response):
                         # Handle user-facing message - this is the final response
                         text, markdown = llm_protocol.extract_user_message(parsed_response)
+                        plugins_used = plugin_tracker.get_plugins_used_list(req_id)
                         response_data = {
                             'success': True,
                             'response': text,
@@ -883,6 +919,7 @@ def api_generate():
                     
                     else:
                         # Fallback for unexpected response format
+                        plugins_used = plugin_tracker.get_plugins_used_list(req_id)
                         response_data = {
                             'success': True,
                             'response': current_response,
@@ -898,6 +935,7 @@ def api_generate():
                         return jsonify(response_data)
                 
                 # If we hit max iterations, return with warning
+                plugins_used = plugin_tracker.get_plugins_used_list(req_id)
                 logger.warning(f"Plugin iteration limit reached: {max_plugin_iterations} iterations for request {req_id}. Plugins used: {[p['id'] for p in plugins_used]}")
                 
                 # Try to parse the final response with error handling
@@ -1312,18 +1350,126 @@ def api_plugin_invoke():
 # Endpoint to get plugins accessed for the most recent request
 @app.route('/api/plugins/accessed', methods=['GET'])
 def api_plugins_accessed():
-    """Return the list of plugin IDs accessed for the current or most recent request."""
+    """Return detailed plugin usage information for the current or most recent request."""
     try:
-        # Return current request if active, else last from RECENT_REQUESTS
-        if CURRENT_REQUEST.get('request_id') and CURRENT_REQUEST['plugins']:
-            return jsonify({'request_id': CURRENT_REQUEST['request_id'], 'plugins': CURRENT_REQUEST['plugins']})
-        elif RECENT_REQUESTS:
-            last = RECENT_REQUESTS[-1]
-            return jsonify({'request_id': last['request_id'], 'plugins': last['plugins']})
-        else:
-            return jsonify({'request_id': None, 'plugins': []})
+        # Check for specific request ID parameter
+        request_id = request.args.get('request_id')
+        
+        if request_id:
+            # Get specific request session
+            session_summary = plugin_tracker.get_session_summary(request_id)
+            plugins_used = plugin_tracker.get_plugins_used_list(request_id)
+            
+            return jsonify({
+                'request_id': request_id,
+                'plugins': [p['id'] for p in plugins_used],  # Legacy format
+                'plugins_used': plugins_used,  # Enhanced format
+                'plugin_count': len(plugins_used),
+                'session_summary': session_summary
+            })
+        
+        # Get current active session if available
+        active_request_id = plugin_tracker.get_active_request_id()
+        if active_request_id:
+            plugins_used = plugin_tracker.get_plugins_used_list(active_request_id)
+            session_summary = plugin_tracker.get_session_summary(active_request_id)
+            
+            return jsonify({
+                'request_id': active_request_id,
+                'plugins': [p['id'] for p in plugins_used],  # Legacy format
+                'plugins_used': plugins_used,  # Enhanced format
+                'plugin_count': len(plugins_used),
+                'session_summary': session_summary
+            })
+        
+        # Fall back to recent sessions
+        recent_sessions = plugin_tracker.get_recent_sessions()
+        if recent_sessions:
+            last_session = recent_sessions[-1]
+            return jsonify({
+                'request_id': last_session['request_id'],
+                'plugins': last_session['plugins'],  # Legacy format
+                'plugins_used': last_session.get('summary', {}).get('plugin_details', {}),  # Enhanced format
+                'plugin_count': last_session['total_invocations'],
+                'session_summary': last_session['summary']
+            })
+        
+        # No data available
+        return jsonify({
+            'request_id': None,
+            'plugins': [],
+            'plugins_used': [],
+            'plugin_count': 0,
+            'session_summary': None
+        })
+        
     except Exception as e:
-        return jsonify({'request_id': None, 'plugins': [], 'error': str(e)})
+        return jsonify({
+            'request_id': None,
+            'plugins': [],
+            'plugins_used': [],
+            'plugin_count': 0,
+            'error': str(e)
+        })
+
+
+@app.route('/api/plugins/usage', methods=['GET'])
+def api_plugins_usage():
+    """Get detailed plugin usage analytics."""
+    try:
+        # Get recent sessions for analytics
+        recent_sessions = plugin_tracker.get_recent_sessions()
+        
+        # Calculate usage statistics
+        total_sessions = len(recent_sessions)
+        total_invocations = sum(session['total_invocations'] for session in recent_sessions)
+        
+        # Plugin popularity analysis
+        plugin_usage_count = {}
+        plugin_success_rate = {}
+        
+        for session in recent_sessions:
+            summary = session.get('summary', {})
+            plugin_details = summary.get('plugin_details', {})
+            
+            for plugin_id, details in plugin_details.items():
+                if plugin_id not in plugin_usage_count:
+                    plugin_usage_count[plugin_id] = 0
+                    plugin_success_rate[plugin_id] = {'success': 0, 'total': 0}
+                
+                plugin_usage_count[plugin_id] += len(details)
+                
+                for detail in details:
+                    plugin_success_rate[plugin_id]['total'] += 1
+                    if detail.get('success') is True:
+                        plugin_success_rate[plugin_id]['success'] += 1
+        
+        # Calculate success rates
+        for plugin_id in plugin_success_rate:
+            total = plugin_success_rate[plugin_id]['total']
+            success = plugin_success_rate[plugin_id]['success']
+            plugin_success_rate[plugin_id]['rate'] = success / total if total > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'analytics': {
+                'total_sessions': total_sessions,
+                'total_invocations': total_invocations,
+                'average_invocations_per_session': total_invocations / total_sessions if total_sessions > 0 else 0,
+                'plugin_usage_count': plugin_usage_count,
+                'plugin_success_rates': plugin_success_rate,
+                'most_used_plugins': sorted(plugin_usage_count.items(), key=lambda x: x[1], reverse=True)[:5]
+            },
+            'recent_sessions': recent_sessions
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'analytics': None,
+            'recent_sessions': []
+        })
 
 
 @app.route('/api/models')
