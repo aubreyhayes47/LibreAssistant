@@ -1,15 +1,9 @@
 
 
-from collections import deque
-
 from typing import List, Dict, Optional
 
 # Import the enhanced plugin usage tracker
 from plugin_usage_tracker import plugin_tracker
-
-# Keep legacy tracking for backward compatibility during transition
-RECENT_REQUESTS = deque(maxlen=20)  # Each entry: {'timestamp': ..., 'request_id': ..., 'plugins': [plugin_id, ...]}
-CURRENT_REQUEST = {'request_id': None, 'plugins': []}
 
 import uuid
 import time
@@ -578,18 +572,6 @@ def api_generate():
         
         # Initialize enhanced plugin tracking for this request
         plugin_tracker.start_request_session(req_id)
-        
-        # Legacy tracking for backward compatibility
-        if CURRENT_REQUEST.get('request_id') != req_id:
-            # New request, archive previous
-            if CURRENT_REQUEST.get('request_id') is not None:
-                RECENT_REQUESTS.append({
-                    'timestamp': time.time(),
-                    'request_id': CURRENT_REQUEST['request_id'],
-                    'plugins': CURRENT_REQUEST['plugins'][:]
-                })
-            CURRENT_REQUEST['request_id'] = req_id
-            CURRENT_REQUEST['plugins'] = []
 
         # Call Ollama API to generate a response
         try:
@@ -730,10 +712,6 @@ def api_generate():
                         invocation = plugin_tracker.record_plugin_invocation(
                             req_id, plugin_id, plugin_input, reason
                         )
-                        
-                        # Legacy tracking for backward compatibility
-                        if plugin_id not in CURRENT_REQUEST['plugins']:
-                            CURRENT_REQUEST['plugins'].append(plugin_id)
                         
                         # Invoke the plugin with retry logic  
                         plugin_retries = data.get('pluginRetries', 2)  # Default to 2 retries
@@ -1387,20 +1365,17 @@ def api_plugin_invoke():
         if not plugin or input_data is None:
             return jsonify({'success': False, 'error': 'Plugin and input data are required'}), 400
 
-        # Track plugin access for this request
+        # Track plugin access for this request  
         req_id = data.get('request_id') or str(uuid.uuid4())
-        if CURRENT_REQUEST.get('request_id') != req_id:
-            # New request, archive previous
-            if CURRENT_REQUEST.get('request_id') is not None:
-                RECENT_REQUESTS.append({
-                    'timestamp': time.time(),
-                    'request_id': CURRENT_REQUEST['request_id'],
-                    'plugins': CURRENT_REQUEST['plugins'][:]
-                })
-            CURRENT_REQUEST['request_id'] = req_id
-            CURRENT_REQUEST['plugins'] = []
-        if plugin not in CURRENT_REQUEST['plugins']:
-            CURRENT_REQUEST['plugins'].append(plugin)
+        
+        # Initialize plugin tracking session if not already started
+        if plugin_tracker.get_active_request_id() != req_id:
+            plugin_tracker.start_request_session(req_id)
+            
+        # Record the plugin invocation
+        plugin_tracker.record_plugin_invocation(
+            req_id, plugin, input_data, "Direct plugin invocation via API"
+        )
 
         # Get timeout from request data if provided, use default user setting
         timeout = data.get('timeout', 180)
