@@ -44,12 +44,12 @@ class PluginUsageTracker:
     def start_request_session(self, request_id: str) -> None:
         """Start a new request session for plugin tracking"""
         with self._lock:
-            # Archive previous session if it exists
-            if self._active_request_id and self._active_request_id in self._request_sessions:
-                self._archive_session(self._active_request_id)
+            # Only create new session if it doesn't already exist
+            if request_id not in self._request_sessions:
+                self._request_sessions[request_id] = []
             
+            # Update active request ID for convenience methods
             self._active_request_id = request_id
-            self._request_sessions[request_id] = []
     
     def record_plugin_invocation(
         self,
