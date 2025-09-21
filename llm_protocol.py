@@ -7,6 +7,7 @@ llm_protocol.py: JSON schema-based LLM communication protocol for LibreAssistant
 
 import json
 import os
+import logging
 from typing import Dict, List, Optional, Tuple, Any
 from jsonschema import validate, ValidationError
 
@@ -15,7 +16,12 @@ SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "llm-response.schema.json"
 
 class LLMProtocolError(Exception):
     """Exception raised for LLM protocol-related errors"""
-    pass
+    def __init__(self, message: str, error_type: str = "general", invalid_output: Optional[str] = None, details: Optional[Dict] = None):
+        self.message = message
+        self.error_type = error_type  # e.g., "json_parse", "schema_validation", "missing_field"
+        self.invalid_output = invalid_output  # The original invalid output for debugging
+        self.details = details or {}  # Additional context
+        super().__init__(message)
 
 class LLMProtocol:
     """Handles structured LLM communication with JSON schema validation"""
@@ -23,6 +29,7 @@ class LLMProtocol:
     def __init__(self, schema_path: Optional[str] = None):
         self.schema_path = schema_path or SCHEMA_PATH
         self._schema = None
+        self.logger = logging.getLogger(__name__)
     
     def _load_schema(self) -> Dict:
         """Load and cache the JSON schema"""
@@ -38,27 +45,129 @@ class LLMProtocol:
             validate(instance=response, schema=schema)
             return True
         except ValidationError as e:
-            raise LLMProtocolError(f"Invalid LLM response schema: {e.message}")
+            # Extract more specific validation error information
+            error_path = ".".join(str(p) for p in e.absolute_path) if e.absolute_path else "root"
+            validation_details = {
+                "path": error_path,
+                "failed_value": e.instance,
+                "schema_path": ".".join(str(p) for p in e.schema_path) if e.schema_path else "unknown",
+                "validator": e.validator,
+                "validator_value": e.validator_value
+            }
+            
+            raise LLMProtocolError(
+                f"Invalid LLM response schema at '{error_path}': {e.message}",
+                error_type="schema_validation",
+                details=validation_details
+            )
         except Exception as e:
-            raise LLMProtocolError(f"Schema validation error: {str(e)}")
+            raise LLMProtocolError(
+                f"Schema validation error: {str(e)}",
+                error_type="validation_error"
+            )
     
     def parse_response(self, response_text: str) -> Dict:
-        """Parse and validate LLM response text as JSON"""
+        """Parse and validate LLM response text as JSON with enhanced error handling"""
+        original_response = response_text.strip()
+        
+        # Try to parse as JSON
         try:
-            # Try to parse as JSON
-            response_data = json.loads(response_text.strip())
+            response_data = json.loads(original_response)
         except json.JSONDecodeError as e:
-            # If it's not valid JSON, treat it as a plain message
-            response_data = {
-                "action": "message",
-                "content": {
-                    "text": response_text.strip()
-                }
+            # Log the invalid JSON for debugging
+            self.logger.warning(
+                f"LLM produced invalid JSON output. Error: {e.msg} at line {e.lineno}, column {e.colno}. "
+                f"Raw output (first 500 chars): {original_response[:500]}"
+            )
+            
+            # Create detailed error information for user
+            json_error_details = {
+                "error_msg": e.msg,
+                "line": e.lineno,
+                "column": e.colno,
+                "position": e.pos,
+                "raw_output_preview": original_response[:200] + "..." if len(original_response) > 200 else original_response
             }
+            
+            # Raise detailed error instead of falling back silently
+            raise LLMProtocolError(
+                f"LLM produced invalid JSON: {e.msg} at line {e.lineno}, column {e.colno}",
+                error_type="json_parse", 
+                invalid_output=original_response,
+                details=json_error_details
+            )
         
         # Validate against schema
-        self.validate_response(response_data)
+        try:
+            self.validate_response(response_data)
+        except LLMProtocolError as e:
+            # Add the original response for debugging schema validation errors
+            e.invalid_output = original_response
+            self.logger.warning(
+                f"LLM produced JSON that failed schema validation. Error: {e.message}. "
+                f"Raw output (first 500 chars): {original_response[:500]}"
+            )
+            raise e
+            
         return response_data
+    def parse_response_with_fallback(self, response_text: str) -> Tuple[Dict, Optional[LLMProtocolError]]:
+        """
+        Parse LLM response with fallback behavior for invalid JSON/schema.
+        Returns (parsed_response, error_info) where error_info is None if successful.
+        """
+        try:
+            return self.parse_response(response_text), None
+        except LLMProtocolError as e:
+            # Log the error for debugging
+            self.logger.error(f"LLM protocol error: {e.message}")
+            
+            # For JSON parse errors, try to fall back to treating as plain message
+            if e.error_type == "json_parse":
+                fallback_response = {
+                    "action": "message",
+                    "content": {
+                        "text": response_text.strip()
+                    }
+                }
+                # Validate the fallback response
+                try:
+                    self.validate_response(fallback_response)
+                    return fallback_response, e
+                except LLMProtocolError:
+                    # Even fallback failed, return minimal response
+                    minimal_response = {
+                        "action": "message", 
+                        "content": {
+                            "text": "I apologize, but I produced an invalid response format. Please try rephrasing your request."
+                        }
+                    }
+                    return minimal_response, e
+            
+            # For schema validation errors, return the original error without fallback
+            return None, e
+            
+    def create_user_friendly_error_message(self, error: LLMProtocolError) -> str:
+        """Create a user-friendly error message based on the LLM protocol error"""
+        if error.error_type == "json_parse":
+            return (
+                "The AI model produced a response that wasn't in the expected format. "
+                "This usually happens when the model is overloaded or the request is too complex. "
+                "Please try again with a simpler request, or try using a different model."
+            )
+        elif error.error_type == "schema_validation":
+            details = error.details or {}
+            path = details.get("path", "unknown")
+            return (
+                f"The AI model's response was missing required information (field: {path}). "
+                "This can happen with complex requests. Please try rephrasing your request "
+                "or breaking it into smaller, more specific tasks."
+            )
+        else:
+            return (
+                "The AI model encountered an issue generating a proper response. "
+                "Please try again, and if the problem persists, try using a different model "
+                "or simplifying your request."
+            )
     
     def generate_system_instructions(self, available_plugins: List[Dict]) -> str:
         """Generate enhanced system instructions that expose available plugins with detailed capabilities to the LLM"""
