@@ -961,10 +961,7 @@ def plugin_catalogue():
     """Plugin catalogue interface"""
     return render_template('plugin_catalogue.html')
 
-@app.route('/requests_screen')
-def requests_screen():
-    """Requests screen interface"""
-    return render_template('requests_screen.html')
+
 
 # --- Plugin endpoints ---
 @app.route('/api/plugins')
