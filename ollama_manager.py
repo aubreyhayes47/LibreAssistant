@@ -10,6 +10,8 @@ CURRENT_REQUEST = {'request_id': None, 'plugins': []}
 
 import uuid
 import time
+import logging
+from datetime import datetime
 
 
 from flask import Flask, request, jsonify
@@ -18,6 +20,13 @@ from plugin_config import PluginConfigManager
 from plugin_loader import PluginLoader
 from llm_protocol import llm_protocol, LLMProtocolError
 import os
+
+# Configure logging for debugging and monitoring
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 import json
 
 # Initialize plugin_loader - this may be replaced by main.py auto-start
@@ -687,6 +696,8 @@ def api_generate():
                         return jsonify(response_data)
                 
                 # If we hit max iterations, return with warning
+                logger.warning(f"Plugin iteration limit reached: {max_plugin_iterations} iterations for request {req_id}. Plugins used: {[p['id'] for p in plugins_used]}")
+                
                 parsed_response = llm_protocol.parse_response(current_response)
                 if llm_protocol.is_user_message(parsed_response):
                     text, markdown = llm_protocol.extract_user_message(parsed_response)
@@ -694,10 +705,19 @@ def api_generate():
                 else:
                     final_response = current_response
                 
+                # Create user-friendly warning message
+                user_warning = f"Your request required multiple plugin calls and reached the processing limit of {max_plugin_iterations} steps. The assistant was able to use {len(plugins_used)} plugin(s) but may not have completed all necessary tasks."
+                
+                if plugins_used:
+                    plugin_names = [p['id'] for p in plugins_used]
+                    user_warning += f" Plugins used: {', '.join(plugin_names)}."
+                
+                user_warning += " Consider breaking your request into smaller, more specific tasks for better results."
+                
                 return jsonify({
                     'success': True,
                     'response': final_response,
-                    'warning': f'Reached maximum plugin iterations ({max_plugin_iterations})',
+                    'warning': user_warning,
                     'plugins_used': plugins_used,
                     'plugin_count': len(plugins_used),
                     'request_id': req_id

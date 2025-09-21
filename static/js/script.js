@@ -1483,6 +1483,7 @@ class LibreAssistantApp {
                         plugin_reason: data.plugin_reason,
                         schema_used: useSchema,
                         schema_error: data.schema_error,
+                        warning: data.warning,
                         rawData: responseRawData
                     });
                     // Refresh plugin pills to show any newly accessed plugins
@@ -1703,7 +1704,7 @@ class LibreAssistantApp {
     }
 
     // Show response in the response box with enhanced formatting
-    showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error, rawData}) {
+    showResponse({text, markdown, error, plugin_used, plugin_reason, schema_used, schema_error, warning, rawData}) {
         const responseBox = document.getElementById('response-box');
         if (!responseBox) return;
         
@@ -1725,6 +1726,13 @@ class LibreAssistantApp {
                     <i class="fas fa-check-circle"></i> <strong>Schema Validation:</strong> Response validated successfully
                 </div>`;
             }
+        }
+        
+        // Warning message display
+        if (warning) {
+            content += `<div class="schema-warning">
+                <i class="fas fa-exclamation-triangle"></i> <strong>Processing Warning:</strong> ${warning}
+            </div>`;
         }
         
         // Plugin usage indicator
