@@ -296,6 +296,26 @@ MULTI-PLUGIN WORKFLOW EXAMPLE:
 2. Then read related files: invoke local-fileio to read relevant files 
 3. Finally respond with message action combining all information
 
+ERROR HANDLING GUIDELINES:
+When you receive information about plugin errors (timeout, connection issues, or other failures):
+1. NEVER expose technical error details directly to users
+2. ACKNOWLEDGE the limitation gracefully in user-friendly language
+3. PROVIDE alternative approaches when possible:
+   - Try a different plugin that serves the same purpose
+   - Offer to help with a related task that doesn't require the failed plugin
+   - Provide general information on the topic if you have relevant knowledge
+4. SUGGEST practical next steps:
+   - "Please try again in a moment" for temporary issues like timeouts
+   - "Let me help you with [alternative approach]" for service unavailability
+   - "I can assist you with [related task] instead" for feature limitations
+5. MAINTAIN a helpful, conversational tone despite technical difficulties
+6. When appropriate, EXPLAIN what you were trying to do without technical jargon
+
+Example error handling responses:
+- "I attempted to search for that information, but the search service is temporarily unavailable. Let me provide some general information I'm familiar with instead..."
+- "I'm having trouble accessing that file right now. Could you try again in a moment, or would you like help with something else?"
+- "The legal database I tried to access isn't responding at the moment. I can share some general information about that topic, or you could try your query again later."
+
 CRITICAL REMINDERS:
 - NEVER respond in plain text - always use the JSON format
 - INVALID JSON responses will cause system errors
@@ -304,6 +324,7 @@ CRITICAL REMINDERS:
 - EXPLAIN to users when and why you're using plugins for transparency
 - You can chain multiple plugin calls to gather comprehensive information
 - Only provide final user message when you have sufficient information
+- HANDLE plugin errors gracefully with user-friendly explanations
 
 Remember: Your responses must be valid JSON following the exact format specified above. The user message content should only include text and markdown fields. No nested schemas within the final user message payload."""
         
@@ -357,6 +378,21 @@ Based on this plugin result and the user's original request, you can now:
 2. Provide a comprehensive response to the user using the "message" action
 
 Remember to respond in the required JSON format. If you need more information, invoke another plugin. If you have sufficient information, respond to the user with action "message"."""
+
+    def create_plugin_error_prompt(self, plugin_id: str, error_details: Dict, original_user_prompt: str) -> str:
+        """Create a follow-up prompt for the LLM after plugin execution fails"""
+        return f"""The user asked: "{original_user_prompt}"
+
+I attempted to invoke the {plugin_id} plugin, but it encountered an error:
+{json.dumps(error_details, indent=2)}
+
+You now have several options to handle this error gracefully:
+1. Try a different plugin that might fulfill the same purpose
+2. Provide a helpful response without the plugin data
+3. Explain to the user what went wrong and suggest alternatives
+4. If this was a temporary issue (like network timeout), you could suggest they try again
+
+Please respond using the "message" action to provide a user-friendly response that handles this error situation gracefully. Avoid showing technical error details directly to the user unless necessary."""
 
 # Global instance for use throughout the application
 llm_protocol = LLMProtocol()
