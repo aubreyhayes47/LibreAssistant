@@ -1446,13 +1446,44 @@ class LibreAssistantApp {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Extract user-friendly content from the response
+                    let displayText = data.response;
+                    let responseRawData = null;
+                    
+                    // If the response looks like JSON, try to parse it for better content
+                    if (typeof displayText === 'string' && 
+                        (displayText.trim().startsWith('{') || displayText.trim().startsWith('['))) {
+                        try {
+                            const parsedResponse = JSON.parse(displayText);
+                            const extractedContent = this.extractMainContent(parsedResponse);
+                            
+                            if (extractedContent) {
+                                displayText = extractedContent;
+                                responseRawData = parsedResponse; // Store raw data for toggle
+                            }
+                        } catch (e) {
+                            // If parsing fails, use the original text
+                            console.log('Response parsing failed, using original text:', e);
+                        }
+                    }
+                    
+                    // Also check if the raw response data is complex and needs parsing
+                    if (!responseRawData && typeof data.response === 'object') {
+                        const extractedContent = this.extractMainContent(data.response);
+                        if (extractedContent) {
+                            displayText = extractedContent;
+                            responseRawData = data.response;
+                        }
+                    }
+                    
                     this.showResponse({
-                        text: data.response,
+                        text: displayText,
                         markdown: data.markdown,
                         plugin_used: data.plugin_used,
                         plugin_reason: data.plugin_reason,
                         schema_used: useSchema,
-                        schema_error: data.schema_error
+                        schema_error: data.schema_error,
+                        rawData: responseRawData
                     });
                     // Refresh plugin pills to show any newly accessed plugins
                     this.setupPluginPills();
@@ -1473,6 +1504,202 @@ class LibreAssistantApp {
                 submitRequest();
             }
         });
+    }
+
+    // Enhanced extractMainContent function for robust response parsing
+    // Handles nested JSON structures and various response patterns
+    extractMainContent(data) {
+        // Handle null/undefined
+        if (data == null) return null;
+        
+        // Handle primitive types (string, number, boolean)
+        if (typeof data !== 'object') {
+            return String(data);
+        }
+        
+        // Handle arrays - try to extract meaningful content from first elements
+        if (Array.isArray(data)) {
+            if (data.length === 0) return null;
+            
+            // For search results or similar arrays
+            if (data.length > 0 && typeof data[0] === 'object') {
+                return this.formatArrayResults(data);
+            }
+            
+            // For simple arrays, join them
+            return data.map(item => this.extractMainContent(item)).filter(Boolean).join('\n');
+        }
+        
+        // Recursive search for common text fields at all depths
+        const textContent = this.findTextContentRecursively(data);
+        if (textContent) return textContent;
+        
+        // Handle known patterns
+        const knownPattern = this.handleKnownPatterns(data);
+        if (knownPattern) return knownPattern;
+        
+        // For search results, try to extract meaningful content
+        if (data.results && Array.isArray(data.results)) {
+            return this.formatSearchResults(data.results, data);
+        }
+        
+        // For other structured data, try to create a readable summary
+        if (typeof data === 'object' && data !== null) {
+            const summary = this.createReadableSummary(data);
+            if (summary) return summary;
+            
+            // If it's a simple object with few fields, create a readable format
+            const keys = Object.keys(data);
+            if (keys.length <= 5 && keys.length > 0) {
+                return keys.map(key => `${key}: ${data[key]}`).join('\n');
+            }
+        }
+        
+        // Fallback: return null to indicate we should show raw JSON
+        return null;
+    }
+
+    // Helper function to recursively search for text content
+    findTextContentRecursively(obj, visited = new WeakSet()) {
+        // Prevent infinite recursion
+        if (visited.has(obj)) return null;
+        visited.add(obj);
+        
+        // Common text field names to search for (in order of preference)
+        const textFields = ['text', 'content', 'message', 'response', 'description', 'body', 'value'];
+        
+        // First, check direct properties
+        for (const field of textFields) {
+            if (obj[field] && typeof obj[field] === 'string' && obj[field].trim()) {
+                return obj[field].trim();
+            }
+        }
+        
+        // Then check nested objects
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key) && typeof obj[key] === 'object' && obj[key] !== null) {
+                if (!Array.isArray(obj[key])) {
+                    const nested = this.findTextContentRecursively(obj[key], visited);
+                    if (nested) return nested;
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    // Handle known response patterns
+    handleKnownPatterns(data) {
+        // Pattern: { action: 'message', content: { text: ... } }
+        if (data.action === 'message' && data.content && data.content.text) {
+            return data.content.text;
+        }
+        
+        // Pattern: { action: 'message', content: 'direct text' }
+        if (data.action === 'message' && typeof data.content === 'string') {
+            return data.content;
+        }
+        
+        // Pattern: { type: 'response', data: { content: { text: ... } } }
+        if (data.type === 'response' && data.data && data.data.content && data.data.content.text) {
+            return data.data.content.text;
+        }
+        
+        // Pattern: plugin response with nested content
+        if (data.success && data.data && typeof data.data === 'object') {
+            const nested = this.findTextContentRecursively(data.data);
+            if (nested) return nested;
+        }
+        
+        return null;
+    }
+
+    // Format array results (for search results, etc.)
+    formatArrayResults(arr) {
+        if (arr.length === 0) return null;
+        
+        let summary = `Found ${arr.length} results:\n\n`;
+        arr.slice(0, 5).forEach((result, index) => {
+            summary += `${index + 1}. `;
+            
+            // Try to get a title/name
+            const title = result.title || result.name || result.label || 'Result';
+            summary += title + '\n';
+            
+            // Try to get a description/snippet
+            const desc = result.snippet || result.description || result.summary || result.text;
+            if (desc) {
+                summary += `   ${desc}\n`;
+            }
+            
+            // Try to get a URL/link
+            const url = result.url || result.link || result.href;
+            if (url) {
+                summary += `   ${url}\n`;
+            }
+            
+            summary += '\n';
+        });
+        
+        if (arr.length > 5) {
+            summary += `... and ${arr.length - 5} more results\n`;
+        }
+        
+        return summary;
+    }
+
+    // Format search results specifically
+    formatSearchResults(results, parentData = null) {
+        if (!results || results.length === 0) return null;
+        
+        let summary = '';
+        
+        // Include parent data context if available
+        if (parentData && parentData.query) {
+            summary += `Search results for: "${parentData.query}"\n\n`;
+        } else {
+            summary += `Found ${results.length} results:\n\n`;
+        }
+        
+        results.slice(0, 5).forEach((result, index) => {
+            summary += `${index + 1}. ${result.title || result.name || 'Result'}\n`;
+            if (result.snippet || result.description) {
+                summary += `   ${result.snippet || result.description}\n`;
+            }
+            if (result.url || result.link) {
+                summary += `   ${result.url || result.link}\n`;
+            }
+            summary += '\n';
+        });
+        
+        if (results.length > 5) {
+            summary += `... and ${results.length - 5} more results\n`;
+        }
+        
+        return summary;
+    }
+
+    // Create readable summary for structured data
+    createReadableSummary(data) {
+        // Try to find title and description patterns
+        const title = data.title || data.name || data.label || data.subject;
+        const desc = data.description || data.summary || data.abstract || data.details;
+        const url = data.url || data.link || data.href;
+        
+        if (title || desc) {
+            let summary = '';
+            if (title) summary += title;
+            if (desc) {
+                if (title) summary += '\n\n';
+                summary += desc;
+            }
+            if (url) {
+                summary += '\n\nURL: ' + url;
+            }
+            return summary;
+        }
+        
+        return null;
     }
 
     // Show response in the response box with enhanced formatting
