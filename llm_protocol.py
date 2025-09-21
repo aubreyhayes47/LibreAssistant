@@ -320,6 +320,7 @@ CRITICAL REMINDERS:
 - NEVER respond in plain text - always use the JSON format
 - INVALID JSON responses will cause system errors
 - ALWAYS validate that your JSON is properly formatted
+- DO NOT escape JSON replies in any way, shape or form
 - USE plugins to enhance your responses with real-time data and file access
 - EXPLAIN to users when and why you're using plugins for transparency
 - You can chain multiple plugin calls to gather comprehensive information
