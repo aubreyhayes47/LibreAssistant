@@ -367,33 +367,212 @@ Remember: Your responses must be valid JSON following the exact format specified
         
         return text, markdown
     
+    def _extract_plugin_result_summary(self, plugin_id: str, plugin_result: Dict) -> str:
+        """Extract a human-readable summary from plugin result data"""
+        try:
+            if plugin_id == "brave-search":
+                return self._summarize_search_results(plugin_result)
+            elif plugin_id == "local-fileio":
+                return self._summarize_fileio_results(plugin_result)
+            elif plugin_id == "courtlistener":
+                return self._summarize_legal_results(plugin_result)
+            else:
+                # Generic summary for unknown plugins
+                return self._summarize_generic_results(plugin_result)
+        except Exception as e:
+            # Fallback to simple description if summarization fails
+            return f"Plugin returned data containing {len(str(plugin_result))} characters of information."
+    
+    def _summarize_search_results(self, result: Dict) -> str:
+        """Summarize brave-search plugin results"""
+        if "results" in result and isinstance(result["results"], list):
+            num_results = len(result["results"])
+            query = result.get("query", "unknown")
+            if num_results > 0:
+                first_result = result["results"][0]
+                title = first_result.get("title", "No title")
+                return f"Found {num_results} search results for '{query}'. Top result: '{title}'"
+            else:
+                return f"No search results found for '{query}'"
+        else:
+            return "Search completed but result format is unexpected"
+    
+    def _summarize_fileio_results(self, result: Dict) -> str:
+        """Summarize local-fileio plugin results"""
+        operation = result.get("operation", "unknown")
+        path = result.get("path", "unknown file")
+        
+        if operation == "read":
+            content_size = len(str(result.get("content", "")))
+            return f"Successfully read file '{path}' ({content_size} characters)"
+        elif operation == "write":
+            return f"Successfully wrote content to file '{path}'"
+        elif operation == "list":
+            files = result.get("files", [])
+            return f"Listed {len(files)} items in directory '{path}'"
+        else:
+            return f"File operation '{operation}' completed for '{path}'"
+    
+    def _summarize_legal_results(self, result: Dict) -> str:
+        """Summarize courtlistener plugin results"""
+        if "results" in result and isinstance(result["results"], list):
+            num_cases = len(result["results"])
+            query = result.get("query", "unknown")
+            if num_cases > 0:
+                return f"Found {num_cases} legal cases related to '{query}'"
+            else:
+                return f"No legal cases found for '{query}'"
+        else:
+            return "Legal search completed but result format is unexpected"
+    
+    def _summarize_generic_results(self, result: Dict) -> str:
+        """Provide a generic summary for unknown plugin types"""
+        if isinstance(result, dict):
+            keys = list(result.keys())
+            if "error" in result:
+                return "Plugin execution completed with error information"
+            elif "success" in result and result["success"]:
+                return "Plugin execution completed successfully"
+            elif keys:
+                return f"Plugin returned data with fields: {', '.join(keys[:5])}"
+            else:
+                return "Plugin returned empty result"
+        else:
+            return f"Plugin returned {type(result).__name__} data"
+    
+    def _extract_error_summary(self, plugin_id: str, error_details: Dict) -> str:
+        """Extract a human-readable error summary from error details"""
+        error_type = error_details.get("error_type", "unknown")
+        message = error_details.get("message", "")
+        
+        if error_type == "timeout":
+            duration = error_details.get("timeout_duration", "unknown")
+            return f"Plugin timed out after {duration} seconds - the operation took too long to complete"
+        elif error_type == "connection_error":
+            return "Lost connection to the plugin service - this appears to be a network issue"
+        elif error_type == "plugin_error":
+            if "invalid api key" in message.lower():
+                return "Plugin authentication failed - the API key may be invalid or expired"
+            elif "not found" in message.lower():
+                return "Requested resource was not found"
+            elif "rate limit" in message.lower():
+                return "Plugin usage limit exceeded - too many requests in a short time"
+            else:
+                return f"Plugin encountered an internal error: {message}"
+        elif error_type == "validation_error":
+            return "Plugin input validation failed - the request format was incorrect"
+        else:
+            # Generic error handling
+            if message:
+                return f"Plugin failed with error: {message}"
+            else:
+                return f"Plugin failed with {error_type} error"
+    
     def create_plugin_result_prompt(self, plugin_id: str, plugin_result: Dict, original_user_prompt: str) -> str:
-        """Create a follow-up prompt for the LLM after plugin execution"""
-        return f"""The user asked: "{original_user_prompt}"
+        """Create a follow-up prompt for the LLM after plugin execution with clear section markers"""
+        
+        # Extract human-readable information from plugin result
+        result_summary = self._extract_plugin_result_summary(plugin_id, plugin_result)
+        
+        return f"""====================
+[USER REQUEST]
+====================
+{original_user_prompt}
 
-I invoked the {plugin_id} plugin and received this result:
+====================
+[PLUGIN EXECUTION]
+====================
+Plugin Used: {plugin_id}
+Status: SUCCESS
+
+====================
+[PLUGIN OUTPUT]
+====================
+{result_summary}
+
+--- Raw Data (for reference) ---
 {json.dumps(plugin_result, indent=2)}
 
-Based on this plugin result and the user's original request, you can now:
-1. Call additional plugins if you need more information to fully address the request
-2. Provide a comprehensive response to the user using the "message" action
+====================
+[INSTRUCTIONS]
+====================
+You have successfully obtained data from the {plugin_id} plugin in response to the user's request above.
 
-Remember to respond in the required JSON format. If you need more information, invoke another plugin. If you have sufficient information, respond to the user with action "message"."""
+Your next action options:
+1. If you need MORE information to fully address the user's request:
+   → Invoke another plugin using the "plugin_invoke" action
+   
+2. If you have SUFFICIENT information to provide a complete response:
+   → Respond to the user using the "message" action
+
+IMPORTANT GUIDELINES:
+• Base your response on the plugin output shown above
+• Incorporate the plugin data meaningfully into your answer
+• Maintain a natural, conversational tone
+• Use the "markdown" field appropriately if your response contains formatting
+• Always respond in the required JSON format
+
+Remember: The user asked "{original_user_prompt}" - ensure your final response addresses this request using the plugin data provided."""
 
     def create_plugin_error_prompt(self, plugin_id: str, error_details: Dict, original_user_prompt: str) -> str:
-        """Create a follow-up prompt for the LLM after plugin execution fails"""
-        return f"""The user asked: "{original_user_prompt}"
+        """Create a follow-up prompt for the LLM after plugin execution fails with clear section markers"""
+        
+        # Extract human-readable error information
+        error_summary = self._extract_error_summary(plugin_id, error_details)
+        
+        return f"""====================
+[USER REQUEST]
+====================
+{original_user_prompt}
 
-I attempted to invoke the {plugin_id} plugin, but it encountered an error:
+====================
+[PLUGIN EXECUTION]
+====================
+Plugin Used: {plugin_id}
+Status: FAILED
+
+====================
+[ERROR DETAILS]
+====================
+{error_summary}
+
+--- Technical Details (for reference) ---
 {json.dumps(error_details, indent=2)}
 
-You now have several options to handle this error gracefully:
-1. Try a different plugin that might fulfill the same purpose
-2. Provide a helpful response without the plugin data
-3. Explain to the user what went wrong and suggest alternatives
-4. If this was a temporary issue (like network timeout), you could suggest they try again
+====================
+[INSTRUCTIONS]
+====================
+The {plugin_id} plugin failed to execute successfully while trying to fulfill the user's request above.
 
-Please respond using the "message" action to provide a user-friendly response that handles this error situation gracefully. Avoid showing technical error details directly to the user unless necessary."""
+Your response options for handling this error gracefully:
+
+1. TRY AN ALTERNATIVE PLUGIN:
+   → If another plugin could serve the same purpose, invoke it
+   → Example: If brave-search failed, could local-fileio help instead?
+
+2. PROVIDE A HELPFUL RESPONSE WITHOUT PLUGIN DATA:
+   → Use your existing knowledge to address the user's request
+   → Acknowledge the limitation but still provide value
+
+3. EXPLAIN THE SITUATION TO THE USER:
+   → Give a user-friendly explanation of what went wrong
+   → Suggest alternative approaches or ask for clarification
+   → Avoid exposing technical error details unless necessary
+
+4. SUGGEST RETRY FOR TEMPORARY ISSUES:
+   → For timeouts or connection issues, suggest trying again
+   → Provide helpful context about when to retry
+
+IMPORTANT GUIDELINES:
+• Always respond using the "message" action (do not attempt to retry the same plugin)
+• Keep your tone helpful and conversational
+• Focus on what you CAN do rather than what failed
+• The user asked "{original_user_prompt}" - try to provide value related to this request
+• Use the "markdown" field appropriately if needed
+• Always respond in the required JSON format
+
+Example Response Approach:
+"I attempted to search for that information, but the search service is temporarily unavailable. However, I can share some general knowledge about [topic] that might be helpful..."""
 
 # Global instance for use throughout the application
 llm_protocol = LLMProtocol()
