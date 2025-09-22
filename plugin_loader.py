@@ -1,10 +1,8 @@
 # Export PluginLoader, Plugin, PluginManifestError, and loader/validator functions
 
-from plugin_loader_test_helpers import start_mcp_server, stop_mcp_server
 __all__ = [
     "PluginLoader", "Plugin", "PluginManifestError",
-    "load_plugin_manifest", "validate_plugin_manifest",
-    "start_mcp_server", "stop_mcp_server"
+    "load_plugin_manifest", "validate_plugin_manifest"
 ]
 
 # Load a plugin manifest from a file
