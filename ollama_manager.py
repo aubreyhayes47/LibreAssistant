@@ -1248,10 +1248,7 @@ def chat():
     """Chat interface"""
     return render_template('chat.html')
 
-@app.route('/demo')
-def demo():
-    """Demo interface"""
-    return render_template('demo.html')
+
 
 @app.route('/plugin_catalogue')
 def plugin_catalogue():

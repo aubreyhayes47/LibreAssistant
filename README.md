@@ -12,7 +12,7 @@
 - **Plugin Catalogue & Management UI:** Browse, enable/disable, and configure plugins with a single click. No technical knowledge required.
 - **Real-Time Plugin Activity Bar:** See which plugins are active for each request, with live visualization and clickable plugin pills for logs/details.
 - **Legacy Model Management:** All Ollama model management, chat, and troubleshooting features from my-ollama-wrapper are fully supported.
-- **First-Party Plugins:** Includes Local File I/O, CourtListener, Brave Search, and a test plugin for development.
+- **First-Party Plugins:** Includes Local File I/O, CourtListener, and Brave Search.
 
 ---
 
@@ -117,7 +117,6 @@ For details on creating your own plugins, see the [PLUGIN_API.md](./PLUGIN_API.m
 | Local File I/O     | Securely read/write files on your device (with consent)      |
 | CourtListener      | Search and retrieve legal opinions/dockets from CourtListener |
 | Brave Search       | Search the web using Brave Search (privacy-respecting)        |
-| Test Plugin        | Minimal plugin for development and testing                    |
 
 ### 🤖 Chat/Interaction Console
 - **Model Selection**: Choose from available Ollama models
@@ -263,13 +262,11 @@ gunicorn main:app
 3. Install Python dependencies: `pip install -r requirements.txt`
 4. Start development server: `python main.py`
 5. Make your changes
-6. Test your changes: `python test_ollama_manager.py`
-7. Submit a pull request
+6. Submit a pull request
 
 ### Available Scripts
 
 - `python main.py` - Start Flask development server
-- `python test_ollama_manager.py` - Run tests
 
 ### Project Structure
 
@@ -282,12 +279,10 @@ LibreAssistant/
 │   └── js/                # JavaScript files
 │       ├── script.js      # Main application logic
 │       ├── chat-script.js # Chat functionality
-│       ├── demo.js        # Demo functionality
 │       └── markdown-utils.js # Markdown utilities
 ├── templates/             # Flask templates
 │   ├── index.html         # Main web interface (includes all requests functionality)
 │   ├── chat.html          # Standalone chat interface
-│   ├── demo.html          # Demo interface
 │   └── plugin_catalogue.html # Plugin catalogue
 ├── plugins/               # Plugin directory
 ├── main.py                # Flask application entry point
@@ -307,7 +302,6 @@ LibreAssistant/
 - **`ollama_manager.py`**: Core Flask app with Ollama API integration
 - **`templates/index.html`**: Main web interface with full functionality
 - **`templates/chat.html`**: Standalone chat interface
-- **`templates/demo.html`**: Demo mode without Ollama backend
 - **`static/js/script.js`**: Main JavaScript application logic
 - **`static/css/styles.css`**: Main application stylesheets
 
@@ -319,7 +313,6 @@ We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) fi
 - Development workflow
 - Pull request process
 - Coding standards
-- Testing requirements
 
 ## Troubleshooting
 
@@ -338,10 +331,9 @@ We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) fi
 
 **Problem**: Browser blocks requests to Ollama
 **Solutions**:
-1. Use the demo mode (`demo.html`) for testing without Ollama
-2. Run Ollama with CORS enabled: `OLLAMA_ORIGINS=* ollama serve`
-3. Use the Electron desktop app instead of browser
-4. Use the Python Flask backend as a proxy
+1. Run Ollama with CORS enabled: `OLLAMA_ORIGINS=* ollama serve`
+2. Use the Electron desktop app instead of browser
+3. Use the Python Flask backend as a proxy
 
 #### Models Not Loading
 
@@ -350,7 +342,7 @@ We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) fi
 1. Verify model is installed: `ollama list`
 2. Test model directly: `ollama run <model-name>`
 3. Check system resources (RAM/CPU usage)
-4. Try a smaller model for testing: `ollama pull tinyllama`
+4. Try a smaller model: `ollama pull tinyllama`
 
 #### Python Flask Issues
 

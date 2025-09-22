@@ -150,8 +150,6 @@ Successfully implemented a comprehensive, thread-safe plugin usage tracking syst
 
 ## Files Added
 
-- **`test_plugin_usage_tracker.py`**: Comprehensive unit tests
-- **`test_enhanced_plugin_tracking_integration.py`**: Integration tests
 - **`ENHANCED_PLUGIN_TRACKING_SUMMARY.md`**: This documentation
 
 ## Benefits

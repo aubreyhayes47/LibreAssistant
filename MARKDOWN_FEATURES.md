@@ -32,8 +32,8 @@ This feature enables automatic markdown rendering for AI model responses in the 
 
 ### Files Modified
 - `markdown-utils.js` - Core markdown rendering utility
-- `chat-script.js`, `demo.js`, `script.js` - Updated to use markdown rendering
-- `chat.html`, `demo.html`, `index.html` - Added library dependencies
+- `chat-script.js`, `script.js` - Updated to use markdown rendering
+- `chat.html`, `index.html` - Added library dependencies
 - `chat-styles.css`, `styles.css` - Added markdown-specific styling
 
 ### Dependencies Added
