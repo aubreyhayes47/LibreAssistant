@@ -8,6 +8,7 @@ llm_protocol.py: JSON schema-based LLM communication protocol for LibreAssistant
 import json
 import os
 import logging
+import re
 from typing import Dict, List, Optional, Tuple, Any
 from jsonschema import validate, ValidationError
 
@@ -30,6 +31,208 @@ class LLMProtocol:
         self.schema_path = schema_path or SCHEMA_PATH
         self._schema = None
         self.logger = logging.getLogger(__name__)
+    
+    def _extract_json_from_text(self, text: str) -> Optional[str]:
+        """
+        Extract JSON content from text that may contain markdown code blocks or extra text.
+        Returns the first valid JSON string found that can be parsed, or None if no valid JSON is found.
+        """
+        # First try to parse the text as-is (backward compatibility)
+        text = text.strip()
+        if not text:
+            return None
+            
+        # Try direct parsing first for performance
+        try:
+            json.loads(text)
+            return text  # It's already valid JSON
+        except json.JSONDecodeError:
+            pass
+        
+        # Pattern 1: Extract from markdown code blocks (```json ... ``` or ``` ... ```)
+        # This is the most reliable method and should be tried first
+        code_block_patterns = [
+            r'```json\s*\n(.*?)\n```',  # ```json ... ```
+            r'```\s*\n(.*?)\n```',     # ``` ... ``` (generic code block)
+        ]
+        
+        for pattern in code_block_patterns:
+            matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+            for match in matches:
+                candidate = match.strip()
+                if self._is_valid_json(candidate):
+                    return candidate
+        
+        # Pattern 2: Look for multi-line JSON structures using line-by-line parsing
+        # This is more reliable than regex for complex nested structures
+        lines = text.split('\n')
+        json_started = False
+        json_lines = []
+        brace_count = 0
+        bracket_count = 0
+        
+        for line in lines:
+            line = line.strip()
+            if not json_started:
+                # Look for lines that start JSON
+                if line.startswith('{') or line.startswith('['):
+                    json_started = True
+                    json_lines = [line]
+                    brace_count = line.count('{') - line.count('}')
+                    bracket_count = line.count('[') - line.count(']')
+                    
+                    # Check if it's a single-line JSON
+                    if brace_count == 0 and bracket_count == 0:
+                        candidate = line
+                        if self._is_valid_json(candidate):
+                            return candidate
+                        json_started = False
+                        json_lines = []
+            else:
+                # Continue collecting JSON lines
+                json_lines.append(line)
+                brace_count += line.count('{') - line.count('}')
+                bracket_count += line.count('[') - line.count(']')
+                
+                # Check if JSON structure is complete
+                if brace_count == 0 and bracket_count == 0:
+                    candidate = '\n'.join(json_lines)
+                    if self._is_valid_json(candidate):
+                        return candidate
+                    # Reset for next potential JSON block
+                    json_started = False
+                    json_lines = []
+                    brace_count = 0
+                    bracket_count = 0
+        
+        # Pattern 3: Simple single-line JSON objects/arrays embedded in text
+        # This is a fallback for edge cases where JSON might be inline
+        # Use a more restrictive pattern to avoid matching quoted JSON strings
+        single_line_patterns = [
+            r'(?:^|\s)(\{[^{}\n]*\})(?:\s|$)',  # Simple single-line object not inside quotes
+            r'(?:^|\s)(\[[^\[\]\n]*\])(?:\s|$)',  # Simple single-line array not inside quotes
+        ]
+        
+        for pattern in single_line_patterns:
+            matches = re.findall(pattern, text, re.MULTILINE)
+            for match in matches:
+                candidate = match.strip()
+                if self._is_valid_json(candidate) and len(candidate) > 10:  # Ignore very small JSON
+                    return candidate
+        
+        return None
+    
+    def _extract_valid_json_from_text(self, text: str) -> Optional[str]:
+        """
+        Extract JSON content that not only parses as valid JSON, but also passes schema validation.
+        This is used when we need to find JSON that will actually work with the LLM protocol.
+        Returns the first schema-valid JSON string found, or None if none found.
+        """
+        # First try to parse the text as-is (backward compatibility)
+        text = text.strip()
+        if not text:
+            return None
+            
+        # Try direct parsing first for performance
+        try:
+            json_data = json.loads(text)
+            self.validate_response(json_data)
+            return text  # It's already valid JSON and passes schema validation
+        except (json.JSONDecodeError, LLMProtocolError):
+            pass
+        
+        # Pattern 1: Extract from markdown code blocks and validate each - most reliable
+        code_block_patterns = [
+            r'```json\s*\n(.*?)\n```',  # ```json ... ```
+            r'```\s*\n(.*?)\n```',     # ``` ... ``` (generic code block)
+        ]
+        
+        for pattern in code_block_patterns:
+            matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+            for match in matches:
+                candidate = match.strip()
+                if self._is_valid_and_schema_compliant_json(candidate):
+                    return candidate
+        
+        # Pattern 2: Multi-line approach with validation - more reliable than regex
+        lines = text.split('\n')
+        json_started = False
+        json_lines = []
+        brace_count = 0
+        bracket_count = 0
+        
+        for line in lines:
+            line = line.strip()
+            if not json_started:
+                # Look for lines that start JSON
+                if line.startswith('{') or line.startswith('['):
+                    json_started = True
+                    json_lines = [line]
+                    brace_count = line.count('{') - line.count('}')
+                    bracket_count = line.count('[') - line.count(']')
+                    
+                    # Check if it's a single-line JSON
+                    if brace_count == 0 and bracket_count == 0:
+                        candidate = line
+                        if self._is_valid_and_schema_compliant_json(candidate):
+                            return candidate
+                        json_started = False
+                        json_lines = []
+            else:
+                # Continue collecting JSON lines
+                json_lines.append(line)
+                brace_count += line.count('{') - line.count('}')
+                bracket_count += line.count('[') - line.count(']')
+                
+                # Check if JSON structure is complete
+                if brace_count == 0 and bracket_count == 0:
+                    candidate = '\n'.join(json_lines)
+                    if self._is_valid_and_schema_compliant_json(candidate):
+                        return candidate
+                    # Reset for next potential JSON block
+                    json_started = False
+                    json_lines = []
+                    brace_count = 0
+                    bracket_count = 0
+        
+        # Pattern 3: Look for JSON-like structures and validate each - fallback
+        # Sort matches by length to prefer larger structures
+        all_matches = []
+        
+        brace_pattern = r'\{(?:[^{}]|(?:\{[^{}]*\}))*\}'
+        bracket_pattern = r'\[(?:[^\[\]]|(?:\[[^\[\]]*\]))*\]'
+        
+        for pattern in [brace_pattern, bracket_pattern]:
+            matches = re.findall(pattern, text, re.DOTALL)
+            for match in matches:
+                candidate = match.strip()
+                if len(candidate) > 10 and self._is_valid_and_schema_compliant_json(candidate):
+                    all_matches.append(candidate)
+        
+        # Sort by length (largest first) to prefer more complete structures
+        all_matches.sort(key=len, reverse=True)
+        
+        for candidate in all_matches:
+            return candidate  # Return the largest schema-valid JSON found
+        
+        return None
+    
+    def _is_valid_and_schema_compliant_json(self, text: str) -> bool:
+        """Check if the given text is valid JSON and passes schema validation"""
+        try:
+            json_data = json.loads(text)
+            self.validate_response(json_data)
+            return True
+        except (json.JSONDecodeError, TypeError, ValueError, LLMProtocolError):
+            return False
+    
+    def _is_valid_json(self, text: str) -> bool:
+        """Check if the given text is valid JSON"""
+        try:
+            json.loads(text)
+            return True
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return False
     
     def _load_schema(self) -> Dict:
         """Load and cache the JSON schema"""
@@ -70,14 +273,44 @@ class LLMProtocol:
         """Parse and validate LLM response text as JSON with enhanced error handling"""
         original_response = response_text.strip()
         
-        # Try to parse as JSON
-        try:
-            response_data = json.loads(original_response)
-        except json.JSONDecodeError as e:
-            # Log the invalid JSON for debugging
+        # Extract JSON from the response text (handles markdown and extra text)
+        # Try schema-aware extraction first for cases with multiple JSON blocks
+        json_content = self._extract_valid_json_from_text(original_response)
+        
+        if json_content is None:
+            # Fallback to basic JSON extraction (might not pass schema validation)
+            json_content = self._extract_json_from_text(original_response)
+        
+        if json_content is None:
+            # No valid JSON found anywhere in the response
             self.logger.warning(
-                f"LLM produced invalid JSON output. Error: {e.msg} at line {e.lineno}, column {e.colno}. "
+                f"LLM produced response with no valid JSON content. "
                 f"Raw output (first 500 chars): {original_response[:500]}"
+            )
+            
+            # Create detailed error information for user
+            json_error_details = {
+                "error_msg": "No valid JSON content found in response",
+                "raw_output_preview": original_response[:200] + "..." if len(original_response) > 200 else original_response
+            }
+            
+            # Raise detailed error instead of falling back silently
+            raise LLMProtocolError(
+                f"LLM produced response with no valid JSON content",
+                error_type="json_parse", 
+                invalid_output=original_response,
+                details=json_error_details
+            )
+        
+        # Try to parse the extracted JSON
+        try:
+            response_data = json.loads(json_content)
+        except json.JSONDecodeError as e:
+            # This shouldn't happen since we validated it in _extract_json_from_text,
+            # but handle it just in case
+            self.logger.warning(
+                f"LLM produced invalid JSON output after extraction. Error: {e.msg} at line {e.lineno}, column {e.colno}. "
+                f"Extracted JSON: {json_content[:500]}"
             )
             
             # Create detailed error information for user
@@ -86,12 +319,13 @@ class LLMProtocol:
                 "line": e.lineno,
                 "column": e.colno,
                 "position": e.pos,
+                "extracted_json": json_content[:200] + "..." if len(json_content) > 200 else json_content,
                 "raw_output_preview": original_response[:200] + "..." if len(original_response) > 200 else original_response
             }
             
             # Raise detailed error instead of falling back silently
             raise LLMProtocolError(
-                f"LLM produced invalid JSON: {e.msg} at line {e.lineno}, column {e.colno}",
+                f"LLM produced invalid JSON after extraction: {e.msg} at line {e.lineno}, column {e.colno}",
                 error_type="json_parse", 
                 invalid_output=original_response,
                 details=json_error_details
@@ -105,7 +339,7 @@ class LLMProtocol:
             e.invalid_output = original_response
             self.logger.warning(
                 f"LLM produced JSON that failed schema validation. Error: {e.message}. "
-                f"Raw output (first 500 chars): {original_response[:500]}"
+                f"Extracted JSON: {json_content[:500]}"
             )
             raise e
             
@@ -117,12 +351,17 @@ class LLMProtocol:
         """
         original_response = response_text.strip()
         
-        # First, try to parse as JSON to check for unknown actions
-        try:
-            response_data = json.loads(original_response)
-        except json.JSONDecodeError as e:
-            # JSON parse error - use fallback
-            self.logger.error(f"LLM protocol error: Invalid JSON: {e.msg}")
+        # Extract JSON from the response text (handles markdown and extra text)
+        # Try schema-aware extraction first for cases with multiple JSON blocks
+        json_content = self._extract_valid_json_from_text(original_response)
+        
+        if json_content is None:
+            # Fallback to basic JSON extraction (might not pass schema validation)
+            json_content = self._extract_json_from_text(original_response)
+        
+        if json_content is None:
+            # No valid JSON found - use fallback
+            self.logger.error(f"LLM protocol error: No valid JSON content found in response")
             
             fallback_response = {
                 "action": "message",
@@ -132,7 +371,40 @@ class LLMProtocol:
             }
             
             json_error = LLMProtocolError(
-                f"LLM produced invalid JSON: {e.msg} at line {e.lineno}, column {e.colno}",
+                f"LLM produced response with no valid JSON content",
+                error_type="json_parse", 
+                invalid_output=original_response
+            )
+            
+            try:
+                self.validate_response(fallback_response)
+                return fallback_response, json_error
+            except LLMProtocolError:
+                # Even fallback failed, return minimal response
+                minimal_response = {
+                    "action": "message", 
+                    "content": {
+                        "text": "I apologize, but I produced an invalid response format. Please try rephrasing your request."
+                    }
+                }
+                return minimal_response, json_error
+        
+        # Parse the extracted JSON
+        try:
+            response_data = json.loads(json_content)
+        except json.JSONDecodeError as e:
+            # JSON parse error - use fallback (this shouldn't happen since we validated it)
+            self.logger.error(f"LLM protocol error: Invalid JSON after extraction: {e.msg}")
+            
+            fallback_response = {
+                "action": "message",
+                "content": {
+                    "text": response_text.strip()
+                }
+            }
+            
+            json_error = LLMProtocolError(
+                f"LLM produced invalid JSON after extraction: {e.msg}",
                 error_type="json_parse", 
                 invalid_output=original_response
             )
