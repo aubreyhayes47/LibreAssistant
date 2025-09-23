@@ -7,6 +7,7 @@ class UIManager {
     constructor(stateManager) {
         this.stateManager = stateManager;
         this.validViews = ['models', 'plugins', 'chat', 'monitoring', 'settings', 'plugin_catalogue'];
+        this.asyncOperationManager = new AsyncOperationManager(this);
         this.init();
     }
 
@@ -113,38 +114,51 @@ class UIManager {
     }
 
     loadViewContent(viewName) {
+        // Show loading state for the view
+        DOMUtils.setLoadingState([`${viewName}-content`, 'main-content'], true, `Loading ${viewName}...`);
+        
         switch (viewName) {
             case 'models':
                 if (window.modelManager) {
-                    window.modelManager.loadModels();
+                    window.modelManager.loadModels().finally(() => {
+                        DOMUtils.setLoadingState([`${viewName}-content`, 'main-content'], false);
+                    });
                 }
                 break;
             case 'monitoring':
                 if (window.monitoringManager) {
-                    window.monitoringManager.loadRealTimeData();
+                    window.monitoringManager.loadRealTimeData().finally(() => {
+                        DOMUtils.setLoadingState([`${viewName}-content`, 'main-content'], false);
+                    });
                 }
                 break;
             case 'plugins':
                 // Load plugins if plugin manager exists
                 if (window.pluginManager) {
-                    window.pluginManager.loadPlugins();
+                    window.pluginManager.loadPlugins().finally(() => {
+                        DOMUtils.setLoadingState([`${viewName}-content`, 'main-content'], false);
+                    });
                 }
                 break;
-            // Add other view-specific loading logic here
+            default:
+                // For other views, just hide loading
+                setTimeout(() => {
+                    DOMUtils.setLoadingState([`${viewName}-content`, 'main-content'], false);
+                }, 500);
         }
     }
 
     updateActiveNav(viewName) {
-        // Remove active class from all nav links
-        const navLinks = document.querySelectorAll('.nav-link');
+        // Remove active class from all nav links using DOM utilities
+        const navLinks = DOMUtils.querySelectorAll('.nav-link');
         navLinks.forEach(link => {
-            link.classList.remove('active');
+            DOMUtils.toggleClass(link, 'active', false);
         });
 
         // Add active class to current view link
-        const activeLink = document.querySelector(`[data-view="${viewName}"]`);
+        const activeLink = DOMUtils.querySelector(`[data-view="${viewName}"]`);
         if (activeLink) {
-            activeLink.classList.add('active');
+            DOMUtils.toggleClass(activeLink, 'active', true);
         }
     }
 
@@ -164,93 +178,74 @@ class UIManager {
     }
 
     /**
-     * Show status message
+     * Show status message with enhanced UI
      */
     showStatus(message, type = 'info', duration = 5000) {
-        const statusContainer = this.getOrCreateStatusContainer();
+        const container = this.getOrCreateStatusContainer();
+        const statusElement = DOMUtils.createStatusMessage(message, type, duration);
         
-        const statusElement = document.createElement('div');
-        statusElement.className = `status-message status-${type}`;
-        statusElement.textContent = message;
+        container.appendChild(statusElement);
         
-        statusContainer.appendChild(statusElement);
-        
-        // Auto-remove after duration
-        if (duration > 0) {
-            setTimeout(() => {
-                if (statusElement.parentNode) {
-                    statusElement.remove();
-                }
-            }, duration);
-        }
+        // Animate in
+        statusElement.style.opacity = '0';
+        statusElement.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            statusElement.style.transition = 'all 0.3s ease';
+            statusElement.style.opacity = '1';
+            statusElement.style.transform = 'translateY(0)';
+        }, 10);
         
         return statusElement;
     }
 
     getOrCreateStatusContainer() {
-        let container = document.getElementById('status-container');
+        let container = DOMUtils.getElementById('status-container');
         if (!container) {
-            container = document.createElement('div');
-            container.id = 'status-container';
-            container.className = 'status-container';
+            container = DOMUtils.createElement('div', {
+                id: 'status-container',
+                className: 'status-container'
+            });
             document.body.appendChild(container);
         }
         return container;
     }
 
     /**
-     * Show loading state
+     * Show loading state (delegating to DOMUtils)
      */
     showLoading(element, message = 'Loading...') {
-        if (typeof element === 'string') {
-            element = document.getElementById(element);
-        }
-        
-        if (element) {
-            element.innerHTML = `
-                <div class="loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-        }
+        DOMUtils.showLoading(element, message);
     }
 
     /**
-     * Hide loading state
+     * Hide loading state (delegating to DOMUtils)
      */
     hideLoading(element) {
-        if (typeof element === 'string') {
-            element = document.getElementById(element);
-        }
-        
-        if (element) {
-            const loadingState = element.querySelector('.loading-state');
-            if (loadingState) {
-                loadingState.remove();
-            }
-        }
+        DOMUtils.hideLoading(element);
     }
 
     /**
-     * Show error message
+     * Show error message (delegating to DOMUtils)
      */
     showError(message, container = null) {
         if (container) {
-            if (typeof container === 'string') {
-                container = document.getElementById(container);
-            }
-            
-            if (container) {
-                container.innerHTML = `
-                    <div class="error-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>${message}</span>
-                    </div>
-                `;
-            }
+            DOMUtils.showError(container, message, true);
         } else {
+            // Show as status message if no specific container
             this.showStatus(message, 'error');
+        }
+    }
+
+    /**
+     * Set loading state for the application
+     */
+    setLoading(isLoading) {
+        this.stateManager.setLoading(isLoading);
+        
+        // Update global loading indicator if it exists
+        const loadingIndicator = DOMUtils.getElementById('global-loading-indicator');
+        if (loadingIndicator) {
+            DOMUtils.toggleClass(loadingIndicator, 'active', isLoading);
         }
     }
 }

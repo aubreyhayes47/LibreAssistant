@@ -19,11 +19,20 @@ class LibreAssistantApp {
 
     setupApp() {
         try {
-            // Initialize core components
+            // Initialize core components with enhanced dependencies
             this.stateManager = window.stateManager;
             this.uiManager = new window.UIManager(this.stateManager);
+            this.asyncOperationManager = this.uiManager.asyncOperationManager;
+            
+            // Initialize managers with enhanced dependencies
             this.modelManager = new window.ModelManager(window.apiClient, this.stateManager, this.uiManager);
-            this.monitoringManager = new window.MonitoringManager(window.apiClient, this.stateManager, this.uiManager);
+            this.monitoringManager = new window.MonitoringManager(window.apiClient, this.stateManager, this.uiManager, this.asyncOperationManager);
+            
+            // Initialize plugin manager if available
+            if (window.PluginManager) {
+                this.pluginManager = new window.PluginManager(window.apiClient, this.stateManager, this.uiManager, this.asyncOperationManager);
+                this.pluginManager.init();
+            }
             
             // Initialize settings manager (existing)
             this.settingsManager = new SettingsManager();
@@ -32,13 +41,40 @@ class LibreAssistantApp {
             window.ollamaApp = this; // For compatibility with existing onclick handlers
             window.modelManager = this.modelManager;
             window.monitoringManager = this.monitoringManager;
+            window.pluginManager = this.pluginManager;
             window.settingsManager = this.settingsManager;
+            window.asyncOperationManager = this.asyncOperationManager;
             
-            console.log('LibreAssistant initialized successfully');
+            // Initialize operation status containers
+            this.createOperationStatusContainers();
+            
+            console.log('LibreAssistant initialized successfully with enhanced features');
             
         } catch (error) {
             console.error('Error initializing LibreAssistant:', error);
             this.showInitializationError(error);
+        }
+    }
+
+    createOperationStatusContainers() {
+        // Create operation status container if it doesn't exist
+        if (!DOMUtils.getElementById('operation-status-container')) {
+            const statusContainer = DOMUtils.createElement('div', {
+                id: 'operation-status-container',
+                className: 'operation-status-container position-fixed bottom-0 end-0 p-3',
+                style: 'z-index: 1060; max-width: 350px;'
+            });
+            document.body.appendChild(statusContainer);
+        }
+        
+        // Create batch progress container if it doesn't exist
+        if (!DOMUtils.getElementById('batch-progress-container')) {
+            const batchContainer = DOMUtils.createElement('div', {
+                id: 'batch-progress-container',
+                className: 'batch-progress-container position-fixed top-0 start-50 translate-middle-x p-3',
+                style: 'z-index: 1070; max-width: 400px;'
+            });
+            document.body.appendChild(batchContainer);
         }
     }
 
