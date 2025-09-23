@@ -6,7 +6,7 @@
 class UIManager {
     constructor(stateManager) {
         this.stateManager = stateManager;
-        this.validViews = ['models', 'plugins', 'chat', 'monitoring', 'settings', 'plugin_catalogue'];
+        this.validViews = ['models', 'plugins', 'chat', 'monitoring', 'settings', 'plugin_catalogue', 'server', 'requests', 'catalogue', 'about'];
         this.asyncOperationManager = new AsyncOperationManager(this);
         this.init();
     }
