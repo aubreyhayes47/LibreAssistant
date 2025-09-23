@@ -31,6 +31,8 @@ class AppConfig:
         
         # Plugin Configuration
         self.disable_plugin_autostart = os.environ.get('DISABLE_PLUGIN_AUTOSTART', '').lower() in ['true', '1', 'yes']
+        self.plugin_host = os.environ.get('PLUGIN_HOST', '0.0.0.0')  # Host for plugin servers
+        self.plugin_base_port = int(os.environ.get('PLUGIN_BASE_PORT', '5101'))  # Base port for plugin services
         
         # Development Settings
         self.log_level = os.environ.get('LOG_LEVEL', 'INFO')
@@ -52,6 +54,20 @@ class AppConfig:
             'host': self.flask_host,
             'port': self.flask_port,
             'debug': self.flask_debug
+        }
+    
+    def get_plugin_url(self, port: int) -> str:
+        """Get a plugin service URL based on configured host and port"""
+        # Use localhost for local development, configured host for deployment
+        host = 'localhost' if self.plugin_host == '0.0.0.0' else self.plugin_host
+        return f"http://{host}:{port}"
+    
+    def get_plugin_config(self) -> dict:
+        """Get plugin-specific configuration"""
+        return {
+            'host': self.plugin_host,
+            'base_port': self.plugin_base_port,
+            'retries': self.plugin_retries
         }
     
     def get_plugin_config(self) -> dict:

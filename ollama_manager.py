@@ -29,10 +29,61 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 import json
 
-# Initialize plugin_loader - this may be replaced by main.py auto-start
+# Global storage for server logs and errors (in-memory for this demo)
+# In production, these would likely be stored in a database or log files
+server_logs_storage = []
+server_errors_storage = []
+log_storage_max_size = 1000  # Maximum number of log entries to keep
 plugin_loader = PluginLoader()
 plugin_loader.discover_plugins()
 config_manager = PluginConfigManager()
+
+def add_server_log(level: str, message: str):
+    """Add a log entry to server log storage"""
+    global server_logs_storage
+    current_time = datetime.now().isoformat()
+    log_entry = {
+        'timestamp': current_time,
+        'level': level,
+        'message': message
+    }
+    server_logs_storage.append(log_entry)
+    
+    # Keep storage size under control
+    if len(server_logs_storage) > log_storage_max_size:
+        server_logs_storage = server_logs_storage[-log_storage_max_size:]
+
+
+def add_server_error(level: str, title: str, error: str, stack: str = '', suggestion: str = ''):
+    """Add an error entry to server error storage"""
+    global server_errors_storage
+    current_time = datetime.now().isoformat()
+    error_entry = {
+        'timestamp': current_time,
+        'level': level,
+        'title': title,
+        'error': error,
+        'stack': stack,
+        'suggestion': suggestion
+    }
+    server_errors_storage.append(error_entry)
+    
+    # Keep storage size under control
+    if len(server_errors_storage) > log_storage_max_size:
+        server_errors_storage = server_errors_storage[-log_storage_max_size:]
+
+
+def clear_server_logs():
+    """Clear stored server logs"""
+    global server_logs_storage
+    server_logs_storage = []
+
+
+def clear_server_errors():
+    """Clear stored server errors"""
+    global server_errors_storage
+    server_errors_storage = []
+
 
 def set_plugin_loader(loader):
     """Allow main.py to set the plugin_loader instance after auto-start"""
@@ -253,7 +304,8 @@ class PluginAPI:
         if self.plugin_loader:
             for plugin in self.plugin_loader.plugins:
                 if hasattr(plugin, 'mcp_port') and plugin.mcp_port:
-                    urls.append(f"http://localhost:{plugin.mcp_port}")
+                    config = get_config()
+                    urls.append(config.get_plugin_url(plugin.mcp_port))
         return urls
     
     def list_plugins(self) -> List[Dict]:
@@ -267,31 +319,78 @@ class PluginAPI:
             
         for base_url in plugin_urls:
             try:
-                response = requests.get(f"{base_url}/api/plugins", timeout=10)
+                response = requests.get(f"{base_url}/api/plugins", timeout=app_config.plugin_retries)
                 response.raise_for_status()
                 data = response.json()
+                
+                # Validate response structure
+                if not isinstance(data, dict):
+                    logger.warning(f"Invalid response format from {base_url}: expected dict, got {type(data)}")
+                    continue
+                    
                 plugins = data.get('plugins', [])
+                if not isinstance(plugins, list):
+                    logger.warning(f"Invalid plugins format from {base_url}: expected list, got {type(plugins)}")
+                    continue
+                
                 # Add server info to each plugin for identification
                 for plugin in plugins:
-                    plugin['server_url'] = base_url
-                all_plugins.extend(plugins)
+                    if isinstance(plugin, dict):
+                        plugin['server_url'] = base_url
+                        all_plugins.append(plugin)
+                    else:
+                        logger.warning(f"Invalid plugin entry from {base_url}: {plugin}")
+                        
+            except requests.Timeout:
+                logger.warning(f"Timeout connecting to plugin server {base_url}")
+                add_server_error('warning', 'Plugin Timeout', f'Plugin server {base_url} timed out', 
+                               f'Connection timeout after {app_config.plugin_retries}s', 
+                               'Check if the plugin server is running and responsive')
+                continue
+            except requests.ConnectionError:
+                logger.warning(f"Connection error to plugin server {base_url}")
+                add_server_error('warning', 'Plugin Connection Error', f'Cannot connect to plugin server {base_url}', 
+                               'Connection refused or network error', 
+                               'Verify the plugin server is running and accessible')
+                continue
             except requests.RequestException as e:
-                # Log error but continue with other servers
-                print(f"Warning: Failed to connect to plugin server {base_url}: {e}")
+                logger.warning(f"Request error for plugin server {base_url}: {e}")
+                add_server_error('warning', 'Plugin Request Error', f'Failed to fetch from {base_url}', 
+                               str(e), 'Check plugin server logs for errors')
+                continue
+            except (ValueError, TypeError) as e:
+                logger.warning(f"JSON parsing error for plugin server {base_url}: {e}")
+                add_server_error('warning', 'Plugin Data Error', f'Invalid response from {base_url}', 
+                               str(e), 'Plugin server may be returning invalid JSON')
+                continue
+            except Exception as e:
+                logger.error(f"Unexpected error fetching from plugin server {base_url}: {e}")
+                add_server_error('error', 'Plugin Unexpected Error', f'Unexpected error with {base_url}', 
+                               str(e), 'Check plugin server status and logs')
                 continue
         
-        # If all servers failed, try the discovered plugins directly
+        # If all servers failed, try the discovered plugins directly with robust error handling
         if not all_plugins and self.plugin_loader:
+            logger.info("All plugin servers failed, using discovered plugin metadata as fallback")
+            add_server_log('INFO', 'Using plugin fallback metadata due to server connection failures')
+            
             for plugin in self.plugin_loader.plugins:
-                all_plugins.append({
-                    'name': getattr(plugin, 'name', plugin.id),
-                    'id': getattr(plugin, 'id', 'unknown'),
-                    'version': getattr(plugin, 'version', '1.0.0'),
-                    'type': 'MCP Plugin',
-                    'size': 0,
-                    'modified_at': '',
-                    'server_url': f"http://localhost:{getattr(plugin, 'mcp_port', 5001)}"
-                })
+                try:
+                    plugin_entry = {
+                        'name': str(getattr(plugin, 'name', plugin.id if hasattr(plugin, 'id') else 'Unknown')),
+                        'id': str(getattr(plugin, 'id', 'unknown')),
+                        'version': str(getattr(plugin, 'version', '1.0.0')),
+                        'type': 'MCP Plugin',
+                        'size': 0,
+                        'modified_at': '',
+                        'description': str(getattr(plugin, 'description', 'No description available')),
+                        'status': 'stopped',  # Assume stopped since server is unreachable
+                        'server_url': app_config.get_plugin_url(getattr(plugin, 'mcp_port', 5001))
+                    }
+                    all_plugins.append(plugin_entry)
+                except Exception as e:
+                    logger.error(f"Error processing fallback plugin {getattr(plugin, 'id', 'unknown')}: {e}")
+                    continue
                 
         return all_plugins
     def install_plugin(self, plugin_name: str) -> bool:
@@ -1052,7 +1151,7 @@ def api_request():
         data = request.get_json(force=True)
         query = data.get('query')
         model = data.get('model', 'llama2')  # Default model
-        server_url = data.get('server_url', 'http://localhost:11434')
+        server_url = data.get('server_url', app_config.ollama_host)
         
         if not query:
             return jsonify({'success': False, 'error': 'Query is required'}), 400
@@ -1260,6 +1359,74 @@ def plugin_catalogue():
 
 
 
+def validate_and_sanitize_plugin_info(plugin: Dict, manifest_data: Dict, plugin_obj, is_running: bool) -> Dict:
+    """
+    Validate and sanitize plugin information with robust error handling and fallbacks.
+    Ensures all required fields are present and properly typed.
+    """
+    plugin_id = plugin.get('id', 'unknown')
+    
+    # Validate and provide fallbacks for all required fields
+    plugin_info = {
+        'name': str(plugin.get('name') or manifest_data.get('name', 'Unknown Plugin')),
+        'id': str(plugin_id),
+        'description': str(plugin.get('description') or manifest_data.get('description', 'No description available')),
+        'version': str(plugin.get('version') or manifest_data.get('version', '1.0.0')),
+        'author': str(manifest_data.get('author', 'Unknown Author')),
+        'license': str(manifest_data.get('license', 'Unknown')),
+        'homepage': str(manifest_data.get('homepage', '')),
+        'type': str(plugin.get('type') or manifest_data.get('type', 'MCP Plugin')),
+        'status': 'running' if is_running else 'stopped',
+        'running': bool(is_running),
+        'enabled': bool(is_running)  # For compatibility
+    }
+    
+    # Handle port information with validation
+    try:
+        mcp_port = manifest_data.get('mcp_port') or (plugin_obj.mcp_port if plugin_obj else None)
+        plugin_info['mcp_port'] = int(mcp_port) if mcp_port else 'Unknown'
+    except (ValueError, TypeError):
+        plugin_info['mcp_port'] = 'Unknown'
+    
+    # Handle arrays with validation
+    try:
+        permissions = manifest_data.get('permissions', [])
+        plugin_info['permissions'] = list(permissions) if isinstance(permissions, (list, tuple)) else []
+    except (TypeError, ValueError):
+        plugin_info['permissions'] = []
+    
+    # Handle nested objects with validation
+    try:
+        capabilities = manifest_data.get('capabilities', {})
+        plugin_info['capabilities'] = dict(capabilities) if isinstance(capabilities, dict) else {}
+    except (TypeError, ValueError):
+        plugin_info['capabilities'] = {}
+    
+    try:
+        config = manifest_data.get('config', {})
+        plugin_info['config'] = dict(config) if isinstance(config, dict) else {}
+    except (TypeError, ValueError):
+        plugin_info['config'] = {}
+    
+    # Handle size information with validation
+    try:
+        raw_size = plugin.get('size', 0)
+        plugin_info['raw_size'] = int(raw_size) if raw_size is not None else 0
+        plugin_info['size'] = format_size(plugin_info['raw_size'])
+    except (ValueError, TypeError):
+        plugin_info['raw_size'] = 0
+        plugin_info['size'] = format_size(0)
+    
+    # Handle modified_at with validation
+    try:
+        modified_at = plugin.get('modified_at', '')
+        plugin_info['modified_at'] = format_datetime(str(modified_at)) if modified_at else ''
+    except (ValueError, TypeError):
+        plugin_info['modified_at'] = ''
+    
+    return plugin_info
+
+
 # --- Plugin endpoints ---
 @app.route('/api/plugins')
 def api_plugins():
@@ -1272,7 +1439,6 @@ def api_plugins():
             # Get status information for this plugin
             plugin_obj = plugin_loader.get_plugin_by_id(plugin_id)
             is_running = plugin_obj.is_reachable() if plugin_obj else False
-            status = 'running' if is_running else 'stopped'
             
             # Load manifest data for enhanced information
             manifest_data = {}
@@ -1283,35 +1449,40 @@ def api_plugins():
                         with open(manifest_path, 'r') as f:
                             manifest_data = json.load(f)
                 except Exception as e:
-                    print(f"Warning: Could not load manifest for {plugin_id}: {e}")
+                    logger.warning(f"Could not load manifest for {plugin_id}: {e}")
             
-            # Combine plugin data with manifest data
-            plugin_info = {
-                'name': plugin.get('name') or manifest_data.get('name', 'Unknown'),
-                'id': plugin_id,
-                'description': plugin.get('description') or manifest_data.get('description', 'No description available'),
-                'version': plugin.get('version') or manifest_data.get('version', '1.0.0'),
-                'author': manifest_data.get('author', 'Unknown Author'),
-                'license': manifest_data.get('license', 'Unknown'),
-                'homepage': manifest_data.get('homepage', ''),
-                'mcp_port': manifest_data.get('mcp_port', plugin_obj.mcp_port if plugin_obj else 'Unknown'),
-                'permissions': manifest_data.get('permissions', []),
-                'capabilities': manifest_data.get('capabilities', {}),
-                'config': manifest_data.get('config', {}),
-                'size': format_size(plugin.get('size', 0)),
-                'modified_at': format_datetime(plugin.get('modified_at', '')),
-                'type': plugin.get('type') or manifest_data.get('type', 'MCP Plugin'),
-                'raw_size': plugin.get('size', 0),
-                'status': status,
-                'running': is_running,
-                'enabled': is_running  # For compatibility
-            }
-            
-            formatted_plugins.append(plugin_info)
+            # Use robust validation to create plugin info
+            try:
+                plugin_info = validate_and_sanitize_plugin_info(plugin, manifest_data, plugin_obj, is_running)
+                formatted_plugins.append(plugin_info)
+            except Exception as e:
+                logger.error(f"Failed to process plugin {plugin_id}: {e}")
+                # Create minimal fallback plugin info
+                formatted_plugins.append({
+                    'name': f'Plugin {plugin_id}',
+                    'id': plugin_id,
+                    'description': 'Plugin information unavailable',
+                    'version': '1.0.0',
+                    'author': 'Unknown',
+                    'license': 'Unknown',
+                    'homepage': '',
+                    'mcp_port': 'Unknown',
+                    'permissions': [],
+                    'capabilities': {},
+                    'config': {},
+                    'size': 'Unknown',
+                    'modified_at': '',
+                    'type': 'MCP Plugin',
+                    'raw_size': 0,
+                    'status': 'error',
+                    'running': False,
+                    'enabled': False
+                })
             
         return jsonify({'success': True, 'plugins': formatted_plugins})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        logger.error(f"Failed to list plugins: {e}")
+        return jsonify({'success': False, 'error': f'Failed to retrieve plugin information: {str(e)}'})
 
 # Alias for /api/plugins to match frontend expectations
 @app.route('/api/plugins/list')
@@ -1544,7 +1715,7 @@ def api_download():
     try:
         data = request.json
         model_name = data.get('model_name')
-        server_url = data.get('server_url', 'http://localhost:11434')
+        server_url = data.get('server_url', app_config.ollama_host)
         timeout = data.get('timeout')
         
         if not model_name:
@@ -1573,7 +1744,7 @@ def api_delete():
     try:
         data = request.json
         model_name = data.get('model_name')
-        server_url = data.get('server_url', 'http://localhost:11434')
+        server_url = data.get('server_url', app_config.ollama_host)
         timeout = data.get('timeout')
         
         if not model_name:
@@ -1785,6 +1956,42 @@ def api_server_errors():
         })
 
 
+@app.route('/api/server/logs/clear', methods=['POST'])
+def api_clear_server_logs():
+    """API endpoint to clear server logs"""
+    try:
+        clear_server_logs()
+        add_server_log('INFO', 'Server logs cleared by user')
+        return jsonify({
+            'success': True,
+            'message': 'Server logs cleared successfully'
+        })
+    except Exception as e:
+        logger.error(f"Failed to clear server logs: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to clear logs: {str(e)}'
+        })
+
+
+@app.route('/api/server/errors/clear', methods=['POST'])
+def api_clear_server_errors():
+    """API endpoint to clear server errors"""
+    try:
+        clear_server_errors()
+        add_server_log('INFO', 'Server errors cleared by user')
+        return jsonify({
+            'success': True,
+            'message': 'Server errors cleared successfully'
+        })
+    except Exception as e:
+        logger.error(f"Failed to clear server errors: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to clear errors: {str(e)}'
+        })
+
+
 # Test endpoint to simulate a running server (for demonstration)
 @app.route('/api/server/test-running')
 def api_server_test_running():
@@ -1796,7 +2003,7 @@ def api_server_test_running():
         {
             'timestamp': current_time,
             'level': 'INFO',
-            'message': 'Ollama server is running on http://localhost:11434'
+            'message': f'Ollama server is running on {app_config.ollama_host}'
         },
         {
             'timestamp': current_time,
