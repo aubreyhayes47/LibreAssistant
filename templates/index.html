@@ -591,6 +591,10 @@
         </div>
     </div>
 
+    <!-- Load enhanced CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-ui.css') }}">
+    
+    <!-- Load third party libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
     <script src="{{ url_for('static', filename='js/markdown-utils.js') }}"></script>
@@ -600,10 +604,15 @@
     <script src="{{ url_for('static', filename='js/api-client.js') }}"></script>
     <script src="{{ url_for('static', filename='js/state-manager.js') }}"></script>
     
+    <!-- Load utility modules -->
+    <script src="{{ url_for('static', filename='js/dom-utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/async-operation-manager.js') }}"></script>
+    
     <!-- Load functional modules -->
     <script src="{{ url_for('static', filename='js/ui-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/model-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/monitoring-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/plugin-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/settings-manager.js') }}"></script>
     
     <!-- Load main application last -->
