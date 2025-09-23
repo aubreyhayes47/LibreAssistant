@@ -12,16 +12,18 @@ from datetime import datetime
 import hashlib
 
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from plugin_config import PluginConfigManager
 from plugin_loader import PluginLoader
 from llm_protocol import llm_protocol, LLMProtocolError
+from app_config import get_config, get_server_url_with_fallback, get_timeout_with_fallback
 import os
 
 # Configure logging for debugging and monitoring
+app_config = get_config()
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, app_config.log_level.upper()),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -377,9 +379,10 @@ import os
 class OllamaAPI:
     """Client for interacting with the Ollama API"""
     
-    def __init__(self, base_url: str = "http://localhost:11434", default_timeout: float = 180):
-        self.base_url = base_url.rstrip('/')
-        self.default_timeout = default_timeout
+    def __init__(self, base_url: Optional[str] = None, default_timeout: Optional[float] = None):
+        config = get_config()
+        self.base_url = (base_url or config.ollama_host).rstrip('/')
+        self.default_timeout = default_timeout or config.ollama_api_timeout
     
     def list_models(self, timeout: Optional[float] = None) -> List[Dict]:
         """List all local models"""
@@ -1508,10 +1511,10 @@ def api_plugins_usage():
 @app.route('/api/models')
 def api_models():
     """API endpoint to get models as JSON"""
-    # Get server URL from query parameter or use default
-    server_url = request.args.get('server_url', 'http://localhost:11434')
-    # Get timeout from query parameter or use default
-    timeout = request.args.get('timeout', type=float)
+    # Get server URL from query parameter or use default from config
+    server_url = get_server_url_with_fallback(request.args.get('server_url'))
+    # Get timeout from query parameter or use default from config
+    timeout = get_timeout_with_fallback(request.args.get('timeout', type=float))
     
     try:
         # Create API instance with custom server URL
@@ -1586,10 +1589,10 @@ def api_delete():
 @app.route('/api/info/<model_name>')
 def api_info(model_name):
     """API endpoint to get model information"""
-    # Get server URL from query parameter or use default
-    server_url = request.args.get('server_url', 'http://localhost:11434')
-    # Get timeout from query parameter or use default
-    timeout = request.args.get('timeout', type=float)
+    # Get server URL from query parameter or use default from config
+    server_url = get_server_url_with_fallback(request.args.get('server_url'))
+    # Get timeout from query parameter or use default from config
+    timeout = get_timeout_with_fallback(request.args.get('timeout', type=float))
     
     try:
         custom_api = OllamaAPI(server_url)
@@ -1602,10 +1605,10 @@ def api_info(model_name):
 @app.route('/api/server/status')
 def api_server_status():
     """API endpoint to get Ollama server status"""
-    # Get server URL from query parameter or use default
-    server_url = request.args.get('server_url', 'http://localhost:11434')
-    # Get timeout from query parameter or use default
-    timeout = request.args.get('timeout', type=float)
+    # Get server URL from query parameter or use default from config
+    server_url = get_server_url_with_fallback(request.args.get('server_url'))
+    # Get timeout from query parameter or use default from config
+    timeout = get_timeout_with_fallback(request.args.get('timeout', type=float))
     
     try:
         # Create API instance with custom server URL
