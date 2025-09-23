@@ -298,14 +298,7 @@ class LibreAssistantApp {
     // Fetch server errors from API
     async fetchServerErrors() {
         try {
-            const backendUrl = 'http://localhost:5000'; // Use Flask server
-            const response = await fetch(`${backendUrl}/api/server/errors`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
+            const data = await window.apiClient.fetchServerErrors();
             if (data.success) {
                 window.monitoringState.errors = data.errors || [];
                 window.monitoringState.lastErrorUpdate = new Date().toISOString();
@@ -498,8 +491,7 @@ class LibreAssistantApp {
 
     async loadModels() {
         const modelList = document.getElementById('model-list');
-        const backendUrl = 'http://localhost:5000'; // Use Flask backend
-        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : window.appConfig.getDefault('serverUrl');
         
         if (!modelList) return;
 
@@ -512,13 +504,8 @@ class LibreAssistantApp {
         `;
 
         try {
-            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
-            const response = await fetch(`${backendUrl}/api/models?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
+            const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : window.appConfig.getDefault('apiTimeout');
+            const data = await window.apiClient.loadModels(serverUrl, timeout);
             if (data.success) {
                 this.displayModels(data.models || []);
                 this.showStatus('Models loaded successfully', 'success');
@@ -725,18 +712,11 @@ class LibreAssistantApp {
     }
 
     async showModelInfo(modelName) {
-        const backendUrl = 'http://localhost:5000'; // Use Flask backend
-        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : 'http://localhost:11434';
-        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : 180;
+        const serverUrl = window.settingsManager ? window.settingsManager.getSetting('serverUrl') : window.appConfig.getDefault('serverUrl');
+        const timeout = window.settingsManager ? window.settingsManager.getSetting('apiTimeout') : window.appConfig.getDefault('apiTimeout');
 
         try {
-            const response = await fetch(`${backendUrl}/api/info/${modelName}?server_url=${encodeURIComponent(serverUrl)}&timeout=${timeout}`);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await window.apiClient.getModelInfo(modelName, serverUrl, timeout);
             if (data.success) {
                 const info = JSON.stringify(data.info, null, 2);
                 alert(`Model Information for "${modelName}":\n\n${info}`);
@@ -2152,17 +2132,8 @@ class LibreAssistantApp {
 // Settings manager for configuration and preferences
 class SettingsManager {
     constructor() {
-        this.defaultSettings = {
-            serverUrl: 'http://localhost:11434',
-            apiTimeout: 180,
-            maxRetries: 3,
-            pluginRetries: 2,
-            theme: 'light',
-            autoConnect: false,
-            saveLogs: false,
-            modelCacheSize: 1000,
-            favoriteModel: null
-        };
+        // Use centralized configuration defaults
+        this.defaultSettings = window.appConfig.getAllDefaults();
         this.settings = this.loadSettings();
         this.initializeSettings();
     }

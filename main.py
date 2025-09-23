@@ -10,6 +10,7 @@ import sys
 import time
 from ollama_manager import app, create_templates, set_plugin_loader
 from plugin_loader import PluginLoader
+from app_config import get_config
 
 # Global plugin loader instance for cleanup
 plugin_loader = None
@@ -19,7 +20,8 @@ def auto_start_plugins():
     Automatically discover and start all available MCP plugin servers.
     Can be disabled by setting DISABLE_PLUGIN_AUTOSTART environment variable.
     """
-    if os.environ.get('DISABLE_PLUGIN_AUTOSTART', '').lower() in ['true', '1', 'yes']:
+    config = get_config()
+    if config.disable_plugin_autostart:
         print("[AutoStart] Plugin auto-start disabled via DISABLE_PLUGIN_AUTOSTART environment variable")
         return None
     
@@ -93,7 +95,9 @@ if __name__ == "__main__":
         set_plugin_loader(plugin_loader)
     
     print("[Main] Starting Flask application...")
+    config = get_config()
+    flask_config = config.get_flask_config()
     try:
-        app.run(host="0.0.0.0", port=5000, debug=True)
+        app.run(host=flask_config['host'], port=flask_config['port'], debug=flask_config['debug'])
     except KeyboardInterrupt:
         signal_handler(signal.SIGINT, None)
