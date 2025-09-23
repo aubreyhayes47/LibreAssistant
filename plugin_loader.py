@@ -175,7 +175,10 @@ class Plugin:
             return False
         try:
             import requests
-            response = requests.get(f"http://localhost:{self.mcp_port}/api/plugins", timeout=2)
+            from app_config import get_config
+            config = get_config()
+            plugin_url = config.get_plugin_url(self.mcp_port)
+            response = requests.get(f"{plugin_url}/api/plugins", timeout=2)
             return response.status_code == 200
         except:
             return False

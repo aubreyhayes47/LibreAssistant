@@ -66,4 +66,6 @@ def search_web():
 # Optionally, add get_result_details endpoint if Brave API supports it
 
 if __name__ == "__main__":
-    app.run(port=5103)
+    host = os.environ.get('PLUGIN_HOST', '0.0.0.0')
+    port = int(os.environ.get('BRAVE_SEARCH_PORT', '5103'))
+    app.run(host=host, port=port)

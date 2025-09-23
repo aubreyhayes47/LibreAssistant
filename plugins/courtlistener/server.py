@@ -88,4 +88,6 @@ def get_docket():
         return jsonify({"success": False, "error": str(e)})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5102)
+    host = os.environ.get('PLUGIN_HOST', '0.0.0.0')
+    port = int(os.environ.get('COURTLISTENER_PORT', '5102'))
+    app.run(host=host, port=port)

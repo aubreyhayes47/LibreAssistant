@@ -58,8 +58,10 @@ class PluginAPI:
 
 # Example usage:
 if __name__ == "__main__":
-    # Example: plugin running at http://localhost:5101
-    api = PluginAPI("http://localhost:5101")
+    # Example: plugin running at configurable URL
+    from app_config import get_config
+    config = get_config()
+    api = PluginAPI(config.get_plugin_url(5101))
     try:
         print("Manifest:", api.get_manifest())
         print("Actions:", api.list_actions())

@@ -101,4 +101,7 @@ def delete_file():
         return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5101)
+    import os
+    host = os.environ.get('PLUGIN_HOST', '0.0.0.0')
+    port = int(os.environ.get('LOCAL_FILEIO_PORT', '5101'))
+    app.run(host=host, port=port)

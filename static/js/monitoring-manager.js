@@ -199,32 +199,146 @@ class MonitoringManager {
     }
 
     /**
-     * Clear logs display (local only)
+     * Clear logs display and optionally server logs
      */
     clearLogs() {
-        if (confirm('Are you sure you want to clear the logs display?')) {
-            this.stateManager.clearLogs();
-            this.displayLogs();
-            
-            const logList = document.getElementById('logList');
-            if (logList) {
-                logList.innerHTML = '<div style="text-align: center; color: #a0aec0; padding: 40px;">Logs display cleared (refresh to reload from server)</div>';
-            }
+        // Create a custom dialog to clarify client vs server clearing
+        const choice = prompt(
+            'Choose clearing option:\n' +
+            '1 - Clear display only (client-side)\n' +
+            '2 - Clear display and server logs\n' +
+            'Enter 1 or 2:'
+        );
+        
+        if (choice === '1') {
+            this.clearLogsClient();
+        } else if (choice === '2') {
+            this.clearLogsServer();
         }
     }
 
     /**
-     * Clear errors display (local only)
+     * Clear logs display only (client-side)
+     */
+    clearLogsClient() {
+        this.stateManager.clearLogs();
+        this.displayLogs();
+        
+        const logList = document.getElementById('logList');
+        if (logList) {
+            logList.innerHTML = `
+                <div style="text-align: center; color: #a0aec0; padding: 40px;">
+                    <i class="fas fa-info-circle"></i><br>
+                    Client display cleared<br>
+                    <small>Server logs remain intact. Refresh to reload from server.</small>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Clear logs on server and client
+     */
+    async clearLogsServer() {
+        try {
+            const response = await this.apiClient.post('/api/server/logs/clear');
+            
+            if (response.success) {
+                // Also clear client display
+                this.stateManager.clearLogs();
+                this.displayLogs();
+                
+                const logList = document.getElementById('logList');
+                if (logList) {
+                    logList.innerHTML = `
+                        <div style="text-align: center; color: #4ade80; padding: 40px;">
+                            <i class="fas fa-check-circle"></i><br>
+                            Server logs cleared successfully<br>
+                            <small>Both client display and server logs have been cleared.</small>
+                        </div>
+                    `;
+                }
+                
+                // Refresh logs after a short delay to show the clear action was logged
+                setTimeout(() => this.fetchServerLogs(), 2000);
+            } else {
+                throw new Error(response.error || 'Failed to clear server logs');
+            }
+        } catch (error) {
+            console.error('Failed to clear server logs:', error);
+            alert(`Failed to clear server logs: ${error.message}`);
+        }
+    }
+
+    /**
+     * Clear errors display and optionally server errors
      */
     clearErrors() {
-        if (confirm('Are you sure you want to clear the errors display?')) {
-            this.stateManager.clearErrors();
-            this.displayErrors();
+        // Create a custom dialog to clarify client vs server clearing
+        const choice = prompt(
+            'Choose clearing option:\n' +
+            '1 - Clear display only (client-side)\n' +
+            '2 - Clear display and server errors\n' +
+            'Enter 1 or 2:'
+        );
+        
+        if (choice === '1') {
+            this.clearErrorsClient();
+        } else if (choice === '2') {
+            this.clearErrorsServer();
+        }
+    }
+
+    /**
+     * Clear errors display only (client-side)
+     */
+    clearErrorsClient() {
+        this.stateManager.clearErrors();
+        this.displayErrors();
+        
+        const errorList = document.getElementById('errorList');
+        if (errorList) {
+            errorList.innerHTML = `
+                <div style="text-align: center; color: #a0aec0; padding: 40px;">
+                    <i class="fas fa-info-circle"></i><br>
+                    Client display cleared<br>
+                    <small>Server errors remain intact. Refresh to reload from server.</small>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Clear errors on server and client
+     */
+    async clearErrorsServer() {
+        try {
+            const response = await this.apiClient.post('/api/server/errors/clear');
             
-            const errorList = document.getElementById('errorList');
-            if (errorList) {
-                errorList.innerHTML = '<div style="text-align: center; color: #a0aec0; padding: 40px;">Errors display cleared (refresh to reload from server)</div>';
+            if (response.success) {
+                // Also clear client display
+                this.stateManager.clearErrors();
+                this.displayErrors();
+                
+                const errorList = document.getElementById('errorList');
+                if (errorList) {
+                    errorList.innerHTML = `
+                        <div style="text-align: center; color: #4ade80; padding: 40px;">
+                            <i class="fas fa-check-circle"></i><br>
+                            Server errors cleared successfully<br>
+                            <small>Both client display and server errors have been cleared.</small>
+                        </div>
+                    `;
+                }
+                
+                // Refresh errors after a short delay to show the clear action was logged
+                setTimeout(() => this.fetchServerErrors(), 2000);
+            } else {
+                throw new Error(response.error || 'Failed to clear server errors');
             }
+        } catch (error) {
+            console.error('Failed to clear server errors:', error);
+            alert(`Failed to clear server errors: ${error.message}`);
         }
     }
 
