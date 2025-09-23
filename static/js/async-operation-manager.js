@@ -112,8 +112,19 @@ class AsyncOperationManager {
             DOMUtils.showLoading(operation.targetElement, operation.loadingMessage);
         }
         
-        // Update operation status
+        // Update operation status with enhanced feedback
         this.updateOperationStatus(operation.id, 'loading', operation.loadingMessage);
+        
+        // Add animated loading indicator for visual feedback
+        this.addLoadingIndicator(operation);
+        
+        // Show progress toast for long operations
+        if (operation.estimatedDuration && operation.estimatedDuration > 3000) {
+            this.showProgressToast(operation);
+        }
+        
+        // Add accessibility support
+        this.announceToScreenReader(`${operation.name} started`);
     }
 
     /**
@@ -145,20 +156,51 @@ class AsyncOperationManager {
             this.uiManager.setLoading(false);
         }
         
-        const errorMessage = error.message || 'An error occurred';
+        const errorMessage = this.formatUserFriendlyError(error);
+        const isRetryable = this.isErrorRetryable(error);
         
         // Show error in target element if specified
         if (operation.targetElement) {
-            DOMUtils.showError(operation.targetElement, errorMessage, operation.errorRetryable);
+            DOMUtils.showError(operation.targetElement, errorMessage, isRetryable && operation.errorRetryable);
         }
         
-        // Show global error message
+        // Show enhanced error notification with action buttons
         if (this.uiManager && this.uiManager.showStatus) {
-            this.uiManager.showStatus(`${operation.name} failed: ${errorMessage}`, 'error');
+            const errorActions = [];
+            
+            if (isRetryable && operation.errorRetryable) {
+                errorActions.push({
+                    text: 'Retry',
+                    action: () => this.retryOperation(operation)
+                });
+            }
+            
+            if (operation.helpUrl) {
+                errorActions.push({
+                    text: 'Get Help',
+                    action: () => window.open(operation.helpUrl, '_blank')
+                });
+            }
+            
+            this.uiManager.showStatus(
+                `${operation.name} failed: ${errorMessage}`, 
+                'error', 
+                8000, // Longer duration for errors
+                errorActions
+            );
         }
         
-        // Update operation status
+        // Update operation status with detailed error info
         this.updateOperationStatus(operation.id, 'error', errorMessage);
+        
+        // Log detailed error for debugging
+        console.group(`Operation Failed: ${operation.name}`);
+        console.error('Error details:', error);
+        console.error('Operation config:', operation);
+        console.groupEnd();
+        
+        // Announce error to screen readers
+        this.announceToScreenReader(`${operation.name} failed: ${errorMessage}`);
     }
 
     /**
@@ -431,6 +473,152 @@ class AsyncOperationManager {
             document.body.appendChild(container);
         }
         return container;
+    }
+    
+    /**
+     * Format error message in user-friendly way
+     */
+    formatUserFriendlyError(error) {
+        if (!error) return 'An unexpected error occurred';
+        
+        // Check for common error patterns and provide helpful messages
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            return 'Unable to connect to the server. Please check your connection.';
+        }
+        
+        if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
+            return 'The operation took too long to complete. Please try again.';
+        }
+        
+        if (error.status === 404) {
+            return 'The requested resource was not found.';
+        }
+        
+        if (error.status === 500) {
+            return 'A server error occurred. Please try again later.';
+        }
+        
+        if (error.status === 403) {
+            return 'You do not have permission to perform this action.';
+        }
+        
+        // Return original message if it's already user-friendly
+        const message = error.message || error.toString();
+        if (message.length < 100 && !message.includes('at ') && !message.includes('Error:')) {
+            return message;
+        }
+        
+        // Default fallback
+        return 'An error occurred while processing your request';
+    }
+    
+    /**
+     * Check if error is retryable
+     */
+    isErrorRetryable(error) {
+        if (!error) return false;
+        
+        // Network errors are usually retryable
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            return true;
+        }
+        
+        // Timeout errors are retryable
+        if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
+            return true;
+        }
+        
+        // 5xx server errors are retryable
+        if (error.status >= 500 && error.status < 600) {
+            return true;
+        }
+        
+        // 4xx client errors are generally not retryable
+        if (error.status >= 400 && error.status < 500) {
+            return false;
+        }
+        
+        return true; // Default to retryable for unknown errors
+    }
+    
+    /**
+     * Retry a failed operation
+     */
+    async retryOperation(operation) {
+        console.log(`Retrying operation: ${operation.name}`);
+        
+        // Remove error state
+        this.clearOperationStatus(operation.id);
+        
+        // Retry the operation
+        try {
+            return await this.startOperation(operation);
+        } catch (error) {
+            console.error(`Retry failed for operation: ${operation.name}`, error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Add visual loading indicator
+     */
+    addLoadingIndicator(operation) {
+        if (operation.targetElement) {
+            const existing = operation.targetElement.querySelector('.async-loading-indicator');
+            if (!existing) {
+                const indicator = DOMUtils.createElement('div', {
+                    className: 'async-loading-indicator',
+                    innerHTML: '<div class="spinner"></div>'
+                });
+                operation.targetElement.appendChild(indicator);
+            }
+        }
+    }
+    
+    /**
+     * Show progress toast for long operations
+     */
+    showProgressToast(operation) {
+        if (this.uiManager && this.uiManager.showStatus) {
+            this.uiManager.showStatus(
+                `${operation.name} is running... This may take a moment.`,
+                'info',
+                operation.estimatedDuration || 5000
+            );
+        }
+    }
+    
+    /**
+     * Announce message to screen readers
+     */
+    announceToScreenReader(message) {
+        // Create or update ARIA live region for screen reader announcements
+        let announcer = document.getElementById('async-operation-announcer');
+        if (!announcer) {
+            announcer = DOMUtils.createElement('div', {
+                id: 'async-operation-announcer',
+                className: 'sr-only',
+                'aria-live': 'polite',
+                'aria-atomic': 'true'
+            });
+            document.body.appendChild(announcer);
+        }
+        
+        // Clear and set new message
+        announcer.textContent = '';
+        setTimeout(() => {
+            announcer.textContent = message;
+        }, 100);
+    }
+    
+    /**
+     * Clear operation status
+     */
+    clearOperationStatus(operationId) {
+        const statusElement = DOMUtils.getElementById(`operation-${operationId}`);
+        if (statusElement) {
+            statusElement.remove();
+        }
     }
 }
 
