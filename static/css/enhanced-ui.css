@@ -1,0 +1,545 @@
+/* Enhanced UI Components Styles for LibreAssistant */
+
+/* Status Messages */
+.status-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 350px;
+}
+
+.status-message {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.status-message i {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+.status-message .btn-close {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.7;
+    margin-left: auto;
+    padding-left: 8px;
+    cursor: pointer;
+}
+
+.status-message .btn-close:hover {
+    opacity: 1;
+}
+
+.status-info {
+    background: rgba(13, 110, 253, 0.9);
+    color: white;
+    border-left: 4px solid #0d6efd;
+}
+
+.status-success {
+    background: rgba(25, 135, 84, 0.9);
+    color: white;
+    border-left: 4px solid #198754;
+}
+
+.status-warning {
+    background: rgba(255, 193, 7, 0.9);
+    color: #212529;
+    border-left: 4px solid #ffc107;
+}
+
+.status-error {
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border-left: 4px solid #dc3545;
+}
+
+/* Loading States */
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+.loading-state i {
+    margin-right: 12px;
+    font-size: 1.3em;
+}
+
+/* Error States */
+.error-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px 20px;
+    color: #dc3545;
+    text-align: center;
+}
+
+.error-state i {
+    font-size: 2em;
+    margin-bottom: 12px;
+}
+
+.error-state .error-message {
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+/* Success States */
+.success-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px 20px;
+    color: #198754;
+    text-align: center;
+}
+
+.success-state i {
+    font-size: 2em;
+    margin-bottom: 12px;
+}
+
+/* Info States */
+.info-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px 20px;
+    color: #0d6efd;
+    text-align: center;
+}
+
+.info-state i {
+    font-size: 2em;
+    margin-bottom: 12px;
+}
+
+/* Empty States */
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 60px 20px;
+    color: #6c757d;
+    text-align: center;
+}
+
+.empty-state i {
+    font-size: 3em;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state span {
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+/* Operation Status */
+.operation-status-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1060;
+    max-width: 350px;
+}
+
+.operation-status {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.operation-status i {
+    margin-right: 8px;
+    width: 16px;
+}
+
+.operation-status .operation-message {
+    flex: 1;
+    margin-right: 8px;
+}
+
+.operation-status .operation-time {
+    color: #6c757d;
+    font-size: 0.8em;
+}
+
+.operation-status.status-loading {
+    border-left: 3px solid #0d6efd;
+}
+
+.operation-status.status-success {
+    border-left: 3px solid #198754;
+}
+
+.operation-status.status-error {
+    border-left: 3px solid #dc3545;
+}
+
+.operation-status.status-queued {
+    border-left: 3px solid #ffc107;
+}
+
+/* Batch Progress */
+.batch-progress-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1070;
+    max-width: 400px;
+    width: 100%;
+}
+
+.batch-progress {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.batch-progress .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.batch-progress .progress {
+    height: 6px;
+    background-color: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.batch-progress .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #0d6efd, #6610f2);
+    transition: width 0.3s ease;
+}
+
+/* Plugin Cards */
+.plugin-group {
+    margin-bottom: 2rem;
+}
+
+.plugin-group-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.plugin-group-title i {
+    margin-right: 8px;
+}
+
+.plugin-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1rem;
+}
+
+.plugin-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.plugin-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.plugin-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.plugin-info h6 {
+    color: #495057;
+    font-weight: 600;
+}
+
+.plugin-details {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.plugin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.plugin-actions .btn {
+    font-size: 0.85em;
+}
+
+/* Plugin Statistics */
+.plugin-stats {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Monitoring Enhancements */
+.log-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e9ecef;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+}
+
+.log-item:hover {
+    background-color: #f8f9fa;
+}
+
+.log-time {
+    color: #6c757d;
+    margin-right: 12px;
+    font-weight: 500;
+}
+
+.log-level {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 12px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.log-debug .log-level { background: #e9ecef; color: #495057; }
+.log-info .log-level { background: #d1ecf1; color: #0c5460; }
+.log-warn .log-level { background: #fff3cd; color: #856404; }
+.log-error .log-level { background: #f8d7da; color: #721c24; }
+.log-fatal .log-level { background: #f5c6cb; color: #491217; }
+
+.error-item {
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: border-color 0.2s ease;
+}
+
+.error-item:hover {
+    border-color: #adb5bd;
+}
+
+.error-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.error-time {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.error-type {
+    font-weight: 600;
+    color: #495057;
+}
+
+.error-severity {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.severity-low { background: #d1ecf1; color: #0c5460; }
+.severity-medium { background: #fff3cd; color: #856404; }
+.severity-high { background: #f8d7da; color: #721c24; }
+.severity-critical { background: #f5c6cb; color: #491217; }
+
+.error-message {
+    color: #495057;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.error-suggestion {
+    background: #e7f3ff;
+    border: 1px solid #b3d7ff;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 0.9em;
+    color: #0d47a1;
+}
+
+.error-suggestion i {
+    margin-right: 6px;
+    color: #1976d2;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .status-container,
+    .operation-status-container {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+    
+    .batch-progress-container {
+        left: 10px;
+        right: 10px;
+        transform: none;
+        max-width: none;
+    }
+    
+    .plugin-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .plugin-actions {
+        flex-direction: column;
+    }
+    
+    .plugin-actions .btn {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .operation-status,
+    .batch-progress {
+        background: rgba(33, 37, 41, 0.95);
+        border-color: #495057;
+        color: #f8f9fa;
+    }
+    
+    .plugin-details {
+        background-color: #343a40;
+        color: #f8f9fa;
+    }
+    
+    .plugin-stats {
+        background: #343a40;
+        color: #f8f9fa;
+    }
+    
+    .log-item:hover {
+        background-color: #343a40;
+    }
+    
+    .error-item {
+        background-color: #212529;
+        border-color: #495057;
+        color: #f8f9fa;
+    }
+    
+    .error-suggestion {
+        background: #1e3a5f;
+        border-color: #2c5aa0;
+        color: #9fc5e8;
+    }
+}
+
+/* Animation Classes */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.animate-slide-in-right {
+    animation: slideInRight 0.3s ease;
+}
+
+.animate-slide-in-down {
+    animation: slideInDown 0.3s ease;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
