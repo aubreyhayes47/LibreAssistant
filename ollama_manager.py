@@ -19,6 +19,9 @@ from plugin_loader import PluginLoader
 from llm_protocol import llm_protocol, LLMProtocolError
 from app_config import get_config, get_server_url_with_fallback, get_timeout_with_fallback
 import os
+import platform
+import subprocess
+import threading
 
 # Configure logging for debugging and monitoring
 app_config = get_config()
@@ -2045,6 +2048,137 @@ def api_server_test_running():
         'errors': errors,
         'server_status': 'running'
     })
+
+
+@app.route('/api/ollama/install', methods=['POST'])
+def api_ollama_install():
+    """API endpoint to install Ollama"""
+    try:
+        system = platform.system().lower()
+        
+        if system == 'linux':
+            # Use the official Ollama installation script
+            install_command = "curl -fsSL https://ollama.ai/install.sh | sh"
+        elif system == 'darwin':  # macOS
+            # Use Homebrew if available, otherwise download installer
+            try:
+                subprocess.run(['which', 'brew'], check=True, capture_output=True)
+                install_command = "brew install ollama"
+            except subprocess.CalledProcessError:
+                install_command = "curl -fsSL https://ollama.ai/install.sh | sh"
+        elif system == 'windows':
+            return jsonify({
+                'success': False,
+                'error': 'Windows installation requires manual download',
+                'download_url': 'https://ollama.ai/download/windows'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Unsupported operating system: {system}',
+                'manual_install': 'Please visit https://ollama.ai for installation instructions'
+            })
+        
+        # Run installation command
+        def install_ollama():
+            try:
+                result = subprocess.run(
+                    install_command,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 minutes timeout
+                )
+                
+                if result.returncode == 0:
+                    add_server_log('INFO', 'Ollama installation completed successfully')
+                else:
+                    add_server_log('ERROR', f'Ollama installation failed: {result.stderr}')
+                    
+            except subprocess.TimeoutExpired:
+                add_server_log('ERROR', 'Ollama installation timed out')
+            except Exception as e:
+                add_server_log('ERROR', f'Ollama installation error: {str(e)}')
+        
+        # Run installation in background thread
+        install_thread = threading.Thread(target=install_ollama)
+        install_thread.daemon = True
+        install_thread.start()
+        
+        add_server_log('INFO', f'Starting Ollama installation for {system}...')
+        return jsonify({
+            'success': True,
+            'message': f'Ollama installation started for {system}',
+            'command': install_command
+        })
+        
+    except Exception as e:
+        add_server_log('ERROR', f'Ollama installation failed: {str(e)}')
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/ollama/start', methods=['POST'])
+def api_ollama_start():
+    """API endpoint to start local Ollama server"""
+    try:
+        def start_ollama():
+            try:
+                # Try different methods to start Ollama
+                commands = [
+                    ['ollama', 'serve'],
+                    ['/usr/local/bin/ollama', 'serve'],
+                    ['systemctl', 'start', 'ollama']
+                ]
+                
+                for cmd in commands:
+                    try:
+                        # Check if command exists
+                        if cmd[0] != 'systemctl':
+                            subprocess.run([cmd[0], '--version'], 
+                                         capture_output=True, check=True, timeout=5)
+                        
+                        # Start the service
+                        if cmd[0] == 'systemctl':
+                            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                            if result.returncode == 0:
+                                add_server_log('INFO', 'Ollama server started via systemctl')
+                                break
+                        else:
+                            # Start ollama serve in background
+                            process = subprocess.Popen(
+                                cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                start_new_session=True
+                            )
+                            # Give it a moment to start
+                            time.sleep(2)
+                            add_server_log('INFO', f'Ollama server started with command: {" ".join(cmd)}')
+                            break
+                            
+                    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+                        continue
+                
+                else:
+                    add_server_log('ERROR', 'Failed to start Ollama server - no working command found')
+                    
+            except Exception as e:
+                add_server_log('ERROR', f'Error starting Ollama server: {str(e)}')
+        
+        # Start server in background thread
+        start_thread = threading.Thread(target=start_ollama)
+        start_thread.daemon = True
+        start_thread.start()
+        
+        add_server_log('INFO', 'Attempting to start Ollama server...')
+        return jsonify({
+            'success': True,
+            'message': 'Ollama server start initiated'
+        })
+        
+    except Exception as e:
+        add_server_log('ERROR', f'Failed to start Ollama server: {str(e)}')
+        return jsonify({'success': False, 'error': str(e)})
 
 
 def create_templates():
