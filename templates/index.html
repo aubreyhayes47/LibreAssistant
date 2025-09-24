@@ -77,6 +77,12 @@
                                     <button id="download-model-btn" class="btn btn-success">
                                         <i class="fas fa-download"></i> Download Model
                                     </button>
+                                    <button id="install-ollama-btn" class="btn btn-info">
+                                        <i class="fas fa-install"></i> Install Ollama
+                                    </button>
+                                    <button id="start-ollama-btn" class="btn btn-warning">
+                                        <i class="fas fa-play"></i> Start Server
+                                    </button>
                                 </div>
                             </div>
                             <div class="model-status" id="model-status" style="display: none;">
@@ -310,8 +316,31 @@
                         <div id="troubleshooting" class="server-tab-content">
                             <div class="monitoring-header">
                                 <h3><i class="fas fa-wrench"></i> Troubleshooting Guide</h3>
+                                <div class="server-management-controls">
+                                    <button id="install-ollama-server-btn" class="btn btn-info">
+                                        <i class="fas fa-download"></i> Install Ollama
+                                    </button>
+                                    <button id="start-ollama-server-btn" class="btn btn-warning">
+                                        <i class="fas fa-play"></i> Start Local Server
+                                    </button>
+                                </div>
                             </div>
                             <div class="troubleshooting-content">
+                                <div class="troubleshooting-section">
+                                    <h4>Server Management</h4>
+                                    <div class="issue-item">
+                                        <h5><i class="fas fa-info-circle"></i> Ollama Installation & Server Control</h5>
+                                        <div class="solution">
+                                            <p><strong>Quick Actions:</strong></p>
+                                            <ul>
+                                                <li>Use the <strong>Install Ollama</strong> button above to automatically install Ollama on your system</li>
+                                                <li>Use the <strong>Start Local Server</strong> button to attempt starting the Ollama service</li>
+                                                <li>Monitor the Server Logs tab to see installation and startup progress</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <div class="troubleshooting-section">
                                     <h4>Common Issues</h4>
                                     
@@ -943,5 +972,161 @@
             }
         }
     </style>
+    
+    <script>
+        // Ollama installer and server management functions
+        async function installOllama(buttonId) {
+            const button = document.getElementById(buttonId);
+            const originalText = button.innerHTML;
+            
+            try {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Installing...';
+                button.disabled = true;
+                
+                const response = await fetch('/api/ollama/install', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success message
+                    showNotification('Ollama installation started. Check Server Logs for progress.', 'success');
+                    
+                    if (result.download_url) {
+                        // Windows case - open download URL
+                        window.open(result.download_url, '_blank');
+                        showNotification('Opening Ollama download page for Windows', 'info');
+                    }
+                } else {
+                    if (result.download_url) {
+                        window.open(result.download_url, '_blank');
+                        showNotification('Opening Ollama download page', 'info');
+                    } else {
+                        showNotification('Installation failed: ' + (result.error || 'Unknown error'), 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error installing Ollama:', error);
+                showNotification('Error installing Ollama: ' + error.message, 'error');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+        
+        async function startOllamaServer(buttonId) {
+            const button = document.getElementById(buttonId);
+            const originalText = button.innerHTML;
+            
+            try {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+                button.disabled = true;
+                
+                const response = await fetch('/api/ollama/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Ollama server start initiated. Check Server Logs for progress.', 'success');
+                } else {
+                    showNotification('Failed to start server: ' + (result.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error starting Ollama server:', error);
+                showNotification('Error starting server: ' + error.message, 'error');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 4px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                max-width: 400px;
+                word-wrap: break-word;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            // Set background color based on type
+            switch (type) {
+                case 'success':
+                    notification.style.backgroundColor = '#28a745';
+                    break;
+                case 'error':
+                    notification.style.backgroundColor = '#dc3545';
+                    break;
+                case 'warning':
+                    notification.style.backgroundColor = '#ffc107';
+                    notification.style.color = '#212529';
+                    break;
+                default:
+                    notification.style.backgroundColor = '#17a2b8';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+        
+        // Add CSS animation for notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add event listeners when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Models view buttons
+            const installBtn = document.getElementById('install-ollama-btn');
+            const startBtn = document.getElementById('start-ollama-btn');
+            
+            // Server view buttons
+            const installServerBtn = document.getElementById('install-ollama-server-btn');
+            const startServerBtn = document.getElementById('start-ollama-server-btn');
+            
+            if (installBtn) {
+                installBtn.addEventListener('click', () => installOllama('install-ollama-btn'));
+            }
+            if (startBtn) {
+                startBtn.addEventListener('click', () => startOllamaServer('start-ollama-btn'));
+            }
+            if (installServerBtn) {
+                installServerBtn.addEventListener('click', () => installOllama('install-ollama-server-btn'));
+            }
+            if (startServerBtn) {
+                startServerBtn.addEventListener('click', () => startOllamaServer('start-ollama-server-btn'));
+            }
+        });
+    </script>
 </body>
 </html>
