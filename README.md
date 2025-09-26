@@ -18,13 +18,35 @@
 
 ## 📸 Screenshots
 
-> _If you have not yet added screenshots, place them in a `screenshots/` folder and update the links below._
+### Main Dashboard & Navigation
+![Models View](screenshots/models-view.png)
+_Models view: Manage your AI models with Ollama integration._
 
-![Plugin Catalogue UI](screenshots/plugin-catalogue.png)
-_Plugin catalogue: browse, enable, and configure plugins._
+![Requests Interface](screenshots/requests-view.png)
+_Requests interface: Send discrete requests to LibreAssistant with plugin support._
 
-![Plugin Activity Bar](screenshots/plugin-activity-bar.gif)
-_Real-time plugin activity bar and request visualization._
+![Settings & Configuration](screenshots/settings-view.png)
+_Settings view: Configure server settings and application preferences._
+
+### Plugin System
+![Plugin Catalogue](screenshots/plugin-catalogue-full.png)
+_Plugin catalogue: Browse, enable, and configure LibreAssistant plugins._
+
+![Plugin Details](screenshots/plugin-details-modal.png)
+_Plugin details modal: View comprehensive plugin information, capabilities, and permissions._
+
+![Plugin Configuration](screenshots/plugin-config-modal.png)
+_Plugin configuration modal: Configure plugin settings and API keys._
+
+### Additional Interfaces
+![Chat Interface](screenshots/chat-interface.png)
+_Chat console: Supports Ollama models and plugin integration._
+
+![Server Monitoring](screenshots/server-monitoring-view.png)
+_Server monitoring: Track logs, errors, and system status._
+
+![About Page](screenshots/about-view.png)
+_About page: Application information and version details._
 
 ---
 
