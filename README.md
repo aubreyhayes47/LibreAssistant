@@ -28,16 +28,6 @@ _Requests interface: Send discrete requests to LibreAssistant with plugin suppor
 ![Settings & Configuration](screenshots/settings-view.png)
 _Settings view: Configure server settings and application preferences._
 
-### Plugin System
-![Plugin Catalogue](screenshots/plugin-catalogue-full.png)
-_Plugin catalogue: Browse, enable, and configure LibreAssistant plugins._
-
-![Plugin Details](screenshots/plugin-details-modal.png)
-_Plugin details modal: View comprehensive plugin information, capabilities, and permissions._
-
-![Plugin Configuration](screenshots/plugin-config-modal.png)
-_Plugin configuration modal: Configure plugin settings and API keys._
-
 ### Additional Interfaces
 ![Chat Interface](screenshots/chat-interface.png)
 _Chat console: Supports Ollama models and plugin integration._
