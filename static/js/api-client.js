@@ -13,9 +13,18 @@ class ApiClient {
      * Generic HTTP request method with error handling
      */
     async request(method, endpoint, options = {}) {
-        const url = typeof endpoint === 'string' && endpoint.startsWith('http') 
-            ? endpoint 
-            : this.config.getApiUrl(endpoint);
+        // Determine the URL based on endpoint type
+        let url;
+        if (typeof endpoint === 'string' && endpoint.startsWith('http')) {
+            // Full URL provided
+            url = endpoint;
+        } else if (typeof endpoint === 'string' && endpoint.startsWith('/')) {
+            // Relative path provided - prepend base URL
+            url = `${this.config.getBackendBaseUrl()}${endpoint}`;
+        } else {
+            // Named endpoint - look up in config
+            url = this.config.getApiUrl(endpoint);
+        }
             
         const config = {
             method: method.toUpperCase(),
@@ -68,9 +77,18 @@ class ApiClient {
      * GET request
      */
     async get(endpoint, params = {}, options = {}) {
-        let url = typeof endpoint === 'string' && endpoint.startsWith('http') 
-            ? endpoint 
-            : this.config.getApiUrl(endpoint);
+        // Determine the URL based on endpoint type
+        let url;
+        if (typeof endpoint === 'string' && endpoint.startsWith('http')) {
+            // Full URL provided
+            url = endpoint;
+        } else if (typeof endpoint === 'string' && endpoint.startsWith('/')) {
+            // Relative path provided - prepend base URL
+            url = `${this.config.getBackendBaseUrl()}${endpoint}`;
+        } else {
+            // Named endpoint - look up in config
+            url = this.config.getApiUrl(endpoint);
+        }
             
         if (Object.keys(params).length > 0) {
             const searchParams = new URLSearchParams(params);

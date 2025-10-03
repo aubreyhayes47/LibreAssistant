@@ -564,13 +564,21 @@ class AsyncOperationManager {
      */
     addLoadingIndicator(operation) {
         if (operation.targetElement) {
-            const existing = operation.targetElement.querySelector('.async-loading-indicator');
-            if (!existing) {
-                const indicator = DOMUtils.createElement('div', {
-                    className: 'async-loading-indicator',
-                    innerHTML: '<div class="spinner"></div>'
-                });
-                operation.targetElement.appendChild(indicator);
+            // Convert string ID to DOM element if necessary
+            let element = operation.targetElement;
+            if (typeof element === 'string') {
+                element = DOMUtils.getElementById(element);
+            }
+            
+            if (element) {
+                const existing = element.querySelector('.async-loading-indicator');
+                if (!existing) {
+                    const indicator = DOMUtils.createElement('div', {
+                        className: 'async-loading-indicator',
+                        innerHTML: '<div class="spinner"></div>'
+                    });
+                    element.appendChild(indicator);
+                }
             }
         }
     }
