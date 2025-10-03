@@ -13,9 +13,9 @@ LibreAssistant is a privacy-first, fully local AI assistant built with Flask tha
 │  Web Interface (Flask + JavaScript)                        │
 │  ┌─────────────────┐  ┌──────────────┐  ┌───────────────┐  │
 │  │   Templates     │  │ Static Assets│  │  JavaScript   │  │
-│  │   - chat.html   │  │ - CSS Styles │  │  - UI Manager │  │
-│  │   - index.html  │  │ - Images     │  │  - API Client │  │
-│  │   - plugins.html│  │              │  │  - Async Ops  │  │
+│  │   - index.html  │  │ - CSS Styles │  │  - UI Manager │  │
+│  │                 │  │ - Images     │  │  - API Client │  │
+│  │                 │  │              │  │  - Async Ops  │  │
 │  └─────────────────┘  └──────────────┘  └───────────────┘  │
 ├─────────────────────────────────────────────────────────────┤
 │  Core Application Layer                                     │
@@ -210,7 +210,6 @@ GET  /settings           - Configuration interface
 
 ### WebSocket Integration (Future)
 ```
-/ws/chat       - Real-time chat communication
 /ws/plugins    - Live plugin status updates
 /ws/monitoring - Real-time system metrics
 ```
