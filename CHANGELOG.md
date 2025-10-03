@@ -19,6 +19,15 @@ All notable changes to LibreAssistant will be documented in this file.
 ### Changed
 - README.md completely rewritten with detailed instructions
 - Project structure documentation updated
+- Frontend now uses only index.html for all views
+
+### Removed
+- Deprecated `templates/chat.html` template - functionality integrated into index.html
+- Deprecated `templates/plugin_catalogue.html` template - functionality integrated into index.html
+- Chat-specific JavaScript file `static/js/chat-script.js`
+- Chat-specific stylesheet `static/css/chat-styles.css`
+- Chat-related CSS styles from `static/css/styles.css`
+- `/chat` and `/plugin_catalogue` routes from backend
 
 ### Security
 - Added security policy and best practices documentation

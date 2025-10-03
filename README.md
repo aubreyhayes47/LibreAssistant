@@ -29,9 +29,6 @@ _Requests interface: Send discrete requests to LibreAssistant with plugin suppor
 _Settings view: Configure server settings and application preferences._
 
 ### Additional Interfaces
-![Chat Interface](screenshots/chat-interface.png)
-_Chat console: Supports Ollama models and plugin integration._
-
 ![Server Monitoring](screenshots/server-monitoring-view.png)
 _Server monitoring: Track logs, errors, and system status._
 
@@ -287,15 +284,19 @@ LibreAssistant/
 ├── static/                 # Static assets served by Flask
 │   ├── css/               # Stylesheets
 │   │   ├── styles.css     # Main application styles
-│   │   └── chat-styles.css # Chat interface styles
+│   │   ├── enhanced-ui.css # Enhanced UI styles
+│   │   └── async-feedback.css # Async operation feedback styles
 │   └── js/                # JavaScript files
-│       ├── script.js      # Main application logic
-│       ├── chat-script.js # Chat functionality
+│       ├── app.js         # Main application logic
+│       ├── api-client.js  # API client
+│       ├── ui-manager.js  # UI management
+│       ├── model-manager.js # Model management
+│       ├── plugin-manager.js # Plugin management
+│       ├── settings-manager.js # Settings management
+│       ├── monitoring-manager.js # Monitoring functionality
 │       └── markdown-utils.js # Markdown utilities
 ├── templates/             # Flask templates
-│   ├── index.html         # Main web interface (includes all requests functionality)
-│   ├── chat.html          # Standalone chat interface
-│   └── plugin_catalogue.html # Plugin catalogue
+│   └── index.html         # Main web interface (all views integrated)
 ├── plugins/               # Plugin directory
 ├── main.py                # Flask application entry point
 ├── ollama_manager.py      # Flask app and Ollama API management
@@ -303,6 +304,9 @@ LibreAssistant/
 ├── plugin_api.py          # Plugin API functionality
 ├── plugin_config.py       # Plugin configuration management
 ├── plugin_loader.py       # Plugin loading system
+├── plugin_usage_tracker.py # Plugin usage tracking
+├── llm_protocol.py        # LLM protocol implementation
+├── app_config.py          # Application configuration
 ├── requirements.txt       # Python dependencies
 ├── CONTRIBUTING.md        # Contribution guidelines
 └── README.md              # This file
@@ -312,9 +316,8 @@ LibreAssistant/
 
 - **`main.py`**: Flask application entry point
 - **`ollama_manager.py`**: Core Flask app with Ollama API integration
-- **`templates/index.html`**: Main web interface with full functionality
-- **`templates/chat.html`**: Standalone chat interface
-- **`static/js/script.js`**: Main JavaScript application logic
+- **`templates/index.html`**: Main web interface with all views (models, requests, catalogue, server, settings, about)
+- **`static/js/app.js`**: Main JavaScript application logic
 - **`static/css/styles.css`**: Main application stylesheets
 
 ## Contributing

@@ -1348,19 +1348,6 @@ def index():
     except Exception as e:
         return render_template('index.html', models=[], plugins=[], error=str(e))
 
-@app.route('/chat')
-def chat():
-    """Chat interface"""
-    return render_template('chat.html')
-
-
-
-@app.route('/plugin_catalogue')
-def plugin_catalogue():
-    """Plugin catalogue interface"""
-    return render_template('plugin_catalogue.html')
-
-
 
 def validate_and_sanitize_plugin_info(plugin: Dict, manifest_data: Dict, plugin_obj, is_running: bool) -> Dict:
     """

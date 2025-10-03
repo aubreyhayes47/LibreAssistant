@@ -2,7 +2,7 @@
 
 ## Overview
 
-This feature enables automatic markdown rendering for AI model responses in the LibreAssistant chat interfaces. It provides rich text formatting while maintaining security through XSS protection.
+This feature enables automatic markdown rendering for AI model responses in the LibreAssistant interface. It provides rich text formatting while maintaining security through XSS protection.
 
 ## Features
 
@@ -32,9 +32,9 @@ This feature enables automatic markdown rendering for AI model responses in the 
 
 ### Files Modified
 - `markdown-utils.js` - Core markdown rendering utility
-- `chat-script.js`, `script.js` - Updated to use markdown rendering
-- `chat.html`, `index.html` - Added library dependencies
-- `chat-styles.css`, `styles.css` - Added markdown-specific styling
+- `app.js` - Updated to use markdown rendering
+- `index.html` - Added library dependencies
+- `styles.css` - Added markdown-specific styling
 
 ### Dependencies Added
 - **marked.js** - Markdown parsing library
@@ -59,7 +59,7 @@ if (role === 'assistant' && window.MarkdownUtils) {
 - Tested with various markdown syntax combinations
 - Verified XSS protection works correctly
 - Confirmed fallback behavior for non-markdown content
-- Tested across all LibreAssistant chat implementations
+- Tested in the LibreAssistant main interface
 
 ### Test Cases Covered
 - Basic text (no formatting)
