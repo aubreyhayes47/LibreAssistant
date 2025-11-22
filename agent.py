@@ -65,6 +65,21 @@ Assistant:
   "action_input": "The result is 200."
 }}
 
+User: Search for "OpenVINO documentation"
+Assistant:
+{{
+  "thought": "I need to search for OpenVINO documentation.",
+  "action": "search_web",
+  "action_input": "OpenVINO documentation"
+}}
+Observation: [{{"title": "OpenVINO Documentation", "url": "...", "description": "..."}}]
+Assistant:
+{{
+  "thought": "I found the documentation.",
+  "action": "Final Answer",
+  "action_input": "Here is the OpenVINO documentation: ..."
+}}
+
 User: Hello
 Assistant:
 {{

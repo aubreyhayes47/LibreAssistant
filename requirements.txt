@@ -7,3 +7,5 @@ accelerate
 nncf
 openvino-tokenizers
 ollama
+requests
+beautifulsoup4
