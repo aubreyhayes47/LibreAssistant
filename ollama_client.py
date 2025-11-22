@@ -42,15 +42,17 @@ class OllamaClient:
     A convenient client class that can be imported and reused.
     """
 
-    def __init__(self, default_model: str | None = None):
+    def __init__(self, default_model: str | None = None, system_prompt: str | None = None):
         if default_model:
             self.model = default_model
         else:
             self.model = select_model()
+        
+        self.system_prompt = system_prompt or "You are LibreAssistant, a helpful and open-source AI assistant. Answer all questions accurately and succinctly."
 
     def call(self, prompt: str) -> str:
-        sys_instruction = "You are LibreAssistant, a helpful and open-source AI assistant. Answer all questions accurately and succinctly. User prompt:"
-        full_prompt = f"{sys_instruction}\n{prompt}"
+        sys_instruction = self.system_prompt
+        full_prompt = f"{sys_instruction} User prompt:\n{prompt}"
         return ollama_call(self.model, full_prompt)
 
     def set_model(self, model_name: str):

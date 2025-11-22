@@ -1,10 +1,23 @@
 #!/usr/bin/env python3
 import sys
 import os
+import json
 
 # Import your backends
 from openvino_client import OpenVINOClient
 from ollama_client import OllamaClient  # adjust if your file is named differently
+
+
+def load_config():
+    config_path = "config.json"
+    if not os.path.exists(config_path):
+        return {}
+    try:
+        with open(config_path, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"⚠️  Failed to load config.json: {e}")
+        return {}
 
 
 def clear():
@@ -41,16 +54,21 @@ def chat_loop(client):
 
 
 def main():
+    config = load_config()
+    system_prompt = config.get("system_prompt", "You are LibreAssistant, a helpful and open-source AI assistant.")
+    
     while True:
         choice = menu()
 
         if choice == "1":
             clear()
             print("🔧 Loading OpenVINO client…")
+            ov_config = config.get("openvino", {})
             try:
                 client = OpenVINOClient(
-                    model_dir="ov_dolphin3p0_llama3p1_8b_int4",
-                    device="AUTO",  # AUTO or GPU or CPU
+                    model_dir=ov_config.get("model_dir", "ov_dolphin3p0_llama3p1_8b_int4"),
+                    device=ov_config.get("device", "AUTO"),
+                    system_prompt=system_prompt
                 )
                 chat_loop(client)
                 client.finish()
@@ -61,8 +79,12 @@ def main():
         elif choice == "2":
             clear()
             print("🔧 Loading Ollama client…")
+            ollama_config = config.get("ollama", {})
             try:
-                client = OllamaClient("llama3:8b")  # or any model you choose
+                client = OllamaClient(
+                    default_model=ollama_config.get("model", "llama3:8b"),
+                    system_prompt=system_prompt
+                )
                 chat_loop(client)
             except Exception as e:
                 print("⚠️  Failed to load Ollama:", e)
