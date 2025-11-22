@@ -6,6 +6,8 @@ import json
 # Import your backends
 from openvino_client import OpenVINOClient
 from ollama_client import OllamaClient  # adjust if your file is named differently
+from agent import Agent
+from tools import TOOLS
 
 
 def load_config():
@@ -27,7 +29,7 @@ def clear():
 def menu():
     clear()
     print("=====================================")
-    print("        LibreAssistant (CLI)         ")
+    print("        LibreAssistant (Agent)       ")
     print("=====================================")
     print("1) Use OpenVINO (GPU/CPU)")
     print("2) Use Ollama (local Llama)")
@@ -36,17 +38,19 @@ def menu():
     return input("Select an option: ").strip()
 
 
-def chat_loop(client):
-    """Unified chat loop for both OpenVINO and Ollama."""
+def task_loop(client):
+    """Task execution loop using the Agent."""
+    agent = Agent(client, TOOLS)
     print("\nType Ctrl+C to return to menu.\n")
     while True:
         try:
-            user = input("You > ").strip()
-            if not user:
+            task = input("Task > ").strip()
+            if not task:
                 continue
 
-            response = client.call(user)
-            print("AI >", response)
+            print("\n🤔 Thinking...")
+            response = agent.run(task)
+            print(f"\n🤖 Final Answer: {response}\n")
 
         except KeyboardInterrupt:
             print("\nReturning to main menu...\n")
@@ -55,7 +59,9 @@ def chat_loop(client):
 
 def main():
     config = load_config()
-    system_prompt = config.get("system_prompt", "You are LibreAssistant, a helpful and open-source AI assistant.")
+    # Note: Agent will override the system prompt, so we don't pass it here for the Agent's internal logic,
+    # but the client might still need one for initialization.
+    base_system_prompt = config.get("system_prompt", "You are a helpful assistant.")
     
     while True:
         choice = menu()
@@ -68,9 +74,9 @@ def main():
                 client = OpenVINOClient(
                     model_dir=ov_config.get("model_dir", "ov_dolphin3p0_llama3p1_8b_int4"),
                     device=ov_config.get("device", "AUTO"),
-                    system_prompt=system_prompt
+                    system_prompt=base_system_prompt
                 )
-                chat_loop(client)
+                task_loop(client)
                 client.finish()
             except Exception as e:
                 print("⚠️  Failed to load OpenVINO:", e)
@@ -83,9 +89,9 @@ def main():
             try:
                 client = OllamaClient(
                     default_model=ollama_config.get("model", "llama3:8b"),
-                    system_prompt=system_prompt
+                    system_prompt=base_system_prompt
                 )
-                chat_loop(client)
+                task_loop(client)
             except Exception as e:
                 print("⚠️  Failed to load Ollama:", e)
                 input("\nPress Enter to continue...")
