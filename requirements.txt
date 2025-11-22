@@ -1,0 +1,9 @@
+openvino
+openvino-genai
+optimum-intel
+transformers
+huggingface_hub
+accelerate
+nncf
+openvino-tokenizers
+ollama

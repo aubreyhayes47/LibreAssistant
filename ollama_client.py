@@ -49,7 +49,9 @@ class OllamaClient:
             self.model = select_model()
 
     def call(self, prompt: str) -> str:
-        return ollama_call(self.model, prompt)
+        sys_instruction = "You are LibreAssistant, a helpful and open-source AI assistant. Answer all questions accurately and succinctly. User prompt:"
+        full_prompt = f"{sys_instruction}\n{prompt}"
+        return ollama_call(self.model, full_prompt)
 
     def set_model(self, model_name: str):
         self.model = model_name

@@ -50,7 +50,7 @@ def main():
             try:
                 client = OpenVINOClient(
                     model_dir="ov_dolphin3p0_llama3p1_8b_int4",
-                    device="GPU",  # AUTO or GPU or CPU
+                    device="AUTO",  # AUTO or GPU or CPU
                 )
                 chat_loop(client)
                 client.finish()
