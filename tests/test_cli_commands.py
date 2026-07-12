@@ -279,3 +279,153 @@ def test_compact_in_help():
     assert "/compact" in COMMANDS
     desc = COMMANDS["/compact"]
     assert len(desc) > 10
+
+
+# /load: restores session.id and deduplicates system messages
+def test_load_restores_session_id_and_deduplicates():
+    """Loading a session with multiple system messages keeps only the first
+    and restores session.id so new messages get the correct session_id."""
+    from libreassistant.session import (
+        Message,
+        Session,
+        save_session,
+        load_session,
+        SESSIONS_DIR,
+    )
+    from libreassistant.profiles import AgentProfile
+
+    profile = AgentProfile(
+        name="default", description="Test", system_prompt="You are a test."
+    )
+    # Build a session with duplicate system messages (the bug scenario)
+    original_id = "original123"
+    msgs = [
+        Message.create("system", "You are a test.", "default", "primary", original_id),
+        Message.create(
+            "system", "## Skills\n- tutorial", "default", "primary", original_id
+        ),
+        Message.create("system", "You are a test.", "default", "primary", original_id),
+        Message.create(
+            "system", "## Skills\n- tutorial", "default", "primary", original_id
+        ),
+        Message.create("user", "hello", "default", "primary", original_id),
+    ]
+    name = "cli_test_load_dedup"
+    try:
+        save_session(name, msgs)
+        loaded = load_session(name)
+        assert loaded is not None
+        assert len(loaded) == 5  # all 5 messages loaded from disk
+
+        # Simulate what the /load handler now does
+        session = Session(profile=profile)
+        session.add_system_message(profile.system_prompt, agent=profile.name)
+        session.messages = loaded
+        if loaded:
+            session.id = loaded[0].session_id
+
+        # Deduplicate system messages (same logic as the /load handler)
+        seen_system = False
+        deduped = []
+        for msg in session.messages:
+            if msg.role == "system":
+                if seen_system:
+                    continue
+                seen_system = True
+            deduped.append(msg)
+        session.messages = deduped
+
+        # Should have 1 system message + 1 user message
+        system_msgs = [m for m in session.messages if m.role == "system"]
+        assert len(system_msgs) == 1
+        assert len(session.messages) == 2
+        assert session.id == original_id
+    finally:
+        p = SESSIONS_DIR / f"{name}.jsonl"
+        if p.exists():
+            p.unlink()
+
+
+# /load: non-existent session returns None (existing test, kept)
+def test_load_nonexistent_returns_none():
+    """Loading a non-existent session returns None."""
+    from libreassistant.session import load_session
+
+    result = load_session("cli_test_nonexistent_xyz_load")
+    assert result is None
+
+
+# auto-resume: deduplicates system messages after resume
+def test_auto_resume_deduplicates_system_messages():
+    """After auto-resume, duplicate system messages are removed."""
+    from libreassistant.session import Message, Session, auto_save, auto_load
+    from libreassistant.profiles import AgentProfile
+    from libreassistant.session import AUTO_SESSION_PATH
+
+    profile = AgentProfile(
+        name="default", description="Test", system_prompt="You are a test."
+    )
+    session = Session(profile=profile)
+    session.add_system_message(profile.system_prompt, agent=profile.name)
+    session.add_system_message("## Skills\n- tutorial", agent=profile.name)
+    session.add_message(
+        Message.create("user", "hello", "default", "primary", session.id)
+    )
+    session.add_message(
+        Message.create("assistant", "hi", "default", "primary", session.id)
+    )
+
+    # Save to auto-save file
+    old_content = None
+    if AUTO_SESSION_PATH.exists():
+        old_content = AUTO_SESSION_PATH.read_bytes()
+    try:
+        auto_save(session.messages)
+        assert AUTO_SESSION_PATH.exists()
+
+        # Simulate what cli.py does at startup:
+        # 1. Create session + add system messages (startup)
+        # 2. Load auto-save + add messages (resume)
+        # 3. Deduplicate system messages
+        new_session = Session(profile=profile)
+        new_session.add_system_message(profile.system_prompt, agent=profile.name)
+        new_session.add_system_message("## Skills\n- tutorial", agent=profile.name)
+
+        loaded = auto_load()
+        assert loaded is not None
+
+        for d in loaded:
+            msg = Message(
+                id=d.get("id", ""),
+                session_id=new_session.id,
+                role=d["role"],
+                content=d.get("content", None),
+                tool_calls=d.get("tool_calls", None),
+                tool_call_id=d.get("tool_call_id", None),
+                agent=d.get("agent", "default"),
+                mode=d.get("mode", "primary"),
+                parent_id=d.get("parent_id", None),
+                timestamp=d.get("timestamp", 0.0),
+            )
+            new_session.add_message(msg)
+
+        # Deduplicate system messages
+        seen_system = False
+        deduped = []
+        for msg in new_session.messages:
+            if msg.role == "system":
+                if seen_system:
+                    continue
+                seen_system = True
+            deduped.append(msg)
+        new_session.messages = deduped
+
+        # Should have exactly 1 system message + user + assistant
+        system_msgs = [m for m in new_session.messages if m.role == "system"]
+        assert len(system_msgs) == 1
+        assert len(new_session.messages) == 3  # 1 system + 1 user + 1 assistant
+    finally:
+        if old_content is not None:
+            AUTO_SESSION_PATH.write_bytes(old_content)
+        elif AUTO_SESSION_PATH.exists():
+            AUTO_SESSION_PATH.unlink()

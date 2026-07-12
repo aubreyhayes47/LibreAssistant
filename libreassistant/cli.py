@@ -355,6 +355,19 @@ def main():
                         timestamp=d.get("timestamp", 0.0),
                     )
                     agent.session.add_message(msg)
+                # Deduplicate system messages — startup already injected the
+                # profile's system prompt and skill listing, and the loaded
+                # session may contain copies of those same messages.  Keep
+                # only the first system message (the primary instruction).
+                seen_system = False
+                deduped = []
+                for msg in agent.session.messages:
+                    if msg.role == "system":
+                        if seen_system:
+                            continue
+                        seen_system = True
+                    deduped.append(msg)
+                agent.session.messages = deduped
             # Delete the auto-save after resume (or decline) to prevent double-resume
             # on next startup.  The session is now live in memory; re-saving happens
             # on /quit or Ctrl+C via auto_save().  If we didn't delete here, a crash
@@ -540,6 +553,26 @@ def main():
                 loaded = load_session(name)
                 if loaded is not None:
                     agent.session.messages = loaded
+                    # Restore session.id from the loaded messages so new messages
+                    # get the correct session_id (not the fresh UUID from startup).
+                    if loaded:
+                        agent.session.id = loaded[0].session_id
+                    agent.registry.session_id = agent.session.id
+                    # Deduplicate system messages — keep only the first one.
+                    # Loaded sessions may contain multiple system messages from
+                    # prior runs (startup injects system prompts, and they get
+                    # saved with the session).  The model treats the first system
+                    # message as the primary instruction, so extras just waste
+                    # context and can confuse the model.
+                    seen_system = False
+                    deduped = []
+                    for msg in agent.session.messages:
+                        if msg.role == "system":
+                            if seen_system:
+                                continue
+                            seen_system = True
+                        deduped.append(msg)
+                    agent.session.messages = deduped
                     print(f"\n(session '{name}' loaded)")
                 else:
                     print(f"\n(session '{name}' not found)")
