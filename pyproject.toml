@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=64", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "libreassistant"
@@ -17,6 +17,9 @@ dependencies = [
 test = [
     "pytest>=7.0.0",
 ]
+
+[project.scripts]
+libre = "libreassistant.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["libreassistant*"]
